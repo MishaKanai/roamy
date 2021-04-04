@@ -3,12 +3,16 @@ import { RootAction } from '../../store/action'
 import * as actions from './actions';
 import { SlateNode } from './domain'
 import getReferencesFromNodes from './util/getReferencesFromNodes';
+import hashSum from 'hash-sum';
 
 interface SlateDocument {
     name: string;
     document: SlateNode[];
+    documentHash: string;
     references: string[]; // to other docs
     backReferences: string[]
+    referencesHash: string;
+    backReferencesHash: string;
 }
 
 type SlateDocuments = {
@@ -29,13 +33,17 @@ const slateDocumentsReducer = (state: SlateDocuments = {}, action: RootAction): 
                 }
                 return t
             }))
+            const backReferences = withBackref ? [withBackref] : []
             return {
                 ...stateWithUpdatedBackrefsToCurrentDoc,
                 [docName]: {
                     name: docName,
                     document: doc,
+                    documentHash: hashSum(doc),
                     references,
-                    backReferences: withBackref ? [withBackref] : []
+                    referencesHash: hashSum(references),
+                    backReferences,
+                    backReferencesHash: hashSum(backReferences)
                 }
             }
         }
@@ -56,16 +64,21 @@ const slateDocumentsReducer = (state: SlateDocuments = {}, action: RootAction): 
                 }
                 return [k, {
                     ...v,
-                    backReferences
+                    backReferences,
+                    backReferencesHash: hashSum(backReferences)
                 }]
             }))
+            const backReferences = state[docName]?.backReferences ?? [];
             return {
                 ...stateWithUpdatedBackrefsToCurrentDoc,
                 [docName]: {
                     name: docName,
                     document: newDoc,
+                    documentHash: hashSum(newDoc),
                     references,
-                    backReferences: state[docName]?.backReferences ?? []
+                    referencesHash: hashSum(references),
+                    backReferences,
+                    backReferencesHash: hashSum(backReferences)
                 }
             }
         }
@@ -73,11 +86,20 @@ const slateDocumentsReducer = (state: SlateDocuments = {}, action: RootAction): 
             // This shouldn't be called unless there aren't any references to the doc.
             const { payload: { docName }} = action;
             const { references } = state[docName];
+            const hasReferencesToDocToDelete = Object.entries(state).filter(([k, v]) => v.references.includes(docName))
+            if (hasReferencesToDocToDelete.length > 0) {
+                alert(`Cannot delete document "${docName}". It is referenced by the following documents: \n${
+                    hasReferencesToDocToDelete.map(([k]) => k + '\n')
+                }`)
+                return state
+            }
             // there shouldn't be any backReferences. Can maybe block this if backReferences exists with an alert or something.
-            return Object.assign({}, state, Object.fromEntries(references.map(r => {
+            return Object.assign({}, Object.fromEntries(Object.entries(state).filter(([k]) => k !== docName)), Object.fromEntries(references.map(r => {
+                const backReferences = state[r].backReferences.filter(r => r !== docName);
                 return [r, {
                     ...state[r],
-                    backReferences: state[r].backReferences.filter(r => r !== docName)
+                    backReferences,
+                    backReferencesHash: hashSum(backReferences)
                 }]
             })))
         }
