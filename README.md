@@ -1,3 +1,11 @@
+Before running yarn dev for electron development, in wsl run 
+rm -r node_modules
+npm_config_platform=win32 yarn
+Note that devtools won't work when using electron this way.
+https://www.electronforge.io/guides/developing-with-wsl
+https://dev.to/mandiwise/electron-apps-made-easy-with-create-react-app-and-electron-forge-560e
+
+
 # Getting Started with Create React App
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
