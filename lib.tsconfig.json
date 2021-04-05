@@ -1,0 +1,5 @@
+{
+  "extends": "./tsconfig.json",
+  "outDir": "lib/",
+  "include": ["src/App.tsx", "src/store/rootReducer.ts"]
+}
