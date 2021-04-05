@@ -5,7 +5,7 @@ import { SlateNode } from './domain'
 import getReferencesFromNodes from './util/getReferencesFromNodes';
 import hashSum from 'hash-sum';
 
-interface SlateDocument {
+export interface SlateDocument {
     name: string;
     document: SlateNode[];
     documentHash: string;

@@ -1,5 +1,9 @@
 import { Node } from 'slate';
 
+export {
+  Node
+}
+
 export type ReferenceElement = {
     type: "reference";
     docReference: string;
