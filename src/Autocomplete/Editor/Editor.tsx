@@ -60,18 +60,18 @@ const withReferences = (editor: ReactEditor) => {
   const { isInline, isVoid } = editor;
 
   editor.isInline = (element: SlateElement) => {
-    return element.type === "reference" ? true : isInline(element);
+    return (element as any).type === "reference" ? true : isInline(element);
   };
 
   editor.isVoid = (element: SlateElement) => {
-    return element.type === "reference" ? true : isVoid(element);
+    return (element as any).type === "reference" ? true : isVoid(element);
   };
 
   return editor;
 };
 const withPortals = (editor: ReactEditor) => {
   const { isVoid } = editor;
-  editor.isVoid = (element) => {
+  editor.isVoid = (element: any) => {
     return element.type === "portal" ? true : isVoid(element);
   };
   return editor;
@@ -114,13 +114,15 @@ const blockFormatIsList = (
 
 const isMarkActive = (editor: Editor, format: HotKeyFormat) => {
   const marks = Editor.marks(editor);
-  return marks ? marks[format] === true : false;
+  return marks ? (marks as any)[format] === true : false;
 };
 
 const isBlockActive = (editor: Editor, format: BlockFormat) => {
   const found = !Editor.nodes(editor, {
     match: (n) =>
-      !Editor.isEditor(n) && SlateElement.isElement(n) && n.type === format,
+      !Editor.isEditor(n) &&
+      SlateElement.isElement(n) &&
+      (n as any).type === format,
   }).next().done;
 
   return Boolean(found);
@@ -143,13 +145,15 @@ const toggleBlock = (editor: Editor, format: BlockFormat) => {
   Transforms.unwrapNodes(editor, {
     match: (n) =>
       LIST_TYPES.includes(
-        !Editor.isEditor(n) && SlateElement.isElement(n) && (n.type as any)
+        !Editor.isEditor(n) &&
+          SlateElement.isElement(n) &&
+          ((n as any).type as any)
       ),
     split: true,
   });
   const newProperties: Partial<SlateElement> = {
     type: isActive ? "paragraph" : isList ? "list-item" : format,
-  };
+  } as any;
   Transforms.setNodes(editor, newProperties);
 
   if (!isActive && isList) {
@@ -239,7 +243,10 @@ const SlateAutocompleteEditor = <Triggers extends string[]>(
   );
   const renderLeaf = useCallback((props) => <Leaf {...props} />, []);
   const editor: ReactEditor = useMemo(
-    () => withReferences(withPortals(withReact(withHistory(createEditor())))),
+    () =>
+      withReferences(
+        withPortals(withReact(withHistory(createEditor()) as any))
+      ),
     []
   );
   const chars = useMemo(() => {
@@ -518,7 +525,7 @@ const insertPortal = (editor: ReactEditor, portalReference: string) => {
   };
   Transforms.insertNodes(editor, [
     portal,
-    { type: "paragraph", children: [{ text: "" }] },
+    { type: "paragraph", children: [{ text: "" }] } as any,
   ]);
   Transforms.move(editor);
 };
@@ -530,7 +537,7 @@ const insertReference = (editor: ReactEditor, docReference: string) => {
   };
   Transforms.insertNodes(editor, [
     reference,
-    { type: "paragraph", children: [{ text: "" }] },
+    { type: "paragraph", children: [{ text: "" }] } as any,
   ]);
   Transforms.move(editor);
 };
@@ -557,8 +564,8 @@ const Reference: React.FC<RenderElementProps> = ({
         boxShadow: selected && focused ? "0 0 0 2px #B4D5FF" : "none",
       }}
     >
-      <Link to={`/docs/${element.docReference}`}>
-        [[{element.docReference}]]
+      <Link to={`/docs/${(element as any).docReference}`}>
+        [[{(element as any).docReference}]]
       </Link>
       {children}
     </span>
@@ -570,11 +577,11 @@ const Element: React.FC<RenderElementProps & { parentDoc: string }> = (
 ) => {
   const { attributes, children, element } = props;
 
-  switch (element.type) {
+  switch ((element as any).type) {
     case "reference":
       return <Reference {...props} />;
     case "portal":
-      const docName = props.element.portalReference as string;
+      const docName = (props.element as any).portalReference as string;
       return (
         <div {...attributes}>
           <div
@@ -587,9 +594,9 @@ const Element: React.FC<RenderElementProps & { parentDoc: string }> = (
             }}
           >
             <div style={{ display: "flex", flexDirection: "row" }}>
-              <Link to={`/docs/${element.portalReference}`}>
+              <Link to={`/docs/${(element as any).portalReference}`}>
                 {"<<"}
-                {element.portalReference}
+                {(element as any).portalReference}
                 {">>"}
               </Link>
               <HoverBacklinks
