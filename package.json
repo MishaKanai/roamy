@@ -40,7 +40,7 @@
     "web-vitals": "^1.0.1"
   },
   "scripts": {
-    "prepare": "yarn build",
+    "prepare": "yarn build-lib",
     "build-lib": "tsc --esModuleInterop --lib esnext --outDir lib/ src/store/rootReducer.ts",
     "start": "react-scripts start",
     "build": "react-scripts build",
