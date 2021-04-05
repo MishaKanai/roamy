@@ -88,7 +88,7 @@ const slateDocumentsReducer = (state: SlateDocuments = {}, action: RootAction): 
             const { references } = state[docName];
             const hasReferencesToDocToDelete = Object.entries(state).filter(([k, v]) => v.references.includes(docName))
             if (hasReferencesToDocToDelete.length > 0) {
-                alert(`Cannot delete document "${docName}". It is referenced by the following documents: \n${
+                console.error(`Cannot delete document "${docName}". It is referenced by the following documents: \n${
                     hasReferencesToDocToDelete.map(([k]) => k + '\n')
                 }`)
                 return state
