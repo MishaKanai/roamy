@@ -19,8 +19,12 @@ interface PageProps {
 
 const createInitialEmptyDoc = () => [
   {
-    type: "paragraph",
-    children: [{ text: "" }],
+    children: [
+      {
+        type: 'paragraph',
+        children: [{ text: '' }],
+      },
+    ],
   },
 ];
 const Page: React.FC<PageProps> = React.memo(
