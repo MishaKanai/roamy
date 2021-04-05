@@ -41,7 +41,7 @@
   },
   "scripts": {
     "prepare": "yarn build-lib",
-    "build-lib": "tsc --esModuleInterop --lib esnext --outDir lib/ src/store/rootReducer.ts",
+    "build-lib": "tsc -p lib.tsconfig.json",
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
