@@ -502,15 +502,15 @@ const SlateAutocompleteEditor = <Triggers extends string[]>(
 };
 
 const Leaf: React.FC<RenderLeafProps> = ({ attributes, children, leaf }) => {
-  if (leaf.bold) {
+  if ((leaf as any).bold) {
     children = <strong>{children}</strong>;
   }
 
-  if (leaf.italic) {
+  if ((leaf as any).italic) {
     children = <em>{children}</em>;
   }
 
-  if (leaf.underline) {
+  if ((leaf as any).underline) {
     children = <u>{children}</u>;
   }
 
