@@ -15,20 +15,21 @@ import HoverBacklinks from "../components/AnchoredPopper";
 interface PageProps {
   docName: string;
   viewedFromParentDoc?: string;
+  title?: React.ReactNode;
 }
 
 const createInitialEmptyDoc = () => [
   {
     children: [
       {
-        type: 'paragraph',
-        children: [{ text: '' }],
+        type: "paragraph",
+        children: [{ text: "" }],
       },
     ],
   },
 ];
 const Page: React.FC<PageProps> = React.memo(
-  ({ docName, viewedFromParentDoc }) => {
+  ({ docName, viewedFromParentDoc, title }) => {
     const initialDoc: SlateNode[] = useMemo(createInitialEmptyDoc, []);
     const currDoc = useSelector(
       (state: RootState) => state.documents[docName]?.document ?? initialDoc
@@ -91,6 +92,7 @@ const Page: React.FC<PageProps> = React.memo(
           <ul>{backReferenceLinks}</ul>
         ) : null */}
         <SlateGraphEditor
+          title={title}
           createDoc={createChildDoc}
           value={currDoc}
           setValue={setDoc}
@@ -103,19 +105,19 @@ const Page: React.FC<PageProps> = React.memo(
 
 export const PageRoute = React.memo(() => {
   let { docName } = useParams<{ docName: string }>();
+  const title = (
+    <div style={{ display: "flex", flexDirection: "row" }}>
+      <b style={{ fontSize: "x-large", marginBottom: 0 }}>{docName}</b>&nbsp;
+      <span style={{ position: "relative" }}>
+        <span style={{ position: "absolute", bottom: 0, whiteSpace: "nowrap" }}>
+          <HoverBacklinks key={docName} docName={docName} />
+        </span>
+      </span>
+    </div>
+  );
   return (
     <div style={{ margin: ".5em" }}>
-      <div style={{ display: "flex", flexDirection: "row" }}>
-        <h3 style={{ marginBottom: 0 }}>{docName}</h3>&nbsp;
-        <span style={{ position: "relative" }}>
-          <span
-            style={{ position: "absolute", bottom: 0, whiteSpace: "nowrap" }}
-          >
-            <HoverBacklinks key={docName} docName={docName} />
-          </span>
-        </span>
-      </div>
-      <Page key={docName} docName={docName} />
+      <Page title={title} key={docName} docName={docName} />
     </div>
   );
 });

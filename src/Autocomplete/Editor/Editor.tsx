@@ -28,7 +28,7 @@ import {
 import ReactDOM from "react-dom";
 import { handleChange } from "./utils/autocompleteUtils";
 import isHotkey from "is-hotkey";
-import { IconButton, useTheme } from "@material-ui/core";
+import { IconButton, Typography, useTheme } from "@material-ui/core";
 import FormatBoldIcon from "@material-ui/icons/FormatBold";
 import FormatUnderlinedIcon from "@material-ui/icons/FormatUnderlined";
 import FormatItalicIcon from "@material-ui/icons/FormatItalic";
@@ -113,8 +113,13 @@ const blockFormatIsList = (
 };
 
 const isMarkActive = (editor: Editor, format: HotKeyFormat) => {
-  const marks = Editor.marks(editor);
-  return marks ? (marks as any)[format] === true : false;
+  try {
+    const marks = Editor.marks(editor);
+    return marks ? (marks as any)[format] === true : false;
+  } catch (e) {
+    console.error(e);
+    return false;
+  }
 };
 
 const isBlockActive = (editor: Editor, format: BlockFormat) => {
@@ -202,6 +207,7 @@ const MarkButton: React.FC<{ format: HotKeyFormat; icon: JSX.Element }> = ({
 };
 
 interface SlateTemplateEditorProps<Triggers extends string[]> {
+  title?: React.ReactNode;
   triggers: Triggers;
   getSearchResults: (
     search: string,
@@ -231,6 +237,7 @@ const SlateAutocompleteEditor = <Triggers extends string[]>(
     triggers,
     createDoc,
     docName,
+    title,
   } = props;
   const ref = useRef<HTMLDivElement | null>(null);
   const [target, setTarget] = useState<Range | null | undefined>();
@@ -363,94 +370,57 @@ const SlateAutocompleteEditor = <Triggers extends string[]>(
   return (
     <div style={{ display: "initial" }}>
       <Slate editor={editor} value={value} onChange={_handleChange}>
-        <div
+        <span
           style={{
-            display: isFocused ? undefined : "none",
-            position: "sticky",
+            position: "absolute",
+            zIndex: 200,
+            fontSize: "large",
+            padding: "2px",
             paddingTop: "5px",
-            top: 0,
-            backgroundColor: theme.palette.background.paper,
           }}
         >
-          <div
+          <b>{title}</b>
+        </span>
+        <span>
+          <span
+            onMouseDownCapture={(e) => {
+              e.preventDefault();
+            }}
             style={{
-              height: "100%",
-              padding: "2px",
+              visibility: isFocused ? undefined : "hidden",
+              justifyContent: "space-between",
+              zIndex: 100,
+              position: "sticky",
+              paddingTop: "3px",
+              top: 0,
+              right: 0,
               display: "flex",
-              flexDirection: "row",
+              backgroundColor: theme.palette.background.paper,
             }}
           >
-            <MarkButton format="bold" icon={<FormatBoldIcon />} />
-            <MarkButton format="italic" icon={<FormatItalicIcon />} />
-            <MarkButton format="underline" icon={<FormatUnderlinedIcon />} />
-            <BlockButton format="heading-one" icon={<LooksOneIcon />} />
-            <BlockButton format="heading-two" icon={<LooksTwoIcon />} />
-            <BlockButton
-              format="bulleted-list"
-              icon={<FormatListBulletedIcon />}
-            />
-          </div>
-          {/* <Toolbar>
-            <MarkButton format="bold" icon={<FormatBoldIcon />} />
-            <MarkButton format="italic" icon={<FormatItalicIcon />} />
-            <MarkButton format="underline" icon={<FormatUnderlinedIcon />} />
-            <BlockButton format="heading-one" icon={<LooksOneIcon />} />
-            <BlockButton format="heading-two" icon={<LooksTwoIcon />} />
-            <BlockButton
-              format="bulleted-list"
-              icon={<FormatListBulletedIcon />}
-            /> */}
-          {/* <Popup<Range>
-              renderDialogContent={({ closeDialog, optionalData }) => {
-                return (
-                  <Card style={{ padding: "1em" }}>
-                    <CreatePortalForm
-                      extraButtons={
-                        <Button onClick={closeDialog}>Close</Button>
-                      }
-                      onSubmit={({ name }) => {
-                        const portalNode = {
-                          type: "portal",
-                          portalReference: name,
-                          children: [
-                            {
-                              text: "<<" + name + ">>",
-                            },
-                          ],
-                        };
-                        Transforms.insertNodes(
-                          editor,
-                          [
-                            portalNode,
-                            {
-                              type: "paragraph",
-                              children: [{ text: "" }],
-                            },
-                          ],
-                          { at: optionalData || undefined }
-                        );
-                        Transforms.deselect(editor);
-                        closeDialog();
-                      }}
-                    />
-                  </Card>
-                );
+            <div style={{ fontSize: "large", padding: "2px" }}>
+              <b>{title}</b>
+            </div>
+            <div
+              style={{
+                height: "100%",
+                padding: "2px",
+                display: "flex",
+                flexDirection: "row",
               }}
-              renderToggler={({ openDialog }) => (
-                <Button
-                  size="small"
-                  color="primary"
-                  style={{ float: "right" }}
-                  onMouseDown={(e) => e.preventDefault()} // prevent onBlur so we can capture current selection in onClick
-                  onClick={(e) => openDialog(editor.selection)()}
-                >
-                  <AddIcon />
-                  <MeetingRoomIcon />
-                </Button>
-              )}
-            /> */}
-          {/* </Toolbar> */}
-        </div>
+            >
+              <MarkButton format="bold" icon={<FormatBoldIcon />} />
+              <MarkButton format="italic" icon={<FormatItalicIcon />} />
+              <MarkButton format="underline" icon={<FormatUnderlinedIcon />} />
+              <BlockButton format="heading-one" icon={<LooksOneIcon />} />
+              <BlockButton format="heading-two" icon={<LooksTwoIcon />} />
+              <BlockButton
+                format="bulleted-list"
+                icon={<FormatListBulletedIcon />}
+              />
+            </div>
+          </span>
+        </span>
         {props.renderEditableRegion({
           editor,
           EditableElement: (
@@ -593,18 +563,23 @@ const Element: React.FC<RenderElementProps & { parentDoc: string }> = (
               // overflow: "hidden",
             }}
           >
-            <div style={{ display: "flex", flexDirection: "row" }}>
-              <Link to={`/docs/${(element as any).portalReference}`}>
-                {"<<"}
-                {(element as any).portalReference}
-                {">>"}
-              </Link>
-              <HoverBacklinks
-                docName={docName}
-                dontInclude={[props.parentDoc]}
-              />
-            </div>
-            <Page viewedFromParentDoc={props.parentDoc} docName={docName} />
+            <Page
+              title={
+                <div style={{ display: "flex", flexDirection: "row" }}>
+                  <Link to={`/docs/${(element as any).portalReference}`}>
+                    {"<<"}
+                    {(element as any).portalReference}
+                    {">>"}
+                  </Link>
+                  <HoverBacklinks
+                    docName={docName}
+                    dontInclude={[props.parentDoc]}
+                  />
+                </div>
+              }
+              viewedFromParentDoc={props.parentDoc}
+              docName={docName}
+            />
           </div>
           {children}
         </div>

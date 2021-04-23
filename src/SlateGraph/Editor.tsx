@@ -7,15 +7,17 @@ import { docNamesSelector } from "./globalSelectors";
 const triggers = ["<<", "[["] as ["<<", "[["];
 
 const SlateGraphEditor: React.FunctionComponent<{
+  title?: React.ReactNode;
   value: Node[];
   docName: string;
   setValue: (value: Node[]) => void;
   createDoc: (newDocName: string) => void;
-}> = React.memo(({ value, setValue, createDoc, docName }) => {
+}> = React.memo(({ value, setValue, createDoc, docName, title }) => {
   const docNames = useSelector(docNamesSelector);
 
   return (
     <SlateAutocompleteEditor
+      title={title ?? docName}
       docName={docName}
       key={docName}
       createDoc={createDoc}
