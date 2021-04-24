@@ -123,14 +123,19 @@ const isMarkActive = (editor: Editor, format: HotKeyFormat) => {
 };
 
 const isBlockActive = (editor: Editor, format: BlockFormat) => {
-  const found = !Editor.nodes(editor, {
-    match: (n) =>
-      !Editor.isEditor(n) &&
-      SlateElement.isElement(n) &&
-      (n as any).type === format,
-  }).next().done;
+  try {
+    const found = !Editor.nodes(editor, {
+      match: (n) =>
+        !Editor.isEditor(n) &&
+        SlateElement.isElement(n) &&
+        (n as any).type === format,
+    }).next().done;
 
-  return Boolean(found);
+    return Boolean(found);
+  } catch (e) {
+    console.error(e);
+    return false;
+  }
 };
 
 const toggleMark = (editor: Editor, format: HotKeyFormat) => {
