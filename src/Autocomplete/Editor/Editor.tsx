@@ -28,7 +28,7 @@ import {
 import ReactDOM from "react-dom";
 import { handleChange } from "./utils/autocompleteUtils";
 import isHotkey from "is-hotkey";
-import { IconButton, Typography, useTheme } from "@material-ui/core";
+import { IconButton, useTheme } from "@material-ui/core";
 import FormatBoldIcon from "@material-ui/icons/FormatBold";
 import FormatUnderlinedIcon from "@material-ui/icons/FormatUnderlined";
 import FormatItalicIcon from "@material-ui/icons/FormatItalic";
@@ -270,13 +270,16 @@ const SlateAutocompleteEditor = <Triggers extends string[]>(
     ) {
       return results;
     }
+    if (search === docName) {
+      return results;
+    }
     return results.concat([
       {
         char: CREATE_PREFIX + search + '"',
         text: CREATE_PREFIX + search + '"',
       },
     ]);
-  }, [getSearchResults, search, trigger, editor]);
+  }, [getSearchResults, docName, search, trigger, editor]);
   const onKeyDown = useCallback(
     (event) => {
       for (const hotkey in HOTKEYS) {
@@ -301,7 +304,7 @@ const SlateAutocompleteEditor = <Triggers extends string[]>(
             break;
           case "Tab":
           case "Enter":
-            const selected = chars[index].char;
+            const selected = chars[index]?.char;
             if (selected) {
               event.preventDefault();
               Transforms.select(editor, target);
