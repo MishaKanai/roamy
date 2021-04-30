@@ -15,7 +15,7 @@ export interface SlateDocument {
     backReferencesHash: string;
 }
 
-type SlateDocuments = {
+export type SlateDocuments = {
     [id: string]: SlateDocument;
 }
 const slateDocumentsReducer = (state: SlateDocuments = {}, action: RootAction): SlateDocuments => {
