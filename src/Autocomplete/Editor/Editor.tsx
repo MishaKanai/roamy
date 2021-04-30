@@ -16,7 +16,7 @@ import {
 import { withHistory } from "slate-history";
 import {
   Slate,
-  Editable,
+  Editable as _Editable,
   ReactEditor,
   withReact,
   useSlate,
@@ -40,6 +40,8 @@ import { SlateNode } from "../../SlateGraph/store/domain";
 import { Link } from "react-router-dom";
 import deepEqual from "fast-deep-equal";
 import HoverBacklinks from "../../components/AnchoredPopper";
+
+const Editable = React.memo(_Editable);
 
 type ReferenceElement = {
   type: "reference";
@@ -375,6 +377,13 @@ const SlateAutocompleteEditor = <Triggers extends string[]>(
     },
     [setValue, triggers, setTarget, setSearch, setIndex, editor, value]
   );
+  const handleFocus: any = useCallback(
+    (event: any, _editor: any) => {
+      setIsFocused(true);
+    },
+    [setIsFocused]
+  );
+  const handleBlur = useCallback((e) => setIsFocused(false), [setIsFocused]);
   return (
     <div style={{ display: "initial" }}>
       <Slate editor={editor} value={value} onChange={_handleChange}>
@@ -433,8 +442,8 @@ const SlateAutocompleteEditor = <Triggers extends string[]>(
           editor,
           EditableElement: (
             <Editable
-              onFocus={(e) => setIsFocused(true)}
-              onBlur={(e) => setIsFocused(false)}
+              onFocus={handleFocus}
+              onBlur={handleBlur}
               renderElement={renderElement}
               renderLeaf={renderLeaf}
               onKeyDown={onKeyDown}
