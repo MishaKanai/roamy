@@ -1,5 +1,5 @@
 {
-  "files": ["src/App.tsx", "src/store/rootReducer.ts"],
+  "files": ["src/App.tsx", "src/store/createRootReducer.ts"],
   "compilerOptions": {
     "target": "es5",
     "lib": ["dom", "dom.iterable", "esnext"],
