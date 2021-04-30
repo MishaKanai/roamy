@@ -4,7 +4,7 @@ import Paper from "@material-ui/core/Paper";
 import Popper from "@material-ui/core/Popper";
 import { makeStyles, createStyles, Theme } from "@material-ui/core/styles";
 import { Link } from "react-router-dom";
-import { RootState } from "../store/rootReducer";
+import { RootState } from "../store/createRootReducer";
 import { useSelector } from "react-redux";
 
 const useStyles = makeStyles((theme: Theme) =>

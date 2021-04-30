@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useParams } from "react-router-dom";
-import { RootState } from "../store/rootReducer";
+import { RootState } from "../store/createRootReducer";
 import SlateGraphEditor from "./Editor";
 import {
   createDocAction,

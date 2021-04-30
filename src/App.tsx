@@ -1,14 +1,10 @@
 import React from "react";
 import { useSelector } from "react-redux";
-import {
-  BrowserRouter as Router,
-  Switch,
-  Route,
-  Link,
-  useRouteMatch,
-} from "react-router-dom";
+import { ConnectedRouter } from "connected-react-router";
+import { Switch, Route, Link, useRouteMatch } from "react-router-dom";
 import { PageRoute } from "./SlateGraph/Page";
 import { docNamesSelector } from "./SlateGraph/globalSelectors";
+import { history } from "./store/configureStore";
 
 const DocsNav: React.FC<{}> = (props) => {
   const docNames = useSelector(docNamesSelector);
@@ -48,7 +44,7 @@ const Docs = React.memo(() => {
 function App() {
   return (
     <div>
-      <Router>
+      <ConnectedRouter history={history}>
         <div>
           <ul>
             <li>
@@ -75,7 +71,7 @@ function App() {
             </Route>
           </Switch>
         </div>
-      </Router>
+      </ConnectedRouter>
     </div>
   );
 }
