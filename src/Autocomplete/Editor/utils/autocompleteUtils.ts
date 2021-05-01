@@ -1,4 +1,4 @@
-import { Editor, Range } from 'slate';
+import { BasePoint, Editor, Range } from 'slate';
 
 const getBeforeChars = (trigger: string, editor: Editor) => {
     const { selection } = editor;
@@ -40,6 +40,24 @@ function escapeRegExp(text: string) {
     return text.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&');
 }
 
+// gets the previous word 'start-point' including dashes, colons, and underscores.
+const getLocationOfWordBefore = (editor: Editor) => {
+    const getLocationOfWordBeforeInner = (location: BasePoint): BasePoint | undefined => {
+        let wordBefore = Editor.before(editor, location, { unit: 'word' })
+        if (!wordBefore) {
+            return
+        }
+        let charBeforeWordBefore = Editor.before(editor, wordBefore, { unit: 'character', distance: 1})
+        if (charBeforeWordBefore) {
+            const prevChar = Editor.string(editor, Editor.range(editor, charBeforeWordBefore, wordBefore))
+            if (prevChar === '-' || prevChar === '_' || prevChar === ':') {
+                return getLocationOfWordBeforeInner(charBeforeWordBefore) || wordBefore;
+            }
+        }
+        return wordBefore
+    }
+    return getLocationOfWordBeforeInner
+}
 export const handleChange = (
     editor: Editor,
     popupShouldOpen: (args: { trigger: string; popupTarget: Range; search: string }) => void,
@@ -49,7 +67,8 @@ export const handleChange = (
     const { selection } = editor;
     if (selection && Range.isCollapsed(selection)) {
         const [start] = Range.edges(selection);
-        const wordBefore = Editor.before(editor, start, { unit: 'word' }); // << is included in words, { and {# is not
+         let wordBefore = getLocationOfWordBefore(editor)(start)
+      
         // so for << this is <<as
         // and for ^ this is ^as
         // but for { and {# this is as
@@ -87,12 +106,13 @@ export const handleChange = (
             if (!beforeText) {
                 continue;
             }
-            const rxp = '^' + escapeRegExp(t) + '(\\w+)$';
+            const rxp = '^' + escapeRegExp(t) + '([A-Za-z0-9_\\-:]+)$';
             const beforeMatch = beforeText.match(new RegExp(rxp));
             const after = Editor.after(editor, start);
             const afterRange = Editor.range(editor, start, after);
             const afterText = Editor.string(editor, afterRange);
             const afterMatch = afterText.match(/^(\}|\s|$)/);
+            
             if (beforeMatch && afterMatch && beforeRange) {
                 popupShouldOpen({
                     trigger: t,
