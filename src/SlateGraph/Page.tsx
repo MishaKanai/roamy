@@ -82,7 +82,7 @@ const Page: React.FC<PageProps> = React.memo(
     }, []); // eslint-disable-line
     const setDoc = useCallback(
       (newDoc: SlateNode[]) => {
-        dispatch(updateDocAction(docName, newDoc));
+        dispatch(updateDocAction(docName, newDoc, currDocRef.current));
       },
       [docName, dispatch]
     );
@@ -105,12 +105,16 @@ const Page: React.FC<PageProps> = React.memo(
 
 export const PageRoute = React.memo(() => {
   let { docName } = useParams<{ docName: string }>();
+  const selectBacklinks = useCallback(
+    (state: RootState) => state.documents[docName]?.backReferences,
+    [docName]
+  );
   const title = (
     <div style={{ display: "flex", flexDirection: "row" }}>
       <b style={{ fontSize: "x-large", marginBottom: 0 }}>{docName}</b>&nbsp;
       <span style={{ position: "relative" }}>
         <span style={{ position: "absolute", bottom: 0, whiteSpace: "nowrap" }}>
-          <HoverBacklinks key={docName} docName={docName} />
+          <HoverBacklinks key={docName} selectBacklinks={selectBacklinks} />
         </span>
       </span>
     </div>

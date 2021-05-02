@@ -6,6 +6,8 @@ import { Switch, Route, Link, useRouteMatch } from "react-router-dom";
 import { PageRoute } from "./SlateGraph/Page";
 import { docNamesSelector } from "./SlateGraph/globalSelectors";
 import { history } from "./store/configureStore";
+import { DrawingPageRoute } from "./Excalidraw/Page";
+import { drawingNamesSelector } from "./Excalidraw/globalSelectors";
 
 const DocsNav: React.FC<{}> = (props) => {
   const docNames = useSelector(docNamesSelector);
@@ -20,6 +22,23 @@ const DocsNav: React.FC<{}> = (props) => {
       })}
       <li>
         <Link to={`/docs/foo`}>foolink :)</Link>
+      </li>
+    </ul>
+  );
+};
+const DrawingsNav: React.FC<{}> = (props) => {
+  const drawingNames = useSelector(drawingNamesSelector);
+  return (
+    <ul>
+      {drawingNames.map((n, i) => {
+        return (
+          <li key={n}>
+            <Link to={`/drawings/${n}`}>{n}</Link>
+          </li>
+        );
+      })}
+      <li>
+        <Link to={`/drawings/foo`}>foolink :)</Link>
       </li>
     </ul>
   );
@@ -41,6 +60,23 @@ const Docs = React.memo(() => {
     </div>
   );
 });
+const Drawings = React.memo(() => {
+  const match = useRouteMatch();
+  return (
+    <div>
+      <h2>Drawings</h2>
+      <DrawingsNav />
+      <Switch>
+        <Route path={`${match.path}/:drawingName`}>
+          <DrawingPageRoute />
+        </Route>
+        <Route path={match.path}>
+          <h3>Please select a Drawing.</h3>
+        </Route>
+      </Switch>
+    </div>
+  );
+});
 export const getApp = (history: History<unknown>) => {
   function App() {
     return (
@@ -57,6 +93,9 @@ export const getApp = (history: History<unknown>) => {
               <li>
                 <Link to="/docs">Docs</Link>
               </li>
+              <li>
+                <Link to="/drawings">Drawings</Link>
+              </li>
             </ul>
           </div>
           <div>
@@ -66,6 +105,9 @@ export const getApp = (history: History<unknown>) => {
               </Route>
               <Route path="/docs">
                 <Docs />
+              </Route>
+              <Route path="/drawings">
+                <Drawings />
               </Route>
               <Route path="/">
                 <div>Home</div>

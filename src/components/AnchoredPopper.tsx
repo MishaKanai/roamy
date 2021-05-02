@@ -19,16 +19,14 @@ const useStyles = makeStyles((theme: Theme) =>
 );
 
 export default function HoverBacklinks({
-  docName,
+  selectBacklinks,
   dontInclude,
 }: {
-  docName: string;
+  selectBacklinks: (state: RootState) => string[] | undefined;
   dontInclude?: string[];
 }) {
   const classes = useStyles();
-  const allBackReferences = useSelector(
-    (state: RootState) => state.documents[docName]?.backReferences
-  );
+  const allBackReferences = useSelector(selectBacklinks);
   const backReferences = useMemo(() => {
     if (dontInclude) {
       return allBackReferences?.filter((r) => !dontInclude.includes(r));

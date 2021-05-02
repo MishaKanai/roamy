@@ -3,12 +3,13 @@ import { CREATE_DOC, UPDATE_DOC, DELETE_DOC } from './constants'
 import { SlateNode } from './domain';
 
 export const updateDocAction = createCustomAction(UPDATE_DOC, type => {
-    return (docName: string, newDoc: SlateNode[],) => {
+    return (docName: string, newDoc: SlateNode[], prevDoc: SlateNode[]) => {
         return {
             type,
             payload: {
                 docName,
                 newDoc,
+                prevDoc,
             },
         }
     }

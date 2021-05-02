@@ -40,6 +40,7 @@ import { SlateNode } from "../../SlateGraph/store/domain";
 import { Link } from "react-router-dom";
 import deepEqual from "fast-deep-equal";
 import HoverBacklinks from "../../components/AnchoredPopper";
+import { RootState } from "../../store/createRootReducer";
 
 const Editable = React.memo(_Editable);
 
@@ -563,7 +564,6 @@ const Element: React.FC<RenderElementProps & { parentDoc: string }> = (
   props
 ) => {
   const { attributes, children, element } = props;
-
   switch ((element as any).type) {
     case "reference":
       return <Reference {...props} />;
@@ -589,7 +589,9 @@ const Element: React.FC<RenderElementProps & { parentDoc: string }> = (
                     {">>"}
                   </Link>
                   <HoverBacklinks
-                    docName={docName}
+                    selectBacklinks={(state: RootState) =>
+                      state.documents[docName]?.backReferences
+                    }
                     dontInclude={[props.parentDoc]}
                   />
                 </div>

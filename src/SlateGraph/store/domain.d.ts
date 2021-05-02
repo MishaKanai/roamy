@@ -11,4 +11,10 @@ export type PortalElement = {
     children: SlateNode[];
 } & Node;
 
-export type SlateNode = Node | ReferenceElement | PortalElement;
+export type DrawingElement = {
+  type: "drawing";
+  drawingReference: string;
+  children: SlateNode[];
+}
+
+export type SlateNode = Node | ReferenceElement | PortalElement | DrawingElement;
