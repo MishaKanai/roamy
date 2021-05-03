@@ -87,6 +87,11 @@ const DrawingPage: React.FC<DrawingPageProps> = React.memo(
       },
       [drawingName, dispatch]
     );
+    const initialData = useMemo(() => {
+      return {
+        elements: currDrawing.elements,
+      };
+    }, [currDrawing]);
 
     return (
       <span style={{ margin: ".5em", marginTop: 0 }}>
@@ -118,13 +123,7 @@ const DrawingPage: React.FC<DrawingPageProps> = React.memo(
             <Draw
               {...excalidrawProps}
               onChange={setDrawing}
-              initialData={{
-                appState: {
-                  height: currDrawing.size.height,
-                  width: currDrawing.size.width,
-                },
-                elements: currDrawing.elements,
-              }}
+              initialData={initialData}
             />
           </Resizable>
         </span>
