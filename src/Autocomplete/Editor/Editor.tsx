@@ -515,7 +515,7 @@ const insertDrawing = (editor: ReactEditor, drawingReference: string) => {
   const drawing: DrawingElement = {
     type: "drawing",
     drawingReference,
-    children: [{ text: "{{" + drawingReference + "}}" }],
+    children: [{ text: "" }],
   };
   Transforms.insertNodes(editor, [
     drawing,
@@ -606,8 +606,8 @@ const Element: React.FC<RenderElementProps & { parentDoc: string }> = (
                   excalidrawProps={
                     editable
                       ? {
-                        gridModeEnabled: true
-                      }
+                          gridModeEnabled: true,
+                        }
                       : {
                           zenModeEnabled: true,
                           viewModeEnabled: true,
@@ -646,7 +646,7 @@ const Element: React.FC<RenderElementProps & { parentDoc: string }> = (
               )}
             </TogglableEditableDrawing>
           </div>
-          {children}
+          <span>{children}</span>
         </div>
       );
     case "portal":
