@@ -13,7 +13,7 @@ import HoverBacklinks from "../components/AnchoredPopper";
 import { ExcalidrawElement } from "@excalidraw/excalidraw/types/element/types";
 import Draw from "@excalidraw/excalidraw";
 import { Resizable } from "re-resizable";
-import { ExcalidrawProps } from "@excalidraw/excalidraw/types/types";
+import { AppState, ExcalidrawProps } from "@excalidraw/excalidraw/types/types";
 
 interface DrawingPageProps {
   drawingName: string;
@@ -75,7 +75,10 @@ const DrawingPage: React.FC<DrawingPageProps> = React.memo(
     }, []); // eslint-disable-line
 
     const setDrawing = useCallback(
-      (newDrawingElements: readonly ExcalidrawElement[]) => {
+      (
+        newDrawingElements: readonly ExcalidrawElement[],
+        appState: AppState
+      ) => {
         dispatch(
           updateDrawingAction(drawingName, {
             elements: newDrawingElements as ExcalidrawElement[],
@@ -115,7 +118,13 @@ const DrawingPage: React.FC<DrawingPageProps> = React.memo(
             <Draw
               {...excalidrawProps}
               onChange={setDrawing}
-              initialData={currDrawing}
+              initialData={{
+                appState: {
+                  height: currDrawing.size.height,
+                  width: currDrawing.size.width,
+                },
+                elements: currDrawing.elements,
+              }}
             />
           </Resizable>
         </span>
