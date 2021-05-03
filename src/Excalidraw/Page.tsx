@@ -144,7 +144,14 @@ export const DrawingPageRoute = React.memo(() => {
   );
   return (
     <div style={{ margin: ".5em" }}>
-      <DrawingPage title={title} key={drawingName} drawingName={drawingName} />
+      <DrawingPage
+        excalidrawProps={{
+          gridModeEnabled: true,
+        }}
+        title={title}
+        key={drawingName}
+        drawingName={drawingName}
+      />
     </div>
   );
 });
