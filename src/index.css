@@ -25,3 +25,7 @@ code {
 .roamy-linkbutton:hover {
   text-decoration: underline;
 }
+
+.excalidraw .App-bottom-bar > .Island {
+  display: none !important;
+}
