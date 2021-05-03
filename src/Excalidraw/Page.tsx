@@ -13,11 +13,13 @@ import HoverBacklinks from "../components/AnchoredPopper";
 import { ExcalidrawElement } from "@excalidraw/excalidraw/types/element/types";
 import Draw from "@excalidraw/excalidraw";
 import { Resizable } from "re-resizable";
+import { ExcalidrawProps } from "@excalidraw/excalidraw/types/types";
 
 interface DrawingPageProps {
   drawingName: string;
   viewedFromParentDoc?: string;
   title?: React.ReactNode;
+  excalidrawProps?: Partial<ExcalidrawProps>;
 }
 
 const INITIAL_HEIGHT = 400;
@@ -31,7 +33,7 @@ const createInitialEmptyDrawing = (): DrawingData => ({
 });
 
 const DrawingPage: React.FC<DrawingPageProps> = React.memo(
-  ({ drawingName, viewedFromParentDoc, title }) => {
+  ({ drawingName, viewedFromParentDoc, title, excalidrawProps }) => {
     const initialDrawing: DrawingData = useMemo(createInitialEmptyDrawing, []);
     const currDrawing = useSelector(
       (state: RootState) =>
@@ -84,15 +86,19 @@ const DrawingPage: React.FC<DrawingPageProps> = React.memo(
     );
 
     return (
-      <div style={{ margin: ".5em", marginTop: 0 }}>
-        <div>
+      <span style={{ margin: ".5em", marginTop: 0 }}>
+        <span>
+          <div style={{ position: "relative" }}>
+            <div style={{ position: "absolute", top: -30, left: 0 }}>
+              {title}
+            </div>
+          </div>
           <Resizable
             style={{
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
               border: "solid 1px #ddd",
-              background: "#f0f0f0",
             }}
             size={currDrawing.size}
             onResizeStop={(e, direction, ref, d) => {
@@ -106,20 +112,14 @@ const DrawingPage: React.FC<DrawingPageProps> = React.memo(
               );
             }}
           >
-            <Draw onChange={setDrawing} initialData={currDrawing} />
+            <Draw
+              {...excalidrawProps}
+              onChange={setDrawing}
+              initialData={currDrawing}
+            />
           </Resizable>
-        </div>
-        {/* backReferenceLinks && backReferenceLinks.length > 0 ? (
-          <ul>{backReferenceLinks}</ul>
-        ) : null */}
-        {/* <SlateGraphEditor
-          title={title}
-          createDoc={createChildDoc}
-          value={currDoc}
-          setValue={setDoc}
-          docName={docName}
-        /> */}
-      </div>
+        </span>
+      </span>
     );
   }
 );

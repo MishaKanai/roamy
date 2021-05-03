@@ -66,6 +66,8 @@ export default function HoverBacklinks({
           anchorEl={anchorRef.current}
           role={undefined}
           transition
+          style={{ zIndex: 10000 }}
+          disablePortal={true}
         >
           {({ TransitionProps, placement }) => (
             <Grow

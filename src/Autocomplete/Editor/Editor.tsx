@@ -36,11 +36,13 @@ import FormatListBulletedIcon from "@material-ui/icons/FormatListBulleted";
 import LooksOneIcon from "@material-ui/icons/LooksOne";
 import LooksTwoIcon from "@material-ui/icons/LooksTwo";
 import Page from "../../SlateGraph/Page";
-import { SlateNode } from "../../SlateGraph/store/domain";
+import { DrawingElement, SlateNode } from "../../SlateGraph/store/domain";
 import { Link } from "react-router-dom";
 import deepEqual from "fast-deep-equal";
 import HoverBacklinks from "../../components/AnchoredPopper";
 import { RootState } from "../../store/createRootReducer";
+import DrawingPage from "../../Excalidraw/Page";
+import EditIcon from "@material-ui/icons/Edit";
 
 const Editable = React.memo(_Editable);
 
@@ -321,11 +323,16 @@ const SlateAutocompleteEditor = <Triggers extends string[]>(
                   createDoc(docRefName);
                 }
                 insertReference(editor, docRefName);
-              } else {
+              } else if (trigger === "<<") {
                 if (isCreate) {
                   createDoc(docRefName);
                 }
                 insertPortal(editor, docRefName);
+              } else if (trigger === "{{") {
+                if (isCreate) {
+                  createDoc(docRefName);
+                }
+                insertDrawing(editor, docRefName);
               }
               setTarget(null);
             } else {
@@ -504,7 +511,18 @@ const Leaf: React.FC<RenderLeafProps> = ({ attributes, children, leaf }) => {
 
   return <span {...attributes}>{children}</span>;
 };
-
+const insertDrawing = (editor: ReactEditor, drawingReference: string) => {
+  const drawing: DrawingElement = {
+    type: "drawing",
+    drawingReference,
+    children: [{ text: "{{" + drawingReference + "}}" }],
+  };
+  Transforms.insertNodes(editor, [
+    drawing,
+    { type: "paragraph", children: [{ text: "" }] } as any,
+  ]);
+  Transforms.move(editor);
+};
 const insertPortal = (editor: ReactEditor, portalReference: string) => {
   const portal: PortalElement = {
     type: "portal",
@@ -560,6 +578,16 @@ const Reference: React.FC<RenderElementProps> = ({
   );
 };
 
+const TogglableEditableDrawing: React.FC<{
+  children: (args: {
+    editable: boolean;
+    setEditable(editable: boolean): void;
+  }) => JSX.Element;
+}> = (props) => {
+  const [editable, setEditable] = React.useState(false);
+  return props.children({ editable, setEditable });
+};
+
 const Element: React.FC<RenderElementProps & { parentDoc: string }> = (
   props
 ) => {
@@ -567,6 +595,60 @@ const Element: React.FC<RenderElementProps & { parentDoc: string }> = (
   switch ((element as any).type) {
     case "reference":
       return <Reference {...props} />;
+    case "drawing":
+      const drawingName = (props.element as any).drawingReference as string;
+      return (
+        <div {...attributes}>
+          <div contentEditable={false}>
+            <TogglableEditableDrawing>
+              {({ editable, setEditable }) => (
+                <DrawingPage
+                  excalidrawProps={
+                    editable
+                      ? {
+                        gridModeEnabled: true
+                      }
+                      : {
+                          zenModeEnabled: true,
+                          viewModeEnabled: true,
+                          gridModeEnabled: true,
+                        }
+                  }
+                  title={
+                    <div style={{ display: "flex", flexDirection: "row" }}>
+                      <Link
+                        to={`/drawings/${(element as any).drawingReference}`}
+                      >
+                        {"{{"}
+                        {(element as any).drawingReference}
+                        {"}}"}
+                      </Link>
+                      <HoverBacklinks
+                        selectBacklinks={(state: RootState) =>
+                          state.drawings[drawingName]?.backReferences
+                        }
+                        dontInclude={[props.parentDoc]}
+                      />
+                      <IconButton
+                        size="small"
+                        onClick={() => setEditable(!editable)}
+                      >
+                        <EditIcon
+                          fontSize="small"
+                          color={editable ? "primary" : undefined}
+                        />
+                      </IconButton>
+                    </div>
+                  }
+                  viewedFromParentDoc={props.parentDoc}
+                  drawingName={drawingName}
+                />
+              )}
+            </TogglableEditableDrawing>
+          </div>
+          {children}
+        </div>
+      );
     case "portal":
       const docName = (props.element as any).portalReference as string;
       return (
