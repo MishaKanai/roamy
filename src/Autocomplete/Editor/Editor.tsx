@@ -398,7 +398,7 @@ const SlateAutocompleteEditor = <Triggers extends string[]>(
         <span
           style={{
             position: "absolute",
-            zIndex: 200,
+            zIndex: 100,
             fontSize: "large",
             padding: "2px",
             paddingTop: "5px",
@@ -414,7 +414,7 @@ const SlateAutocompleteEditor = <Triggers extends string[]>(
             style={{
               visibility: isFocused ? undefined : "hidden",
               justifyContent: "space-between",
-              zIndex: 100,
+              zIndex: 200,
               position: "sticky",
               paddingTop: "3px",
               top: 0,
@@ -645,8 +645,8 @@ const Element: React.FC<RenderElementProps & { parentDoc: string }> = (
                 />
               )}
             </TogglableEditableDrawing>
+            {children}
           </div>
-          <span>{children}</span>
         </div>
       );
     case "portal":
