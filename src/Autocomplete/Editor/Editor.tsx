@@ -43,6 +43,7 @@ import HoverBacklinks from "../../components/AnchoredPopper";
 import { RootState } from "../../store/createRootReducer";
 import DrawingPage from "../../Excalidraw/Page";
 import EditIcon from "@material-ui/icons/Edit";
+import { drawingOptionsContext } from "../../extension/drawingOptionsContext";
 
 const Editable = React.memo(_Editable);
 
@@ -600,9 +601,11 @@ const Element: React.FC<RenderElementProps & { parentDoc: string }> = (
       return (
         <div {...attributes}>
           <div contentEditable={false}>
-            <TogglableEditableDrawing>
+            <drawingOptionsContext.Consumer>{({ renderDrawingOptions }) => (
+              <TogglableEditableDrawing>
               {({ editable, setEditable }) => (
                 <DrawingPage
+                  preventScrollAndResize={!editable}
                   excalidrawProps={
                     editable
                       ? {
@@ -638,6 +641,7 @@ const Element: React.FC<RenderElementProps & { parentDoc: string }> = (
                           color={editable ? "primary" : undefined}
                         />
                       </IconButton>
+                        {editable && renderDrawingOptions?.({ drawingId: drawingName })}
                     </div>
                   }
                   viewedFromParentDoc={props.parentDoc}
@@ -645,6 +649,7 @@ const Element: React.FC<RenderElementProps & { parentDoc: string }> = (
                 />
               )}
             </TogglableEditableDrawing>
+            )}</drawingOptionsContext.Consumer>
             {children}
           </div>
         </div>

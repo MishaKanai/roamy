@@ -1,4 +1,10 @@
-import React, { useCallback, useEffect, useMemo, useRef } from "react";
+import React, {
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+} from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useParams } from "react-router-dom";
 import { RootState } from "../store/createRootReducer";
@@ -14,12 +20,14 @@ import { ExcalidrawElement } from "@excalidraw/excalidraw/types/element/types";
 import Draw from "@excalidraw/excalidraw";
 import { Resizable } from "re-resizable";
 import { AppState, ExcalidrawProps } from "@excalidraw/excalidraw/types/types";
+import { drawingOptionsContext } from "../extension/drawingOptionsContext";
 
 interface DrawingPageProps {
   drawingName: string;
   viewedFromParentDoc?: string;
   title?: React.ReactNode;
   excalidrawProps?: Partial<ExcalidrawProps>;
+  preventScrollAndResize?: boolean;
 }
 
 const INITIAL_HEIGHT = 400;
@@ -33,7 +41,13 @@ const createInitialEmptyDrawing = (): DrawingData => ({
 });
 
 const DrawingPage: React.FC<DrawingPageProps> = React.memo(
-  ({ drawingName, viewedFromParentDoc, title, excalidrawProps }) => {
+  ({
+    drawingName,
+    viewedFromParentDoc,
+    title,
+    excalidrawProps,
+    preventScrollAndResize = false,
+  }) => {
     const initialDrawing: DrawingData = useMemo(createInitialEmptyDrawing, []);
     const currDrawing = useSelector(
       (state: RootState) =>
@@ -92,40 +106,66 @@ const DrawingPage: React.FC<DrawingPageProps> = React.memo(
         elements: currDrawing.elements,
       };
     }, [currDrawing]);
-
+    const drawing = (
+      <Draw
+        {...excalidrawProps}
+        onChange={setDrawing}
+        initialData={initialData}
+      />
+    );
     return (
       <span style={{ margin: ".5em", marginTop: 0 }}>
         <span>
           <div style={{ position: "relative" }}>
-            <div style={{ position: "absolute", top: -30, left: 0 }}>
+            <div style={{ position: "absolute", top: -34, left: 0 }}>
               {title}
             </div>
+            {preventScrollAndResize && (
+              // a perfect overlay of the drawing area
+              <div
+                style={{
+                  zIndex: 500,
+                  position: "absolute",
+                  top: 0,
+                  left: 0,
+                  height: currDrawing.size.height,
+                  width: currDrawing.size.width,
+                }}
+              />
+            )}
           </div>
-          <Resizable
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              border: "solid 1px #ddd",
-            }}
-            size={currDrawing.size}
-            onResizeStop={(e, direction, ref, d) => {
-              dispatch(
-                updateDrawingAction(drawingName, {
-                  size: {
-                    height: currDrawing.size.height + d.height,
-                    width: currDrawing.size.width + d.width,
-                  },
-                })
-              );
-            }}
-          >
-            <Draw
-              {...excalidrawProps}
-              onChange={setDrawing}
-              initialData={initialData}
-            />
-          </Resizable>
+          {preventScrollAndResize ? (
+            <div
+              style={{
+                height: currDrawing.size.height,
+                width: currDrawing.size.width,
+              }}
+            >
+              {drawing}
+            </div>
+          ) : (
+            <Resizable
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                border: "solid 1px #ddd",
+              }}
+              size={currDrawing.size}
+              onResizeStop={(e, direction, ref, d) => {
+                dispatch(
+                  updateDrawingAction(drawingName, {
+                    size: {
+                      height: currDrawing.size.height + d.height,
+                      width: currDrawing.size.width + d.width,
+                    },
+                  })
+                );
+              }}
+            >
+              {drawing}
+            </Resizable>
+          )}
         </span>
       </span>
     );
@@ -139,9 +179,13 @@ export const DrawingPageRoute = React.memo(() => {
     (state: RootState) => state.drawings[drawingName]?.backReferences,
     [drawingName]
   );
+
+  const { renderDrawingOptions } = useContext(drawingOptionsContext);
   const title = (
     <div style={{ display: "flex", flexDirection: "row" }}>
       <b style={{ fontSize: "x-large", marginBottom: 0 }}>{drawingName}</b>
+      &nbsp;
+      {renderDrawingOptions?.({ drawingId: drawingName })}
       &nbsp;
       <span style={{ position: "relative" }}>
         <span style={{ position: "absolute", bottom: 0, whiteSpace: "nowrap" }}>
