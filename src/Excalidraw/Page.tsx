@@ -40,6 +40,63 @@ const createInitialEmptyDrawing = (): DrawingData => ({
   elements: [],
 });
 
+export const useDrawingPage = (
+  drawingName: string,
+  options?: {
+    viewedFromParentDoc?: string;
+  }
+) => {
+  const viewedFromParentDoc = options?.viewedFromParentDoc;
+  const initialDrawing: DrawingData = useMemo(createInitialEmptyDrawing, []);
+  const currDrawing = useSelector(
+    (state: RootState) => state.drawings[drawingName]?.drawing ?? initialDrawing
+  );
+  const hasBackReferences = useSelector((state: RootState) =>
+    Boolean(state.drawings[drawingName]?.backReferences?.length)
+  );
+  const hasBackReferencesRef = useRef(hasBackReferences);
+  hasBackReferencesRef.current = hasBackReferences;
+  const currDocRef = useRef(currDrawing);
+  currDocRef.current = currDrawing; // always have a ref to the current doc- this lets us check it on cleanup to see if doc is nonempty
+  // if not, we can safely delete on unmount.
+
+  const dispatch = useDispatch();
+
+  useEffect(() => {
+    if (currDrawing === initialDrawing) {
+      dispatch(
+        createDrawingAction(
+          drawingName,
+          currDrawing,
+          viewedFromParentDoc ? { withBackref: viewedFromParentDoc } : undefined
+        )
+      );
+    }
+    return () => {
+      if (
+        deepEqual(
+          currDocRef.current,
+          createInitialEmptyDrawing() && !hasBackReferencesRef.current
+        )
+      ) {
+        dispatch(deleteDrawingAction(drawingName));
+      }
+    };
+  }, []); // eslint-disable-line
+
+  const setDrawing = useCallback(
+    (newDrawingElements: readonly ExcalidrawElement[], appState: AppState) => {
+      dispatch(
+        updateDrawingAction(drawingName, {
+          elements: newDrawingElements as ExcalidrawElement[],
+        })
+      );
+    },
+    [drawingName, dispatch]
+  );
+  return [currDrawing, setDrawing] as [typeof currDrawing, typeof setDrawing];
+};
+
 const DrawingPage: React.FC<DrawingPageProps> = React.memo(
   ({
     drawingName,
@@ -48,64 +105,16 @@ const DrawingPage: React.FC<DrawingPageProps> = React.memo(
     excalidrawProps,
     preventScrollAndResize = false,
   }) => {
-    const initialDrawing: DrawingData = useMemo(createInitialEmptyDrawing, []);
-    const currDrawing = useSelector(
-      (state: RootState) =>
-        state.drawings[drawingName]?.drawing ?? initialDrawing
-    );
-    const hasBackReferences = useSelector((state: RootState) =>
-      Boolean(state.drawings[drawingName]?.backReferences?.length)
-    );
-    const hasBackReferencesRef = useRef(hasBackReferences);
-    hasBackReferencesRef.current = hasBackReferences;
-    const currDocRef = useRef(currDrawing);
-    currDocRef.current = currDrawing; // always have a ref to the current doc- this lets us check it on cleanup to see if doc is nonempty
-    // if not, we can safely delete on unmount.
-
     const dispatch = useDispatch();
+    const [currDrawing, setDrawing] = useDrawingPage(drawingName, {
+      viewedFromParentDoc,
+    });
 
-    useEffect(() => {
-      if (currDrawing === initialDrawing) {
-        dispatch(
-          createDrawingAction(
-            drawingName,
-            currDrawing,
-            viewedFromParentDoc
-              ? { withBackref: viewedFromParentDoc }
-              : undefined
-          )
-        );
-      }
-      return () => {
-        if (
-          deepEqual(
-            currDocRef.current,
-            createInitialEmptyDrawing() && !hasBackReferencesRef.current
-          )
-        ) {
-          dispatch(deleteDrawingAction(drawingName));
-        }
-      };
-    }, []); // eslint-disable-line
-
-    const setDrawing = useCallback(
-      (
-        newDrawingElements: readonly ExcalidrawElement[],
-        appState: AppState
-      ) => {
-        dispatch(
-          updateDrawingAction(drawingName, {
-            elements: newDrawingElements as ExcalidrawElement[],
-          })
-        );
-      },
-      [drawingName, dispatch]
-    );
     const initialData = useMemo(() => {
       return {
         elements: currDrawing.elements,
         appState: {
-            viewBackgroundColor: "transparent",
+          viewBackgroundColor: "transparent",
         },
       };
     }, [currDrawing]);
