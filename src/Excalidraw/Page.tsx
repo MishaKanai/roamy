@@ -104,6 +104,9 @@ const DrawingPage: React.FC<DrawingPageProps> = React.memo(
     const initialData = useMemo(() => {
       return {
         elements: currDrawing.elements,
+        appState: {
+            viewBackgroundColor: "transparent",
+        },
       };
     }, [currDrawing]);
     const drawing = (
