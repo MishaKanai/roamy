@@ -238,7 +238,7 @@ interface SlateTemplateEditorProps<Triggers extends string[]> {
   docName: string;
 }
 
-const SlateAutocompleteEditor = <Triggers extends string[]>(
+const _SlateAutocompleteEditor = <Triggers extends string[]>(
   props: SlateTemplateEditorProps<Triggers>
 ) => {
   const {
@@ -702,5 +702,5 @@ const Element: React.FC<RenderElementProps & { parentDoc: string }> = (
       return <p {...attributes}>{children}</p>;
   }
 };
-
+const SlateAutocompleteEditor = React.memo(_SlateAutocompleteEditor);
 export default SlateAutocompleteEditor;
