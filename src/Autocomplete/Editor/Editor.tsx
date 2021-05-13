@@ -44,6 +44,12 @@ import { RootState } from "../../store/createRootReducer";
 import DrawingPage from "../../Excalidraw/Page";
 import EditIcon from "@material-ui/icons/Edit";
 import { drawingOptionsContext } from "../../extension/drawingOptionsContext";
+import PlainTextExample from "./PT";
+
+const isElectron = (() => {
+  var userAgent = navigator.userAgent.toLowerCase();
+  return (userAgent.includes(' electron/'))
+})();
 
 const Editable = React.memo(_Editable);
 
@@ -667,6 +673,15 @@ const Element: React.FC<RenderElementProps & { parentDoc: string }> = (
               // overflow: "hidden",
             }}
           >
+            {/*
+              When rendered in the Electron app, the first (and only first) Slate editor rendered below this point has a bad issue:
+              When typing with the cursor at the END of the editor's contents, the character is placed at the end but then focus instantly jumps to the beginning of the document.
+              Any Slate editors rendered below that editor is apparently free of any issues.
+
+              I have NO idea why this happens.
+
+            */}
+            {isElectron && <div style={{ display: 'none' }}><PlainTextExample /></div>}
             <Page
               title={
                 <div style={{ display: "flex", flexDirection: "row" }}>
