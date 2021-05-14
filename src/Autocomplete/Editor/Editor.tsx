@@ -46,11 +46,6 @@ import EditIcon from "@material-ui/icons/Edit";
 import { drawingOptionsContext } from "../../extension/drawingOptionsContext";
 import PlainTextExample from "./PT";
 
-const isElectron = (() => {
-  var userAgent = navigator.userAgent.toLowerCase();
-  return (userAgent.includes(' electron/'))
-})();
-
 const Editable = React.memo(_Editable);
 
 type ReferenceElement = {
@@ -607,55 +602,60 @@ const Element: React.FC<RenderElementProps & { parentDoc: string }> = (
       return (
         <div {...attributes}>
           <div contentEditable={false}>
-            <drawingOptionsContext.Consumer>{({ renderDrawingOptions }) => (
-              <TogglableEditableDrawing>
-              {({ editable, setEditable }) => (
-                <DrawingPage
-                  preventScrollAndResize={!editable}
-                  excalidrawProps={
-                    editable
-                      ? {
-                          gridModeEnabled: true,
-                        }
-                      : {
-                          zenModeEnabled: true,
-                          viewModeEnabled: true,
-                          gridModeEnabled: true,
-                        }
-                  }
-                  title={
-                    <div style={{ display: "flex", flexDirection: "row" }}>
-                      <Link
-                        to={`/drawings/${(element as any).drawingReference}`}
-                      >
-                        {"{{"}
-                        {(element as any).drawingReference}
-                        {"}}"}
-                      </Link>
-                      <HoverBacklinks
-                        selectBacklinks={(state: RootState) =>
-                          state.drawings[drawingName]?.backReferences
-                        }
-                        dontInclude={[props.parentDoc]}
-                      />
-                      <IconButton
-                        size="small"
-                        onClick={() => setEditable(!editable)}
-                      >
-                        <EditIcon
-                          fontSize="small"
-                          color={editable ? "primary" : undefined}
-                        />
-                      </IconButton>
-                        {editable && renderDrawingOptions?.({ drawingId: drawingName })}
-                    </div>
-                  }
-                  viewedFromParentDoc={props.parentDoc}
-                  drawingName={drawingName}
-                />
+            <drawingOptionsContext.Consumer>
+              {({ renderDrawingOptions }) => (
+                <TogglableEditableDrawing>
+                  {({ editable, setEditable }) => (
+                    <DrawingPage
+                      preventScrollAndResize={!editable}
+                      excalidrawProps={
+                        editable
+                          ? {
+                              gridModeEnabled: true,
+                            }
+                          : {
+                              zenModeEnabled: true,
+                              viewModeEnabled: true,
+                              gridModeEnabled: true,
+                            }
+                      }
+                      title={
+                        <div style={{ display: "flex", flexDirection: "row" }}>
+                          <Link
+                            to={`/drawings/${
+                              (element as any).drawingReference
+                            }`}
+                          >
+                            {"{{"}
+                            {(element as any).drawingReference}
+                            {"}}"}
+                          </Link>
+                          <HoverBacklinks
+                            selectBacklinks={(state: RootState) =>
+                              state.drawings[drawingName]?.backReferences
+                            }
+                            dontInclude={[props.parentDoc]}
+                          />
+                          <IconButton
+                            size="small"
+                            onClick={() => setEditable(!editable)}
+                          >
+                            <EditIcon
+                              fontSize="small"
+                              color={editable ? "primary" : undefined}
+                            />
+                          </IconButton>
+                          {editable &&
+                            renderDrawingOptions?.({ drawingId: drawingName })}
+                        </div>
+                      }
+                      viewedFromParentDoc={props.parentDoc}
+                      drawingName={drawingName}
+                    />
+                  )}
+                </TogglableEditableDrawing>
               )}
-            </TogglableEditableDrawing>
-            )}</drawingOptionsContext.Consumer>
+            </drawingOptionsContext.Consumer>
             {children}
           </div>
         </div>
@@ -674,14 +674,16 @@ const Element: React.FC<RenderElementProps & { parentDoc: string }> = (
             }}
           >
             {/*
-              When rendered in the Electron app, the first (and only first) Slate editor rendered below this point has a bad issue:
+              After Slate version 0.63, the first (and only first) Slate editor rendered below this point has a bad issue:
               When typing with the cursor at the END of the editor's contents, the character is placed at the end but then focus instantly jumps to the beginning of the document.
               Any Slate editors rendered below that editor is apparently free of any issues.
 
               I have NO idea why this happens.
 
             */}
-            {isElectron && <div style={{ display: 'none' }}><PlainTextExample /></div>}
+            <div style={{ display: "none" }}>
+              <PlainTextExample />
+            </div>
             <Page
               title={
                 <div style={{ display: "flex", flexDirection: "row" }}>
