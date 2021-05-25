@@ -20,6 +20,9 @@ export type SlateDocuments = {
 }
 const slateDocumentsReducer = (state: SlateDocuments = {}, action: RootAction): SlateDocuments => {
     switch (action.type) {
+        case getType(actions.replaceDocsAction): {
+            return action.payload.docs
+        }
         case getType(actions.createDocAction): {
             const { payload: { docName, doc, withBackref }} = action;
             const referencesSet = getReferencesFromNodes(doc)

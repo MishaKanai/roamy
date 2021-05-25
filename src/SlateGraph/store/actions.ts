@@ -1,6 +1,7 @@
 import { createCustomAction } from 'typesafe-actions';
-import { CREATE_DOC, UPDATE_DOC, DELETE_DOC } from './constants'
+import { CREATE_DOC, UPDATE_DOC, DELETE_DOC, REPLACE_DOCS } from './constants'
 import { SlateNode } from './domain';
+import { SlateDocuments } from './reducer';
 
 export const updateDocAction = createCustomAction(UPDATE_DOC, type => {
     return (docName: string, newDoc: SlateNode[], prevDoc: SlateNode[]) => {
@@ -36,6 +37,17 @@ export const deleteDocAction = createCustomAction(DELETE_DOC, type => {
             type,
             payload: {
                 docName
+            }
+        }
+    }
+})
+
+export const replaceDocsAction = createCustomAction(REPLACE_DOCS, type => {
+    return (docs: SlateDocuments) => {
+        return {
+            type,
+            payload: {
+                docs
             }
         }
     }

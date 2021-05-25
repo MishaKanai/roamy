@@ -6,6 +6,7 @@ import reportWebVitals from "./reportWebVitals";
 import { Provider } from "react-redux";
 import configureStore from "./store/configureStore";
 import { PersistGate } from "redux-persist/integration/react";
+import AccessControlledPage from "./dropbox/Components/AccessControlledPage";
 
 const { store, persistor } = configureStore();
 
@@ -13,7 +14,9 @@ ReactDOM.render(
   <React.StrictMode>
     <Provider store={store}>
       <PersistGate loading={null} persistor={persistor}>
-        <App />
+        <AccessControlledPage>
+          <App />
+        </AccessControlledPage>
       </PersistGate>
     </Provider>
   </React.StrictMode>,

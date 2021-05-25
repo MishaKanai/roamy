@@ -19,6 +19,9 @@ export type DrawingDocuments = {
 }
 const drawingsReducer = (state: DrawingDocuments = {}, action: RootAction): DrawingDocuments => {
     switch (action.type) {
+        case getType(actions.replaceDrawingsAction): {
+            return action.payload.drawings
+        }
         // UPDATE BACKREFS WHEN DOCUMENTS CHANGE
         case getType(docActions.createDocAction): {
             const { payload: { docName, doc }} = action;
