@@ -1,15 +1,34 @@
+import { files } from "dropbox";
 import { getType } from "typesafe-actions";
 import { RootAction } from "../../store/action";
-import { authSuccessAction, selectFilePathAction } from './actions';
+import { authSuccessAction, selectFilePathAction, syncDebounceStartAction, syncFailureAction, syncStartAction, syncSuccessAction } from './actions';
 
-export type DropboxAuthState = {
-    state: 'not_authorized',
+type Success = {
+    _type: 'success'
+    date: Date
+}
+type SyncingState = {
+    _type: 'initial'
+} | Success | {
+    _type: 'failure',
+    date: Date
+    error: files.UploadError
 } | {
+    _type: 'request_pending',
+} | {
+    _type: 'debounced_pending',
+}
+
+export type AuthorizedAuthState = {
     state: 'authorized',
     accessToken: string
     selectedFilePath: string,
     rev?: string,
+    syncing: SyncingState
 }
+export type DropboxAuthState = {
+    state: 'not_authorized',
+} | AuthorizedAuthState
 const dropboxAuthReducer = (state: DropboxAuthState = { state: 'not_authorized'}, action: RootAction): DropboxAuthState => {
     switch (action.type) {
         case getType(authSuccessAction): {
@@ -17,6 +36,7 @@ const dropboxAuthReducer = (state: DropboxAuthState = { state: 'not_authorized'}
                 state: 'authorized',
                 accessToken: action.payload.accessToken,
                 selectedFilePath: '',
+                syncing: { _type: 'initial' }
             }
         }
         case getType(selectFilePathAction): {
@@ -24,10 +44,49 @@ const dropboxAuthReducer = (state: DropboxAuthState = { state: 'not_authorized'}
                 return {
                     ...state,
                     selectedFilePath: action.payload.path,
-                    rev: action.payload.rev
+                    rev: action.payload.rev,
+                    syncing: { _type: 'success', date: new Date() }
                 }
             }
             // can log error here
+            return state;
+        }
+
+        case getType(syncDebounceStartAction): {
+            if (state.state === 'authorized') {
+                return {
+                    ...state,
+                    syncing: { _type: 'debounced_pending' }
+                }
+            }
+            return state;
+        }
+        case getType(syncStartAction): {
+            if (state.state === 'authorized') {
+                return {
+                    ...state,
+                    syncing: { _type: 'request_pending' }
+                }
+            }
+            return state;
+        }
+        case getType(syncSuccessAction): {
+            if (state.state === 'authorized') {
+                return {
+                    ...state,
+                    rev: action.payload.rev,
+                    syncing: { _type: 'success', date: action.payload.date }
+                }
+            }
+            return state;
+        }
+        case getType(syncFailureAction): {
+            if (state.state === 'authorized') {
+                return {
+                    ...state,
+                    syncing: { _type: 'failure', date: action.payload.date, error: action.error }
+                }
+            }
             return state;
         }
     }

@@ -7,15 +7,23 @@ import { createBrowserHistory } from "history";
 import { PersistPartial } from "redux-persist/es/persistReducer";
 import { RootAction } from "./action";
 
-import { DropboxAuth, Dropbox } from "dropbox";
+import { DropboxAuth, Dropbox, files } from "dropbox";
 import parseQueryString from "../dropbox/util/parseQueryString";
 import {
   authSuccessAction,
   selectFilePathAction,
+  syncDebounceStartAction,
+  syncFailureAction,
+  syncStartAction,
+  syncSuccessAction,
 } from "../dropbox/store/actions";
 import debounce from "lodash/debounce";
 import { DrawingDocuments } from "../Excalidraw/store/reducer";
 import { SlateDocuments } from "../SlateGraph/store/reducer";
+import {
+  AuthorizedAuthState,
+  DropboxAuthState,
+} from "../dropbox/store/reducer";
 // aka app key
 const CLIENT_ID = "9r1uwr2l55chuy7";
 const REDIRECT_URI = window.location.protocol + "//" + window.location.host;
@@ -60,58 +68,89 @@ const syncDropboxToStore = (
   const dbx = new Dropbox({ accessToken });
   let prevDocuments: SlateDocuments;
   let prevDrawings: DrawingDocuments;
-  store.subscribe(
-    debounce(() => {
-      console.log("called");
-      const state = store.getState();
-      if (
-        state.auth.state === "authorized" &&
-        state.auth.selectedFilePath &&
-        state.auth.rev &&
-        // update only on data (otherwise we loop due to state update triggered from below)
-        (state.documents !== prevDocuments || state.drawings !== prevDrawings)
-        // TODO next step: Update only the files necessary to update.
-      ) {
-        console.log("ok uploading");
-        dbx
-          .filesUpload({
-            mode: {
-              ".tag": "update",
-              update: state.auth.rev,
-            },
-            path: state.auth.selectedFilePath, // `/path/to/file-name.json`
-            contents: new File(
-              [
-                JSON.stringify(
-                  {
-                    documents: state.documents,
-                    drawings: state.drawings,
-                  },
-                  null,
-                  2
-                ),
-              ],
-              state.auth.selectedFilePath.slice(1),
-              {
-                type: "application/json",
-              }
-            ),
-            // ...other dropbox args
-          })
-          .then((response) => {
-            prevDocuments = state.documents;
-            prevDrawings = state.drawings;
-            store.dispatch(
-              selectFilePathAction(
-                response.result.path_lower!,
-                response.result.rev
-              )
-            );
-            // on success we can dispatch "upload complete" or something like that
-          });
-      }
-    }, 2000)
+  let setPrevDocuments = (documents: SlateDocuments) => {
+    prevDocuments = documents;
+  };
+  let setPrevDrawings = (drawings: DrawingDocuments) => {
+    prevDrawings = drawings;
+  };
+  let documentsChanged = (documents: SlateDocuments) =>
+    documents !== prevDocuments;
+  let drawingsChanged = (drawings: DrawingDocuments) =>
+    drawings !== prevDrawings;
+  const isAuthorized = (
+    authState: DropboxAuthState
+  ): authState is AuthorizedAuthState => {
+    return authState.state === "authorized";
+  };
+  const debouncedSync = debounce(
+    (
+      rev: string,
+      filePath: string,
+      documents: SlateDocuments,
+      drawings: DrawingDocuments
+    ) => {
+      store.dispatch(syncStartAction());
+      dbx
+        .filesUpload({
+          mode: {
+            ".tag": "update",
+            update: rev,
+          },
+          path: filePath, // `/path/to/file-name.json`
+          contents: new File(
+            [
+              JSON.stringify(
+                {
+                  documents,
+                  drawings,
+                },
+                null,
+                2
+              ),
+            ],
+            filePath.slice(1),
+            {
+              type: "application/json",
+            }
+          ),
+          // ...other dropbox args
+        })
+        .then((response) => {
+          // setPrevDocuments(documents);
+          // setPrevDrawings(drawings);
+          store.dispatch(syncSuccessAction(response.result.rev));
+          // on success we can dispatch "upload complete" or something like that
+        })
+        .catch((error: files.UploadError) => {
+          // if we dont setPrev here, we will loop because the dispatched failure
+          // will trigger the subscriber and it will see the documents don't match the cached ones
+          // setPrevDocuments(documents);
+          // setPrevDrawings(drawings);
+          store.dispatch(syncFailureAction(error));
+        });
+    },
+    1000
   );
+  store.subscribe(() => {
+    const { auth, documents, drawings } = store.getState();
+    if (
+      isAuthorized(auth) &&
+      auth.selectedFilePath &&
+      auth.rev &&
+      (documentsChanged(documents) || drawingsChanged(drawings))
+    ) {
+      setPrevDocuments(documents);
+      setPrevDrawings(drawings);
+      if (
+        auth.syncing._type !== "debounced_pending" &&
+        auth.syncing._type !== "request_pending"
+      ) {
+        store.dispatch(syncDebounceStartAction());
+      }
+      debouncedSync(auth.rev, auth.selectedFilePath, documents, drawings);
+    }
+  });
 };
 
 const configureStore = () => {
