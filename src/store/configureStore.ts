@@ -66,8 +66,8 @@ const syncDropboxToStore = (
 ) => {
   console.log("syncDropboxToStore");
   const dbx = new Dropbox({ accessToken });
-  let prevDocuments: SlateDocuments;
-  let prevDrawings: DrawingDocuments;
+  let prevDocuments: SlateDocuments = store.getState().documents;
+  let prevDrawings: DrawingDocuments = store.getState().drawings;
   let setPrevDocuments = (documents: SlateDocuments) => {
     prevDocuments = documents;
   };
