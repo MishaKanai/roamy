@@ -21,6 +21,7 @@ import Draw from "@excalidraw/excalidraw";
 import { Resizable } from "re-resizable";
 import { AppState, ExcalidrawProps } from "@excalidraw/excalidraw/types/types";
 import { drawingOptionsContext } from "../extension/drawingOptionsContext";
+import equal from "fast-deep-equal";
 
 interface DrawingPageProps {
   drawingName: string;
@@ -31,7 +32,7 @@ interface DrawingPageProps {
 }
 
 const INITIAL_HEIGHT = 400;
-const INITIAL_WIDTH = 400;
+const INITIAL_WIDTH = 600;
 const createInitialEmptyDrawing = (): DrawingData => ({
   size: {
     height: INITIAL_HEIGHT,
@@ -84,8 +85,20 @@ export const useDrawingPage = (
     };
   }, []); // eslint-disable-line
 
+  const someRealChangeToDrawing_Ref = useRef(false);
   const setDrawing = useCallback(
     (newDrawingElements: readonly ExcalidrawElement[], appState: AppState) => {
+      if (
+        // prevent updateDrawing on initial load.
+        !someRealChangeToDrawing_Ref.current &&
+        equal(newDrawingElements, currDocRef.current.elements)
+        // the deep equality check here isn't necessary if we only update according to the change
+        // of document hashes, instead of shallow-equal check to determine if 'drawings' store was updated
+      ) {
+        return;
+      }
+      someRealChangeToDrawing_Ref.current = true;
+
       dispatch(
         updateDrawingAction(drawingName, {
           elements: newDrawingElements as ExcalidrawElement[],
