@@ -1,8 +1,10 @@
-import React from "react";
+import React, { useContext } from "react";
 import { useSelector } from "react-redux";
 import { RootState } from "../../store/createRootReducer";
 import { DropboxAuth } from "dropbox";
-import PickDbxFile from "./PickFile";
+import PickDbxFile, { fileSelectPendingContext, FileSelectPendingProvider } from "./PickFile";
+import SelectedFileAutocomplete from "./SelectedFileAutocomplete";
+import { CircularProgress } from "@material-ui/core";
 
 // aka app key
 const CLIENT_ID = "9r1uwr2l55chuy7";
@@ -34,6 +36,13 @@ function doAuth() {
 interface AccessControlledPageProps {
   children: JSX.Element;
 }
+
+const FileSelectPendingWrapper: React.FC<{}> = props => {
+  const { state } = useContext(fileSelectPendingContext);
+  return <>{state._type === 'ok' ? props.children :
+    state._type === 'pending' ? <CircularProgress /> : <p>Error:{state.message}</p>}</>
+}
+
 const AccessControlledPage: React.FC<AccessControlledPageProps> = (props) => {
   const auth = useSelector((state: RootState) => state.auth);
   const isAuthorized = auth.state === "authorized";
@@ -47,13 +56,16 @@ const AccessControlledPage: React.FC<AccessControlledPageProps> = (props) => {
       </div>
     );
   }
-  if (!fileSelected) {
-    return (
-      <div>
-        <PickDbxFile />
-      </div>
-    );
-  }
-  return <div>{props.children}</div>;
+  const selectedFileAutocomplete = <div style={{ margin: '1em' }}>
+    <SelectedFileAutocomplete />
+  </div>
+  const content = <FileSelectPendingWrapper>
+    <div>{fileSelected ? props.children : <PickDbxFile />}</div>
+  </FileSelectPendingWrapper>
+  return <FileSelectPendingProvider><div>
+    {selectedFileAutocomplete}
+    {content}
+  </div>
+  </FileSelectPendingProvider>;
 };
 export default AccessControlledPage;
