@@ -12,7 +12,7 @@ import { syncSuccessAction } from '../../store/actions';
 import { DropboxResponseError } from 'dropbox';
 import { addHashesToDocs, removeHashesFromDocs } from '../../../SlateGraph/store/util/hashes';
 import useDbx from '../../hooks/useDbx';
-import ResolveConflicts from './ResolveConflicts2';
+import ResolveConflicts from './ResolveConflicts';
 import { mergeTriggeredAction } from '../store/actions';
 
 const useAutomerge = () => {

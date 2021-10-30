@@ -12,7 +12,7 @@ import { SlateNode } from "./store/domain";
 import deepEqual from "fast-deep-equal";
 import HoverBacklinks from "../components/AnchoredPopper";
 import { v4 as uuidv4 } from 'uuid';
-import { mergeContext } from "../dropbox/resolveMerge/components/ResolveConflicts2";
+import mergeContext from "../dropbox/resolveMerge/mergeContext";
 import { RootAction } from "../store/action";
 
 export const useRoamyDispatch = (): (action: RootAction) => void => {

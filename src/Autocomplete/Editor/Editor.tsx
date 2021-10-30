@@ -47,7 +47,7 @@ import { drawingOptionsContext } from "../../extension/drawingOptionsContext";
 import PlainTextExample from "./PT";
 import { withNodeId } from "@udecode/plate-node-id";
 import { v4 as uuidv4 } from 'uuid';
-import { mergeContext } from "../../dropbox/resolveMerge/components/ResolveConflicts2";
+import mergeContext from "../../dropbox/resolveMerge/mergeContext";
 
 const Editable = React.memo(_Editable);
 

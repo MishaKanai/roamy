@@ -1,45 +1,82 @@
-import { Checkbox, FormControlLabel } from '@material-ui/core';
-import React, { useState } from 'react';
+import { Checkbox, FormControlLabel, useTheme } from '@material-ui/core';
+import React, { useCallback, useContext, useState } from 'react';
 import ReadOnlyDoc from '../../../Autocomplete/Editor/ReadOnly';
-import SlateGraphEditor from '../../../SlateGraph/Editor';
-import { useCreateChildDoc } from '../../../SlateGraph/Page';
+import Page from '../../../SlateGraph/Page';
 import { SlateNode } from '../../../SlateGraph/store/domain';
 import EditIcon from '@material-ui/icons/Edit';
 import ToggleButton from '@material-ui/lab/ToggleButton';
+import mergeContext from '../mergeContext';
+import { updateDocAction } from '../../../SlateGraph/store/actions';
 
 interface MergeDocsProps {
     docName: string
     left: SlateNode[];
     right: SlateNode[];
     curr: SlateNode[];
-    onChange: (nodes: SlateNode[]) => void;
 }
-const MergeDocs: React.FC<MergeDocsProps> = ({ left, right, docName, curr, onChange }) => {
+const MergeDocs: React.FC<MergeDocsProps> = ({ left, right, docName, curr }) => {
+    const mergeCtxt = useContext(mergeContext);
+    if (!mergeCtxt.inMergeContext) {
+        throw new Error('MergeDocs outside of ')
+    }
+    const mrgDispatch = mergeCtxt.dispatch;
     const [leftOrRight, setLeftOrRight] = useState<'left' | 'right'>(curr === left ? 'left' : 'right');
+
     const [edit, setEdit] = useState(false);
-    const createChildDoc = useCreateChildDoc(docName);
+    const handleLeftCheck = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+            if (e.target.checked) {
+                mrgDispatch(updateDocAction(docName, left, curr));
+                if (leftOrRight === 'right' && edit) {
+                    setEdit(false)
+                }
+                
+                setLeftOrRight('left');
+            }
+    }, [mrgDispatch, setLeftOrRight, leftOrRight, docName, left, curr, edit])
+    const handleRightCheck = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.checked) {
+            mrgDispatch(updateDocAction(docName, right, curr));
+            if (leftOrRight === 'left' && edit) {
+                setEdit(false)
+            }
+            setLeftOrRight('right');
+        }
+    }, [mrgDispatch, setLeftOrRight, leftOrRight, docName, right, curr, edit])
+
+    // const createChildDoc = useCreateChildDoc(docName);
     const leftSelected = leftOrRight === 'left';
     const rightSelected = leftOrRight === 'right';
+    const theme = useTheme();
+    const selColor = theme.palette.primary.main;
+    const selectedStyles = {
+        outline: 'none',
+        border: '2px solid ' + selColor,
+        borderRadius: '4px',
+        borderColor: selColor,
+        boxShadow: '0 0 10px ' + selColor
+    };
     return <div>
         <div style={{ display: 'flex' }}>
-            <div style={{ border: leftSelected ? '1px solid grey' : undefined, padding: '3px', borderRadius: '4px' }}>
+            <div style={{ 
+                ...(leftSelected ? selectedStyles : undefined),
+                width:'50%'
+                }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                     <FormControlLabel
-                        control={<Checkbox checked={leftSelected} onChange={e => {
-                            if (e.target.checked) {
-                                setLeftOrRight('left')
-                                onChange(left)
-                            }
-                        }} name="left" />}
+                        control={<Checkbox checked={leftSelected} onChange={handleLeftCheck} name="left" />}
                         label="Yours"
                     />
                     {leftSelected ? (
                         <ToggleButton
+                            style={{margin: '2px'}}
                             size="small"
                             value="check"
                             selected={edit}
                             onChange={() => {
                                 setEdit(value => !value)
+                                if (edit) {
+                                    mrgDispatch(updateDocAction(docName, left, curr))
+                                }
                             }}
                         >
                             <EditIcon />
@@ -47,34 +84,32 @@ const MergeDocs: React.FC<MergeDocsProps> = ({ left, right, docName, curr, onCha
                     ) : null}
                 </div>
                 {leftSelected && edit ? (<div>
-                    <SlateGraphEditor
-                        title={docName}
-                        createDoc={createChildDoc}
-                        value={curr}
-                        setValue={onChange}
+                    <Page
+                        currDoc={curr}
                         docName={docName}
                     />
-                </div>) : <div style={{ opacity: leftSelected ? 1 : .8 }}><ReadOnlyDoc docName={docName} document={left} /></div>}
+                </div>) : <div style={{ opacity: leftSelected && edit ? 1 : .7, margin: '0px 0.5em 0.5em' }}><ReadOnlyDoc docName={docName} document={leftSelected ? curr : left} /></div>}
             </div>
-            <div style={{ width: '3px' }}></div>
-            <div style={{ border: rightSelected ? '1px solid grey' : undefined, padding: '3px', borderRadius: '4px' }}>
+            <div style={{
+                ...(rightSelected ? selectedStyles : undefined),
+                width:'50%'
+                }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                     <FormControlLabel
-                        control={<Checkbox checked={rightSelected} onChange={e => {
-                            if (e.target.checked) {
-                                setLeftOrRight('right')
-                                onChange(right)
-                            }
-                        }} name="right" />}
+                        control={<Checkbox checked={rightSelected} onChange={handleRightCheck} name="right" />}
                         label="Theirs"
                     />
                     {rightSelected ? (
                         <ToggleButton
+                            style={{margin: '2px'}}
                             size="small"
                             value="check"
                             selected={edit}
                             onChange={() => {
                                 setEdit(value => !value)
+                                if (edit) {
+                                    mrgDispatch(updateDocAction(docName, right, curr))
+                                }
                             }}
                         >
                             <EditIcon />
@@ -82,14 +117,11 @@ const MergeDocs: React.FC<MergeDocsProps> = ({ left, right, docName, curr, onCha
                     ) : null}
                 </div>
                 {rightSelected && edit ? (<div>
-                    <SlateGraphEditor
-                        title={docName}
-                        createDoc={createChildDoc}
-                        value={curr}
-                        setValue={onChange}
+                    <Page
+                        currDoc={curr}
                         docName={docName}
                     />
-                </div>) : <div style={{ opacity: rightSelected ? 1 : .8 }}><ReadOnlyDoc docName={docName} document={right} /></div>}
+                </div>) : <div style={{ opacity: rightSelected && edit ? 1 : .7, margin: '0px 0.5em 0.5em' }}><ReadOnlyDoc docName={docName} document={rightSelected ? curr : right} /></div>}
             </div>
         </div></div>
 }
