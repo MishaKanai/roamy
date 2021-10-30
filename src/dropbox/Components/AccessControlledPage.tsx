@@ -5,6 +5,8 @@ import { DropboxAuth } from "dropbox";
 import PickDbxFile, { fileSelectPendingContext, FileSelectPendingProvider } from "./PickFile";
 import SelectedFileAutocomplete from "./SelectedFileAutocomplete";
 import { CircularProgress } from "@material-ui/core";
+import SyncStatus from "./SyncStatus";
+import MergeEditorWrap from "../resolveMerge/components/MergePopup";
 
 // aka app key
 const CLIENT_ID = "9r1uwr2l55chuy7";
@@ -49,6 +51,7 @@ const AccessControlledPage: React.FC<AccessControlledPageProps> = (props) => {
   const fileSelected =
     auth.state === "authorized" && Boolean(auth.selectedFilePath);
 
+  const mergeResolvedKey = useSelector((state: RootState) => Boolean(state.merge.state === 'resolved'))
   if (!isAuthorized) {
     return (
       <div>
@@ -56,15 +59,23 @@ const AccessControlledPage: React.FC<AccessControlledPageProps> = (props) => {
       </div>
     );
   }
-  const selectedFileAutocomplete = <div style={{ margin: '1em' }}>
-    <SelectedFileAutocomplete />
+  const selectedFileAutocomplete = <div style={{ margin: '1em', display: 'flex' }}>
+    <div><SelectedFileAutocomplete /><div style={{ width: '50px', marginTop: '6px', marginLeft: '6px' }}><SyncStatus /></div></div>
+    <div><button onClick={() => {
+      localStorage.clear();
+      window.location.href = '/'
+    }}>Logout</button></div>
   </div>
-  const content = <FileSelectPendingWrapper>
+
+  const content = <FileSelectPendingWrapper key={mergeResolvedKey + ''}>
     <div>{fileSelected ? props.children : <PickDbxFile />}</div>
   </FileSelectPendingWrapper>
+  
   return <FileSelectPendingProvider><div>
     {selectedFileAutocomplete}
-    {content}
+    <MergeEditorWrap>
+      {content}
+    </MergeEditorWrap>
   </div>
   </FileSelectPendingProvider>;
 };

@@ -1,14 +1,14 @@
 import React, { useContext } from 'react';
-import { Dropbox, files } from "dropbox";
+import { files } from "dropbox";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useDispatch, useSelector } from "react-redux";
+import { useDispatch } from "react-redux";
 import { replaceDrawingsAction } from "../../Excalidraw/store/actions";
 import { DrawingDocuments } from "../../Excalidraw/store/reducer";
 import { replaceDocsAction } from "../../SlateGraph/store/actions";
 import { SlateDocuments } from "../../SlateGraph/store/reducer";
-import { RootState } from "../../store/createRootReducer";
 import { selectFilePathAction } from "../store/actions";
 import { push as pushAction } from 'connected-react-router';
+import useDbx from '../hooks/useDbx';
 const folderPath = "";
 
 type FileSelectPendingState = {
@@ -38,13 +38,7 @@ export const FileSelectPendingProvider: React.FC<{}> = props => {
 export const useDbxEntries = () => {
   const [entries, setEntries] =
     useState<files.ListFolderResult["entries"] | null>(null);
-  const accessToken = useSelector(
-    (state: RootState) =>
-      state.auth.state === "authorized" && state.auth.accessToken
-  );
-  const dbx = useMemo(() => {
-    return accessToken && new Dropbox({ accessToken });
-  }, [accessToken]);
+  const dbx = useDbx()
   useEffect(() => {
     if (!dbx) {
       return;
@@ -180,6 +174,8 @@ const PickDbxFile: React.FC<{}> = (props) => {
               dispatch(selectFilePathAction(path, response.result.rev));
               dispatch(replaceDocsAction(data.documents));
               dispatch(replaceDrawingsAction(data.drawings));
+            }).catch(e =>{
+              console.error(e)
             });
         }}
       >

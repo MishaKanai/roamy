@@ -1,5 +1,5 @@
 import { createCustomAction } from 'typesafe-actions';
-import { files } from 'dropbox'
+import { DropboxResponseError } from 'dropbox'
 import { AUTH_SUCCESS, SELECT_FILEPATH, SYNC_START, SYNC_SUCCESS, SYNC_FAILURE, SYNC_DEBOUNCE_START } from './constants'
 
 export const authSuccessAction = createCustomAction(AUTH_SUCCESS, type => {
@@ -56,7 +56,7 @@ export const syncSuccessAction = createCustomAction(SYNC_SUCCESS, type => {
 })
 
 export const syncFailureAction = createCustomAction(SYNC_FAILURE, type => {
-    return (error: files.UploadError) => {
+    return (error: DropboxResponseError<unknown>) => {
         return {
             type,
             payload: {

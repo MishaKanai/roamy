@@ -1,4 +1,4 @@
-import { files } from "dropbox";
+import { DropboxResponseError } from "dropbox";
 import { getType } from "typesafe-actions";
 import { RootAction } from "../../store/action";
 import { authSuccessAction, selectFilePathAction, syncDebounceStartAction, syncFailureAction, syncStartAction, syncSuccessAction } from './actions';
@@ -12,7 +12,7 @@ type SyncingState = {
 } | Success | {
     _type: 'failure',
     date: Date
-    error: files.UploadError
+    error: DropboxResponseError<unknown>
 } | {
     _type: 'request_pending',
 } | {
@@ -24,7 +24,7 @@ export type AuthorizedAuthState = {
     accessToken: string
     selectedFilePath: string,
     rev?: string,
-    syncing: SyncingState
+    syncing?: SyncingState
 }
 export type DropboxAuthState = {
     state: 'not_authorized',

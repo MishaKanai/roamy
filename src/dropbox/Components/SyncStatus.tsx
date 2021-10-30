@@ -1,5 +1,5 @@
 import { CircularProgress } from "@material-ui/core";
-import { files } from "dropbox";
+import { DropboxResponseError } from "dropbox";
 import React from "react";
 import { useSelector } from "react-redux";
 import { RootState } from "../../store/createRootReducer";
@@ -24,7 +24,7 @@ const SyncStatus: React.FC<SyncStatusProps> = (props) => {
       <CircularProgress thickness={5} size={25} />
     </span>
   );
-  const renderFailure = (error: files.UploadError, date: Date) => (
+  const renderFailure = (error: DropboxResponseError<unknown>, date: Date) => (
     <span>
       <WarnIcon />
     </span>

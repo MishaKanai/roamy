@@ -3,7 +3,7 @@ import Grow from "@material-ui/core/Grow";
 import Paper from "@material-ui/core/Paper";
 import Popper from "@material-ui/core/Popper";
 import { makeStyles, createStyles, Theme } from "@material-ui/core/styles";
-import { Link } from "react-router-dom";
+import Link from "../components/Link";
 import { RootState } from "../store/createRootReducer";
 import { useSelector } from "react-redux";
 
@@ -66,7 +66,7 @@ export default function HoverBacklinks({
           anchorEl={anchorRef.current}
           role={undefined}
           transition
-          style={{ zIndex: 10000 }}
+          style={{ zIndex: 999999 }}
           disablePortal={true}
         >
           {({ TransitionProps, placement }) => (

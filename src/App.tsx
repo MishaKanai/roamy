@@ -8,7 +8,6 @@ import { docNamesSelector } from "./SlateGraph/globalSelectors";
 import { history } from "./store/configureStore";
 import { DrawingPageRoute } from "./Excalidraw/Page";
 import { drawingNamesSelector } from "./Excalidraw/globalSelectors";
-import SyncStatus from "./dropbox/Components/SyncStatus";
 
 const DocsNav: React.FC<{}> = (props) => {
   const docNames = useSelector(docNamesSelector);
@@ -98,7 +97,6 @@ export const getApp = (history: History<unknown>) => {
                 <Link to="/drawings">Drawings</Link>
               </li>
             </ul>
-            <SyncStatus />
           </div>
           <div>
             <Switch>

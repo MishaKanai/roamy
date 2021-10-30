@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useRef } from "react";
+import React, { useCallback, useContext, useEffect, useMemo, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useParams } from "react-router-dom";
 import { RootState } from "../store/createRootReducer";
@@ -11,28 +11,56 @@ import {
 import { SlateNode } from "./store/domain";
 import deepEqual from "fast-deep-equal";
 import HoverBacklinks from "../components/AnchoredPopper";
+import { v4 as uuidv4 } from 'uuid';
+import { mergeContext } from "../dropbox/resolveMerge/components/ResolveConflicts2";
+import { RootAction } from "../store/action";
+
+export const useRoamyDispatch = (): (action: RootAction) => void => {
+  const mergeCtxt = useContext(mergeContext);
+  const reduxDispatch = useDispatch();
+  return mergeCtxt.inMergeContext ? mergeCtxt.dispatch : reduxDispatch;
+}
 
 interface PageProps {
   docName: string;
+  currDoc?: SlateNode[];
   viewedFromParentDoc?: string;
   title?: React.ReactNode;
 }
 
 const createInitialEmptyDoc = () => [
   {
+    id: uuidv4(),
     children: [
       {
+        id: uuidv4(),
         type: "paragraph",
-        children: [{ text: "" }],
+        children: [{ id: uuidv4(), text: "" }],
       },
     ],
   },
 ];
+export const useCreateChildDoc = (docName: string) => {
+  const dispatch = useRoamyDispatch();
+  const createChildDoc = useCallback(
+    // sets backref to current.
+    (newDocName: string) => {
+      dispatch(
+        createDocAction(newDocName, createInitialEmptyDoc(), {
+          withBackref: docName,
+        })
+      );
+    },
+    [docName, dispatch]
+  );
+
+  return createChildDoc
+}
 const Page: React.FC<PageProps> = React.memo(
-  ({ docName, viewedFromParentDoc, title }) => {
+  ({ docName, viewedFromParentDoc, title, currDoc: currDocProp }) => {
     const initialDoc: SlateNode[] = useMemo(createInitialEmptyDoc, []);
     const currDoc = useSelector(
-      (state: RootState) => state.documents[docName]?.document ?? initialDoc
+      (state: RootState) => currDocProp ?? state.documents[docName]?.document ?? initialDoc
     );
     const hasBackReferences = useSelector((state: RootState) =>
       Boolean(state.documents[docName]?.backReferences?.length)
@@ -43,19 +71,9 @@ const Page: React.FC<PageProps> = React.memo(
     currDocRef.current = currDoc; // always have a ref to the current doc- this lets us check it on cleanup to see if doc is nonempty
     // if not, we can safely delete on unmount.
 
-    const dispatch = useDispatch();
+    const dispatch = useRoamyDispatch();
 
-    const createChildDoc = useCallback(
-      // sets backref to current.
-      (newDocName: string) => {
-        dispatch(
-          createDocAction(newDocName, createInitialEmptyDoc(), {
-            withBackref: docName,
-          })
-        );
-      },
-      [docName, dispatch]
-    );
+    const createChildDoc = useCreateChildDoc(docName)
 
     useEffect(() => {
       if (currDoc === initialDoc) {

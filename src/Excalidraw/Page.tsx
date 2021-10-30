@@ -5,7 +5,7 @@ import React, {
   useMemo,
   useRef,
 } from "react";
-import { useDispatch, useSelector } from "react-redux";
+import { useSelector } from "react-redux";
 import { useParams } from "react-router-dom";
 import { RootState } from "../store/createRootReducer";
 import {
@@ -22,6 +22,7 @@ import { Resizable } from "re-resizable";
 import { AppState, ExcalidrawProps } from "@excalidraw/excalidraw/types/types";
 import { drawingOptionsContext } from "../extension/drawingOptionsContext";
 import equal from "fast-deep-equal";
+import { useRoamyDispatch } from "../SlateGraph/Page";
 
 interface DrawingPageProps {
   drawingName: string;
@@ -61,7 +62,7 @@ export const useDrawingPage = (
   currDocRef.current = currDrawing; // always have a ref to the current doc- this lets us check it on cleanup to see if doc is nonempty
   // if not, we can safely delete on unmount.
 
-  const dispatch = useDispatch();
+  const dispatch = useRoamyDispatch();
 
   useEffect(() => {
     if (currDrawing === initialDrawing) {
@@ -118,7 +119,7 @@ const DrawingPage: React.FC<DrawingPageProps> = React.memo(
     excalidrawProps,
     preventScrollAndResize = false,
   }) => {
-    const dispatch = useDispatch();
+    const dispatch = useRoamyDispatch();
     const [currDrawing, setDrawing] = useDrawingPage(drawingName, {
       viewedFromParentDoc,
     });

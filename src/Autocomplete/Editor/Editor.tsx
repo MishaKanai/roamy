@@ -37,7 +37,7 @@ import LooksOneIcon from "@material-ui/icons/LooksOne";
 import LooksTwoIcon from "@material-ui/icons/LooksTwo";
 import Page from "../../SlateGraph/Page";
 import { DrawingElement, SlateNode } from "../../SlateGraph/store/domain";
-import { Link } from "react-router-dom";
+import Link from "../../components/Link";
 import deepEqual from "fast-deep-equal";
 import HoverBacklinks from "../../components/AnchoredPopper";
 import { RootState } from "../../store/createRootReducer";
@@ -45,6 +45,9 @@ import DrawingPage from "../../Excalidraw/Page";
 import EditIcon from "@material-ui/icons/Edit";
 import { drawingOptionsContext } from "../../extension/drawingOptionsContext";
 import PlainTextExample from "./PT";
+import { withNodeId } from "@udecode/plate-node-id";
+import { v4 as uuidv4 } from 'uuid';
+import { mergeContext } from "../../dropbox/resolveMerge/components/ResolveConflicts2";
 
 const Editable = React.memo(_Editable);
 
@@ -163,8 +166,8 @@ const toggleBlock = (editor: Editor, format: BlockFormat) => {
     match: (n) =>
       LIST_TYPES.includes(
         !Editor.isEditor(n) &&
-          SlateElement.isElement(n) &&
-          ((n as any).type as any)
+        SlateElement.isElement(n) &&
+        ((n as any).type as any)
       ),
     split: true,
   });
@@ -239,6 +242,16 @@ interface SlateTemplateEditorProps<Triggers extends string[]> {
   docName: string;
 }
 
+export const useEditor = () => {
+  return useMemo(
+    () =>
+      withReferences(
+        withPortals(withReact(withNodeId({ reuseId: false, idCreator: uuidv4 })(withHistory(createEditor())) as any))
+      ),
+    []
+  );
+}
+
 const _SlateAutocompleteEditor = <Triggers extends string[]>(
   props: SlateTemplateEditorProps<Triggers>
 ) => {
@@ -261,13 +274,7 @@ const _SlateAutocompleteEditor = <Triggers extends string[]>(
     [docName]
   );
   const renderLeaf = useCallback((props) => <Leaf {...props} />, []);
-  const editor: ReactEditor = useMemo(
-    () =>
-      withReferences(
-        withPortals(withReact(withHistory(createEditor()) as any))
-      ),
-    []
-  );
+  const editor: ReactEditor = useEditor();
   const chars = useMemo(() => {
     const precedingText = getPrecedingText(editor);
     const results = getSearchResults(search, trigger, precedingText);
@@ -469,7 +476,7 @@ const _SlateAutocompleteEditor = <Triggers extends string[]>(
                 top: "-9999px",
                 left: "-9999px",
                 position: "absolute",
-                zIndex: 1,
+                zIndex: 999999,
                 padding: "3px",
                 background: "white",
                 borderRadius: "4px",
@@ -498,7 +505,7 @@ const _SlateAutocompleteEditor = <Triggers extends string[]>(
   );
 };
 
-const Leaf: React.FC<RenderLeafProps> = ({ attributes, children, leaf }) => {
+export const Leaf: React.FC<RenderLeafProps> = ({ attributes, children, leaf }) => {
   if ((leaf as any).bold) {
     children = <strong>{children}</strong>;
   }
@@ -590,7 +597,7 @@ const TogglableEditableDrawing: React.FC<{
   return props.children({ editable, setEditable });
 };
 
-const Element: React.FC<RenderElementProps & { parentDoc: string }> = (
+export const Element: React.FC<RenderElementProps & { parentDoc: string }> = (
   props
 ) => {
   const { attributes, children, element } = props;
@@ -611,20 +618,19 @@ const Element: React.FC<RenderElementProps & { parentDoc: string }> = (
                       excalidrawProps={
                         editable
                           ? {
-                              gridModeEnabled: true,
-                            }
+                            gridModeEnabled: true,
+                          }
                           : {
-                              zenModeEnabled: true,
-                              viewModeEnabled: true,
-                              gridModeEnabled: true,
-                            }
+                            zenModeEnabled: true,
+                            viewModeEnabled: true,
+                            gridModeEnabled: true,
+                          }
                       }
                       title={
                         <div style={{ display: "flex", flexDirection: "row" }}>
                           <Link
-                            to={`/drawings/${
-                              (element as any).drawingReference
-                            }`}
+                            to={`/drawings/${(element as any).drawingReference
+                              }`}
                           >
                             {"{{"}
                             {(element as any).drawingReference}
@@ -684,25 +690,30 @@ const Element: React.FC<RenderElementProps & { parentDoc: string }> = (
             <div style={{ display: "none" }}>
               <PlainTextExample />
             </div>
-            <Page
-              title={
-                <div style={{ display: "flex", flexDirection: "row" }}>
-                  <Link to={`/docs/${(element as any).portalReference}`}>
-                    {"<<"}
-                    {(element as any).portalReference}
-                    {">>"}
-                  </Link>
-                  <HoverBacklinks
-                    selectBacklinks={(state: RootState) =>
-                      state.documents[docName]?.backReferences
-                    }
-                    dontInclude={[props.parentDoc]}
-                  />
-                </div>
-              }
-              viewedFromParentDoc={props.parentDoc}
-              docName={docName}
-            />
+            <mergeContext.Consumer>{({ inMergeContext }) => (inMergeContext ? (
+              // TODO: mergeContext can contain list of docs to merge, and we can make a #link to that doc if present
+              <b>{'<<'}{(element as any).portalReference}{'>>'}</b>
+            ) : (
+              <Page
+                title={
+                  <div style={{ display: "flex", flexDirection: "row" }}>
+                    <Link to={`/docs/${(element as any).portalReference}`}>
+                      {"<<"}
+                      {(element as any).portalReference}
+                      {">>"}
+                    </Link>
+                    <HoverBacklinks
+                      selectBacklinks={(state: RootState) =>
+                        state.documents[docName]?.backReferences
+                      }
+                      dontInclude={[props.parentDoc]}
+                    />
+                  </div>
+                }
+                viewedFromParentDoc={props.parentDoc}
+                docName={docName}
+              />
+            ))}</mergeContext.Consumer>
           </div>
           {children}
         </div>
@@ -716,7 +727,16 @@ const Element: React.FC<RenderElementProps & { parentDoc: string }> = (
     case "list-item":
       return <li {...attributes}>{children}</li>;
     default:
-      return <p {...attributes}>{children}</p>;
+      // return <p {...attributes}>{children}</p>;
+      // using a span to simulate <p> to prevent validateDOMNesting error
+      // when we have children to the <p> that are lists, etc.
+      return <span style={{
+        display: 'block',
+        marginTop: '1em',
+        marginBottom: '1em',
+        marginLeft: 0,
+        marginRight: 0,
+      }} {...attributes}>{children}</span>;
   }
 };
 const SlateAutocompleteEditor = React.memo(_SlateAutocompleteEditor);
