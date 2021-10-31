@@ -143,11 +143,15 @@ const DrawingPage: React.FC<DrawingPageProps> = React.memo(
     );
     return (
       <span style={{ margin: ".5em", marginTop: 0 }}>
-        <span>
-          <div style={{ position: "relative" }}>
-            <div style={{ position: "absolute", top: -34, left: 0 }}>
+        <div style={{ position: "relative" }}>
+          <div style={{ position: "absolute", top: -34, left: 0 }}>
               {title}
-            </div>
+          </div>
+        </div>
+        <div style={viewedFromParentDoc ? {
+          overflowX: 'auto',
+        } : undefined}>
+          <div style={{ position: "relative" }}>
             {preventScrollAndResize && (
               // a perfect overlay of the drawing area
               <div
@@ -194,7 +198,7 @@ const DrawingPage: React.FC<DrawingPageProps> = React.memo(
               {drawing}
             </Resizable>
           )}
-        </span>
+        </div>
       </span>
     );
   }
