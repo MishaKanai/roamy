@@ -94,14 +94,18 @@ const drawingsReducer = (state: DrawingDocuments = {}, action: RootAction): Draw
         }
         case getType(actions.updateDrawingAction): {
             const { newDrawing: _newDrawing, drawingName } = action.payload;
-            const { backReferences, backReferencesHash, drawing: prevDrawing } = state[drawingName]
+            const { backReferences, backReferencesHash, drawing: prevDrawing, drawingHash: prevDrawingHash } = state[drawingName]
             const newDrawing = Object.assign({}, prevDrawing, _newDrawing)
+            const newDrawingHash = hashSum(newDrawing);
+            if (newDrawingHash === prevDrawingHash) {
+                return state;
+            }
             return {
                 ...state,
                 [drawingName]: {
                     name: drawingName,
                     drawing: newDrawing,
-                    drawingHash: hashSum(newDrawing),
+                    drawingHash: newDrawingHash,
                     backReferences,
                     backReferencesHash
                 }
