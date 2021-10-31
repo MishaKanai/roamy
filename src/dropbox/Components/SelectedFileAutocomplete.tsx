@@ -123,7 +123,7 @@ export default function SelectedFileAutocomplete() {
                 clearOnBlur
                 handleHomeEndKeys
                 renderOption={(option) => option.title}
-                style={{ width: 300 }}
+                style={{ minWidth: 'min(256px, calc(100vw - 70px))' }}
                 freeSolo
                 renderInput={(params) => (
                     <TextField {...params} size="small" label="Document" variant="outlined" />
