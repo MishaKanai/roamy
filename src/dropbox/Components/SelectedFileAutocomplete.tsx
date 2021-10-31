@@ -57,6 +57,15 @@ export default function SelectedFileAutocomplete() {
         })
     };
 
+    const promptCreate = (fileName: string) => {
+        // timeout to avoid instant validation of the dialog's form.
+        setTimeout(() => {
+            toggleOpen(true);
+            setDialogValue({
+                path_lower: fileName.endsWith('.json') ? fileName : fileName + '.json'
+            });
+        });
+    }
     return (
         <React.Fragment>
             <Autocomplete
@@ -68,15 +77,13 @@ export default function SelectedFileAutocomplete() {
                 }}
                 onChange={(event, newValue) => {
                     if (typeof newValue === 'string') {
-                        // timeout to avoid instant validation of the dialog's form.
-                        setTimeout(() => {
-                            toggleOpen(true);
-                            setDialogValue({
-                                path_lower: newValue.endsWith('.json') ? newValue : newValue + '.json'
-                            });
-                        });
+                        promptCreate(newValue)
                     } else if (newValue && newValue.inputValue) {
-                        newValue.path_lower && loadExistingFile(newValue.path_lower)
+                        if (newValue.title?.startsWith('Add "')) {
+                            promptCreate(newValue.inputValue)
+                        } else {
+                            newValue.path_lower && loadExistingFile(newValue.path_lower)
+                        }
                         setValue(newValue);
                     } else {
                         setValue(newValue);
