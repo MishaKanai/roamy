@@ -1,13 +1,13 @@
 /* eslint-disable no-use-before-define */
 import React, { useMemo } from 'react';
-import TextField from '@material-ui/core/TextField';
-import Dialog from '@material-ui/core/Dialog';
-import DialogTitle from '@material-ui/core/DialogTitle';
-import DialogContent from '@material-ui/core/DialogContent';
-import DialogContentText from '@material-ui/core/DialogContentText';
-import DialogActions from '@material-ui/core/DialogActions';
-import Button from '@material-ui/core/Button';
-import Autocomplete, { createFilterOptions } from '@material-ui/lab/Autocomplete';
+import TextField from '@mui/material/TextField';
+import Dialog from '@mui/material/Dialog';
+import DialogTitle from '@mui/material/DialogTitle';
+import DialogContent from '@mui/material/DialogContent';
+import DialogContentText from '@mui/material/DialogContentText';
+import DialogActions from '@mui/material/DialogActions';
+import Button from '@mui/material/Button';
+import Autocomplete, { createFilterOptions } from '@mui/material/Autocomplete';
 import { files } from "dropbox";
 import { useDbxEntries } from './PickFile';
 import { useSelector } from 'react-redux';
@@ -122,7 +122,11 @@ export default function SelectedFileAutocomplete() {
                 selectOnFocus
                 clearOnBlur
                 handleHomeEndKeys
-                renderOption={(option) => option.title}
+                // renderOption={(option) => option.title}
+                renderOption={(props, option, { selected }) => (
+                    <li {...props}>
+                        {option.title}
+                    </li>)}
                 style={{ minWidth: 'min(256px, calc(100vw - 70px))' }}
                 freeSolo
                 renderInput={(params) => (

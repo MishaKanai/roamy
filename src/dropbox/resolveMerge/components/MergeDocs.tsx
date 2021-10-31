@@ -1,10 +1,10 @@
-import { Checkbox, FormControlLabel, useTheme } from '@material-ui/core';
+import { Checkbox, FormControlLabel, useTheme } from '@mui/material';
 import React, { useCallback, useContext, useState } from 'react';
 import ReadOnlyDoc from '../../../Autocomplete/Editor/ReadOnly';
 import Page from '../../../SlateGraph/Page';
 import { SlateNode } from '../../../SlateGraph/store/domain';
-import EditIcon from '@material-ui/icons/Edit';
-import ToggleButton from '@material-ui/lab/ToggleButton';
+import EditIcon from '@mui/icons-material/Edit';
+import ToggleButton from '@mui/material/ToggleButton';
 import mergeContext from '../mergeContext';
 import { updateDocAction } from '../../../SlateGraph/store/actions';
 

@@ -1,7 +1,7 @@
-import { Checkbox, FormControlLabel, useTheme } from '@material-ui/core';
+import { Checkbox, FormControlLabel, useTheme } from '@mui/material';
 import React, { useMemo, useCallback, useContext, useState } from 'react';
-import EditIcon from '@material-ui/icons/Edit';
-import ToggleButton from '@material-ui/lab/ToggleButton';
+import EditIcon from '@mui/icons-material/Edit';
+import ToggleButton from '@mui/material/ToggleButton';
 import mergeContext from '../mergeContext';
 import { DrawingData } from '../../../Excalidraw/store/domain';
 import { updateDrawingAction } from '../../../Excalidraw/store/actions';

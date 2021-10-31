@@ -2,11 +2,20 @@ import React from "react";
 import ReactDOM from "react-dom";
 import "./index.css";
 import App from "./App";
+import '@fontsource/roboto/300.css';
+import '@fontsource/roboto/400.css';
+import '@fontsource/roboto/500.css';
+import '@fontsource/roboto/700.css';
+import { createTheme, ThemeProvider } from '@mui/material/styles';
 import reportWebVitals from "./reportWebVitals";
 import { Provider } from "react-redux";
 import configureStore from "./store/configureStore";
 import { PersistGate } from "redux-persist/integration/react";
 import AccessControlledPage from "./dropbox/Components/AccessControlledPage";
+import CssBaseline from '@mui/material/CssBaseline';
+
+const theme = createTheme();
+
 
 const { store, persistor } = configureStore();
 
@@ -14,9 +23,12 @@ ReactDOM.render(
   <React.StrictMode>
     <Provider store={store}>
       <PersistGate loading={null} persistor={persistor}>
-        <AccessControlledPage>
-          <App />
-        </AccessControlledPage>
+        <ThemeProvider theme={theme}>
+          <CssBaseline />
+          <AccessControlledPage>
+            <App />
+          </AccessControlledPage>
+        </ThemeProvider>
       </PersistGate>
     </Provider>
   </React.StrictMode>,

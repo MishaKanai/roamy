@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useReducer, useRef, useState } from 'react';
 import LoadingOverlay from 'react-loading-overlay-ts';
-import { Dialog } from '@material-ui/core';
+import { Dialog } from '@mui/material';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../../../store/createRootReducer';
 import useFetchCurrentDoc from '../../hooks/useFetchCurrentDoc';

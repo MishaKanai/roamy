@@ -1,7 +1,7 @@
 import React from "react";
-import { Modal, Dialog } from "@material-ui/core";
-import { ModalProps } from "@material-ui/core/Modal";
-import { DialogProps } from "@material-ui/core/Dialog";
+import { Modal, Dialog } from "@mui/material";
+import { ModalProps } from "@mui/material/Modal";
+import { DialogProps } from "@mui/material/Dialog";
 
 export type PopupProps<T = null> = (
   | {

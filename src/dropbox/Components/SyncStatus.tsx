@@ -1,9 +1,9 @@
-import { CircularProgress } from "@material-ui/core";
+import { CircularProgress } from "@mui/material";
 import { DropboxResponseError } from "dropbox";
 import React from "react";
 import { useSelector } from "react-redux";
 import { RootState } from "../../store/createRootReducer";
-import WarnIcon from "@material-ui/icons/Warning";
+import WarnIcon from "@mui/icons-material/Warning";
 import "./TypingIndicator.css";
 
 export const TypingIndicator: React.FC<{}> = () => (

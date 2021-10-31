@@ -4,7 +4,7 @@ import { RootState } from "../../store/createRootReducer";
 import { DropboxAuth } from "dropbox";
 import PickDbxFile, { fileSelectPendingContext, FileSelectPendingProvider } from "./PickFile";
 import SelectedFileAutocomplete from "./SelectedFileAutocomplete";
-import { CircularProgress } from "@material-ui/core";
+import { CircularProgress } from "@mui/material";
 import SyncStatus from "./SyncStatus";
 import MergeEditorWrap from "../resolveMerge/components/MergePopup";
 
