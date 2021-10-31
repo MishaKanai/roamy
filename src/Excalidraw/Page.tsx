@@ -30,6 +30,7 @@ interface DrawingPageProps {
   title?: React.ReactNode;
   excalidrawProps?: Partial<ExcalidrawProps>;
   preventScrollAndResize?: boolean;
+  overrideDrawing?: DrawingData;
 }
 
 const INITIAL_HEIGHT = 400;
@@ -118,12 +119,13 @@ const DrawingPage: React.FC<DrawingPageProps> = React.memo(
     title,
     excalidrawProps,
     preventScrollAndResize = false,
+    overrideDrawing
   }) => {
     const dispatch = useRoamyDispatch();
-    const [currDrawing, setDrawing] = useDrawingPage(drawingName, {
+    const [_currDrawing, setDrawing] = useDrawingPage(drawingName, {
       viewedFromParentDoc,
     });
-
+    const currDrawing = overrideDrawing ?? _currDrawing;
     const initialData = useMemo(() => {
       return {
         elements: currDrawing.elements,
@@ -131,7 +133,7 @@ const DrawingPage: React.FC<DrawingPageProps> = React.memo(
           viewBackgroundColor: "transparent",
         },
       };
-    }, [currDrawing]);
+    }, /* [stableStringify(currDrawing.elements)] */ [currDrawing.elements]);
     const drawing = (
       <Draw
         {...excalidrawProps}

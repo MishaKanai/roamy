@@ -6,19 +6,20 @@ import { RootState } from '../../../store/createRootReducer';
 import useFetchCurrentDoc from '../../hooks/useFetchCurrentDoc';
 import { SlateDocuments } from '../../../SlateGraph/store/reducer';
 import { DrawingDocuments } from '../../../Excalidraw/store/reducer';
-import trimerge from '../trimerge/trimerge';
 import { replaceDocsAction } from '../../../SlateGraph/store/actions';
 import { syncSuccessAction } from '../../store/actions';
 import { DropboxResponseError } from 'dropbox';
-import { addHashesToDocs, removeHashesFromDocs } from '../../../SlateGraph/store/util/hashes';
 import useDbx from '../../hooks/useDbx';
 import ResolveConflicts from './ResolveConflicts';
 import { mergeTriggeredAction } from '../store/actions';
+import attemptMerge from '../util/attemptMerge';
+import { replaceDrawingsAction } from '../../../Excalidraw/store/actions';
 
 const useAutomerge = () => {
     const _lastRev = useSelector((state: RootState) => state.auth.state === 'authorized' && state.auth.rev)
     const lastRevRef = useRef(_lastRev);
     const documents = useSelector((state: RootState) => state.documents);
+    const drawings = useSelector((state: RootState) => state.drawings);
     const { state, fetchCurrentDoc } = useFetchCurrentDoc()
     const { state: lastRevState, fetchCurrentDoc: fetchLastRevDoc } = useFetchCurrentDoc();
     useEffect(() => {
@@ -44,12 +45,13 @@ const useAutomerge = () => {
         initial: SlateDocuments;
         left: SlateDocuments;
         right: SlateDocuments;
-        // initial: ReturnType<typeof removeHashesFromDocs>;
-        // left: ReturnType<typeof removeHashesFromDocs>;
-        // right: ReturnType<typeof removeHashesFromDocs>;
+        initialDrawings: DrawingDocuments;
+        leftDrawings: DrawingDocuments;
+        rightDrawings: DrawingDocuments;
     })) | {
         type: 'succeeded',
         mergedDocs: SlateDocuments;
+        mergedDrawings: DrawingDocuments;
         remoteRev: string;
     }
     const [autoMergeState, setAutomergeState] = useState<AutomergeState>({ type: 'waiting_for_data' })
@@ -59,25 +61,50 @@ const useAutomerge = () => {
         if (state.type === 'success' && lastRevState.type === 'success' && (
             lastRevStateTypeRef.current !== 'success' || lastStateTypeRef.current !== 'success'
         )) {
-            // lets attempt the trimerge.
-            let initial = removeHashesFromDocs(lastRevState.data.documents);
-            let left = removeHashesFromDocs(documents);
-            let right = removeHashesFromDocs(state.data.documents);
-            try {
-                let mergedDocs = trimerge(initial, left, right);
-                mergedDocs = addHashesToDocs(mergedDocs);
-                setAutomergeState({ type: 'succeeded', mergedDocs, remoteRev: state.rev })
-            } catch (e) {
+            const initialDrawings = lastRevState.data.drawings;
+            const leftDrawings = drawings;
+            const rightDrawings = state.data.drawings;
+            // null means cannot automerge
+            const left = documents;
+            const right = state.data.documents;
+            const initial = lastRevState.data.documents;
+           
+            const [mergedState, docsNeedingMerge, drawingsNeedingMerge] = attemptMerge({
+                documents: {
+                    left,
+                    right,
+                    initial,
+                },
+                drawings: {
+                    left: leftDrawings,
+                    right: rightDrawings,
+                    initial: initialDrawings,
+                }
+            })
+            if (docsNeedingMerge.length > 0 || drawingsNeedingMerge.length > 0) {
                 setAutomergeState({
-                    type: 'failed', reason: 'merge_conflict',
+                    type: 'failed',
+                    reason: 'merge_conflict',
                     remoteRev: state.rev,
-                    initial: lastRevState.data.documents, left: documents, right: state.data.documents
+                    initial,
+                    left,
+                    right,
+                    leftDrawings,
+                    rightDrawings,
+                    initialDrawings
+                })
+            } else {
+                setAutomergeState({
+                    type: 'succeeded',
+                    mergedDocs: mergedState.documents,
+                    mergedDrawings: mergedState.drawings,
+                    remoteRev: state.rev,
                 })
             }
         }
         lastStateTypeRef.current = state.type;
         lastRevStateTypeRef.current = lastRevState.type;
-    }, [state, lastRevState, setAutomergeState, documents])
+    }, [state, lastRevState, setAutomergeState, documents, drawings])
 
     const someFetchError = Boolean(state.type === 'error' || lastRevState.type === 'error');
     useEffect(() => {
@@ -95,6 +122,7 @@ export const useSubmitMergedDoc = () => {
     const submitMergedDoc = useCallback((documents: SlateDocuments, drawings: DrawingDocuments, remoteRev: string) => {
         if (!dbx || !filePath) { return; }
         dispatch(replaceDocsAction(documents));
+        dispatch(replaceDrawingsAction(drawings));
         dbx.filesUpload({
             mode: {
                 ".tag": "update",
@@ -141,32 +169,16 @@ export const MergeEditorWrap: React.FC<{}> = ({ children }) => {
 
 export const MergeWrapper: React.FC<{ children: React.ReactNode; retry: () => void; }> = ({ children, retry }) => {
     const autoMergeState = useAutomerge()
-    const drawings = useSelector((state: RootState) => state.drawings);
     const submitMerge = useSubmitMergedDoc();
-    const lastAutoMergeStateRef = useRef(autoMergeState)
-    const lastSubmitMergeRef = useRef(submitMerge)
-    const lastDrawingsRef = useRef(drawings);
+    const lastAutoMergeStateType = useRef(autoMergeState.type);
     useEffect(() => {
-        if (autoMergeState !== lastAutoMergeStateRef.current) {
-            console.log('autoMergeState changed:', lastAutoMergeStateRef.current, autoMergeState)
+        if (lastAutoMergeStateType.current !== 'succeeded' && autoMergeState.type === 'succeeded') {
+            submitMerge(autoMergeState.mergedDocs, autoMergeState.mergedDrawings, autoMergeState.remoteRev);
         }
-        if (lastSubmitMergeRef.current !== submitMerge) {
-            console.log('submitMerge changed.', lastSubmitMergeRef.current, submitMerge)
-        }
-        if (drawings !== lastDrawingsRef.current) {
-            console.log('drawings changed.', lastDrawingsRef.current, drawings)
-        }
-        lastAutoMergeStateRef.current = autoMergeState
-        lastSubmitMergeRef.current = submitMerge
-        lastDrawingsRef.current = drawings;
-        if (autoMergeState.type === 'succeeded') {
-            submitMerge(autoMergeState.mergedDocs, drawings, autoMergeState.remoteRev);
-        }
-    }, [autoMergeState, submitMerge, drawings])
+        lastAutoMergeStateType.current = autoMergeState.type;
+    }, [autoMergeState, submitMerge])
 
     const displayOverlay = autoMergeState.type === 'waiting_for_data';
-
-
     return <>
         {autoMergeState.type === 'failed' ? (
             <Dialog
@@ -174,7 +186,15 @@ export const MergeWrapper: React.FC<{ children: React.ReactNode; retry: () => vo
                 open={true}
             >
                 {autoMergeState.reason === 'merge_conflict' ? (
-                    <ResolveConflicts remoteRev={autoMergeState.remoteRev} left={autoMergeState.left} right={autoMergeState.right} initial={autoMergeState.initial} />
+                    <ResolveConflicts
+                        remoteRev={autoMergeState.remoteRev}
+                        left={autoMergeState.left}
+                        right={autoMergeState.right}
+                        initial={autoMergeState.initial}
+                        leftDrawings={autoMergeState.leftDrawings}
+                        rightDrawings={autoMergeState.rightDrawings}
+                        initialDrawings={autoMergeState.initialDrawings}
+                    />
                 ) : (
                     <div>Retry?<button onClick={retry}>Retry</button></div>
                 )}

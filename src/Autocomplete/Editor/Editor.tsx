@@ -609,59 +609,63 @@ export const Element: React.FC<RenderElementProps & { parentDoc: string }> = (
       return (
         <div {...attributes}>
           <div contentEditable={false}>
-            <drawingOptionsContext.Consumer>
-              {({ renderDrawingOptions }) => (
-                <TogglableEditableDrawing>
-                  {({ editable, setEditable }) => (
-                    <DrawingPage
-                      preventScrollAndResize={!editable}
-                      excalidrawProps={
-                        editable
-                          ? {
-                            gridModeEnabled: true,
-                          }
-                          : {
-                            zenModeEnabled: true,
-                            viewModeEnabled: true,
-                            gridModeEnabled: true,
-                          }
-                      }
-                      title={
-                        <div style={{ display: "flex", flexDirection: "row" }}>
-                          <Link
-                            to={`/drawings/${(element as any).drawingReference
-                              }`}
-                          >
-                            {"{{"}
-                            {(element as any).drawingReference}
-                            {"}}"}
-                          </Link>
-                          <HoverBacklinks
-                            selectBacklinks={(state: RootState) =>
-                              state.drawings[drawingName]?.backReferences
+            <mergeContext.Consumer>{({ inMergeContext }) => inMergeContext ? (
+              <b>{'{{'}{drawingName}{'}}'}</b>
+            ) : (
+              <drawingOptionsContext.Consumer>
+                {({ renderDrawingOptions }) => (
+                  <TogglableEditableDrawing>
+                    {({ editable, setEditable }) => (
+                      <DrawingPage
+                        preventScrollAndResize={!editable}
+                        excalidrawProps={
+                          editable
+                            ? {
+                              gridModeEnabled: true,
                             }
-                            dontInclude={[props.parentDoc]}
-                          />
-                          <IconButton
-                            size="small"
-                            onClick={() => setEditable(!editable)}
-                          >
-                            <EditIcon
-                              fontSize="small"
-                              color={editable ? "primary" : undefined}
+                            : {
+                              zenModeEnabled: true,
+                              viewModeEnabled: true,
+                              gridModeEnabled: true,
+                            }
+                        }
+                        title={
+                          <div style={{ display: "flex", flexDirection: "row" }}>
+                            <Link
+                              to={`/drawings/${(element as any).drawingReference
+                                }`}
+                            >
+                              {"{{"}
+                              {(element as any).drawingReference}
+                              {"}}"}
+                            </Link>
+                            <HoverBacklinks
+                              selectBacklinks={(state: RootState) =>
+                                state.drawings[drawingName]?.backReferences
+                              }
+                              dontInclude={[props.parentDoc]}
                             />
-                          </IconButton>
-                          {editable &&
-                            renderDrawingOptions?.({ drawingId: drawingName })}
-                        </div>
-                      }
-                      viewedFromParentDoc={props.parentDoc}
-                      drawingName={drawingName}
-                    />
-                  )}
-                </TogglableEditableDrawing>
-              )}
-            </drawingOptionsContext.Consumer>
+                            <IconButton
+                              size="small"
+                              onClick={() => setEditable(!editable)}
+                            >
+                              <EditIcon
+                                fontSize="small"
+                                color={editable ? "primary" : undefined}
+                              />
+                            </IconButton>
+                            {editable &&
+                              renderDrawingOptions?.({ drawingId: drawingName })}
+                          </div>
+                        }
+                        viewedFromParentDoc={props.parentDoc}
+                        drawingName={drawingName}
+                      />
+                    )}
+                  </TogglableEditableDrawing>
+                )}
+              </drawingOptionsContext.Consumer>
+            )}</mergeContext.Consumer>
             {children}
           </div>
         </div>
