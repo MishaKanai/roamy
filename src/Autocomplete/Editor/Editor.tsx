@@ -4,6 +4,7 @@ import React, {
   useRef,
   useEffect,
   useState,
+  useContext,
 } from "react";
 import {
   Node,
@@ -22,8 +23,6 @@ import {
   useSlate,
   RenderLeafProps,
   RenderElementProps,
-  useSelected,
-  useFocused,
 } from "slate-react";
 import ReactDOM from "react-dom";
 import { handleChange } from "./utils/autocompleteUtils";
@@ -33,8 +32,6 @@ import FormatBoldIcon from "@mui/icons-material/FormatBold";
 import FormatUnderlinedIcon from "@mui/icons-material/FormatUnderlined";
 import FormatItalicIcon from "@mui/icons-material/FormatItalic";
 import FormatListBulletedIcon from "@mui/icons-material/FormatListBulleted";
-import LooksOneIcon from "@mui/icons-material/LooksOne";
-import LooksTwoIcon from "@mui/icons-material/LooksTwo";
 import Page from "../../SlateGraph/Page";
 import { DrawingElement, SlateNode } from "../../SlateGraph/store/domain";
 import Link from "../../components/Link";
@@ -48,6 +45,8 @@ import PlainTextExample from "./PT";
 import { withNodeId } from "@udecode/plate-node-id";
 import { v4 as uuidv4 } from 'uuid';
 import mergeContext from "../../dropbox/resolveMerge/mergeContext";
+import nestedEditorContext from "../nestedEditorContext";
+import useBackgroundColor from "./hooks/useBackgroundColor";
 
 const Editable = React.memo(_Editable);
 
@@ -252,7 +251,7 @@ export const useEditor = () => {
   );
 }
 
-const _SlateAutocompleteEditor = <Triggers extends string[]>(
+const SlateAutocompleteEditorComponent = <Triggers extends string[]>(
   props: SlateTemplateEditorProps<Triggers>
 ) => {
   const {
@@ -370,7 +369,6 @@ const _SlateAutocompleteEditor = <Triggers extends string[]>(
       }
     }
   }, [chars.length, editor, index, search, target]);
-  const theme = useTheme();
   const [isFocused, setIsFocused] = useState(false);
   const _handleChange = useCallback(
     (_value: SlateNode[]) => {
@@ -401,6 +399,7 @@ const _SlateAutocompleteEditor = <Triggers extends string[]>(
     [setIsFocused]
   );
   const handleBlur = useCallback((e) => setIsFocused(false), [setIsFocused]);
+  const backgroundColor = useBackgroundColor();
   return (
     <div style={{ display: "initial" }}>
       <Slate editor={editor} value={value} onChange={_handleChange}>
@@ -411,6 +410,7 @@ const _SlateAutocompleteEditor = <Triggers extends string[]>(
             fontSize: "large",
             padding: "2px",
             paddingTop: "5px",
+            backgroundColor,
           }}
         >
           <b>{title}</b>
@@ -429,7 +429,7 @@ const _SlateAutocompleteEditor = <Triggers extends string[]>(
               top: 0,
               right: 0,
               display: "flex",
-              backgroundColor: theme.palette.background.paper,
+              backgroundColor,
             }}
           >
             <div style={{ fontSize: "large", padding: "2px" }}>
@@ -446,8 +446,8 @@ const _SlateAutocompleteEditor = <Triggers extends string[]>(
               <MarkButton format="bold" icon={<FormatBoldIcon />} />
               <MarkButton format="italic" icon={<FormatItalicIcon />} />
               <MarkButton format="underline" icon={<FormatUnderlinedIcon />} />
-              <BlockButton format="heading-one" icon={<LooksOneIcon />} />
-              <BlockButton format="heading-two" icon={<LooksTwoIcon />} />
+              {/* <BlockButton format="heading-one" icon={<LooksOneIcon />} />
+              <BlockButton format="heading-two" icon={<LooksTwoIcon />} /> */}
               <BlockButton
                 format="bulleted-list"
                 icon={<FormatListBulletedIcon />}
@@ -562,21 +562,17 @@ const Reference: React.FC<RenderElementProps> = ({
   children,
   element,
 }) => {
-  const selected = useSelected();
-  const focused = useFocused();
+  // const selected = useSelected();
+  // const focused = useFocused();
   return (
     <span
       {...attributes}
       contentEditable={false}
       style={{
-        padding: "3px 3px 2px",
-        margin: "0 1px",
         verticalAlign: "baseline",
         display: "inline-block",
-        borderRadius: "4px",
-        backgroundColor: "#eee",
         fontSize: "0.9em",
-        boxShadow: selected && focused ? "0 0 0 2px #B4D5FF" : "none",
+        // boxShadow: selected && focused ? "0 0 0 2px #B4D5FF" : "none",
       }}
     >
       <Link to={`/docs/${(element as any).docReference}`}>
@@ -601,6 +597,8 @@ export const Element: React.FC<RenderElementProps & { parentDoc: string }> = (
   props
 ) => {
   const { attributes, children, element } = props;
+  const colorOfPortal = useBackgroundColor(1);
+  const theme = useTheme();
   switch ((element as any).type) {
     case "reference":
       return <Reference {...props} />;
@@ -677,9 +675,10 @@ export const Element: React.FC<RenderElementProps & { parentDoc: string }> = (
           <div
             contentEditable={false}
             style={{
-              border: "1px solid silver",
+              border: "1px solid " + theme.palette.divider,
               margin: ".25em",
               padding: ".25em",
+              backgroundColor: colorOfPortal
               // overflow: "hidden",
             }}
           >
@@ -736,12 +735,19 @@ export const Element: React.FC<RenderElementProps & { parentDoc: string }> = (
       // when we have children to the <p> that are lists, etc.
       return <span style={{
         display: 'block',
-        marginTop: '1em',
-        marginBottom: '1em',
         marginLeft: 0,
         marginRight: 0,
       }} {...attributes}>{children}</span>;
   }
 };
-const SlateAutocompleteEditor = React.memo(_SlateAutocompleteEditor);
+const SlateAutocompleteEditorWithContext: <Triggers extends string[]>(props: SlateTemplateEditorProps<Triggers>) => JSX.Element = props => {
+  const currentNestingContext = useContext(nestedEditorContext);
+  const newNestingContext = useMemo(() => {
+    return [props.docName, ...currentNestingContext]
+  }, [currentNestingContext, props.docName])
+  return <nestedEditorContext.Provider value={newNestingContext}>
+    <SlateAutocompleteEditorComponent {...props} />
+  </nestedEditorContext.Provider>
+}
+const SlateAutocompleteEditor = React.memo(SlateAutocompleteEditorWithContext);
 export default SlateAutocompleteEditor;

@@ -11,10 +11,13 @@ import reportWebVitals from "./reportWebVitals";
 import { Provider } from "react-redux";
 import configureStore from "./store/configureStore";
 import { PersistGate } from "redux-persist/integration/react";
-import AccessControlledPage from "./dropbox/Components/AccessControlledPage";
 import CssBaseline from '@mui/material/CssBaseline';
 
-const theme = createTheme();
+const theme = createTheme({
+  palette: {
+    // mode: 'dark'
+  }
+});
 
 
 const { store, persistor } = configureStore();
@@ -25,9 +28,7 @@ ReactDOM.render(
       <PersistGate loading={null} persistor={persistor}>
         <ThemeProvider theme={theme}>
           <CssBaseline />
-          <AccessControlledPage>
             <App />
-          </AccessControlledPage>
         </ThemeProvider>
       </PersistGate>
     </Provider>

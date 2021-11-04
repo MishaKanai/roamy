@@ -20,14 +20,12 @@ const SyncStatus: React.FC<SyncStatusProps> = (props) => {
   const renderLogin = () => null;
   const renderDebouncePending = () => <TypingIndicator />;
   const renderRequestPending = () => (
-    <span style={{ margin: 4 }}>
-      <CircularProgress thickness={5} size={25} />
+    <span style={{ display: 'block', margin: 'auto', marginTop: '5px' }}>
+      <CircularProgress thickness={6} size={22} />
     </span>
   );
   const renderFailure = (error: DropboxResponseError<unknown>, date: Date) => (
-    <span>
-      <WarnIcon />
-    </span>
+      <WarnIcon color="error" style={{ display: 'block', margin: 'auto'}} />
   );
   const renderSuccess = (date: Date) => null;
   return auth.state === "not_authorized"

@@ -129,7 +129,13 @@ export const PageRoute = React.memo(() => {
   );
   const title = (
     <div style={{ display: "flex", flexDirection: "row" }}>
-      <b style={{ fontSize: "x-large", marginBottom: 0 }}>{docName}</b>&nbsp;
+      <b style={{
+        marginTop: '-2px',
+        fontSize: "x-large",
+        marginBottom: 0,
+        textTransform: 'capitalize'
+      }}>{docName}</b>&nbsp;
+      {/* &nbsp;&nbsp;<SyncStatus />&nbsp; */}
       <span style={{ position: "relative" }}>
         <span style={{ position: "absolute", bottom: 0, whiteSpace: "nowrap" }}>
           <HoverBacklinks key={docName} selectBacklinks={selectBacklinks} />
@@ -138,7 +144,7 @@ export const PageRoute = React.memo(() => {
     </div>
   );
   return (
-    <div style={{ margin: ".5em" }}>
+    <div>
       <Page title={title} key={docName} docName={docName} />
     </div>
   );

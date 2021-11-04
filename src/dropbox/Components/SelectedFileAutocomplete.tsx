@@ -127,7 +127,8 @@ export default function SelectedFileAutocomplete() {
                     <li {...props}>
                         {option.title}
                     </li>)}
-                style={{ minWidth: 'min(256px, calc(100vw - 70px))' }}
+                // style={{ minWidth: 'min(256px, calc(100vw - 70px))' }}
+                fullWidth
                 freeSolo
                 renderInput={(params) => (
                     <TextField {...params} size="small" label="Document" variant="outlined" />

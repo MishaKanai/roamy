@@ -4,28 +4,11 @@ import { History } from "history";
 import { ConnectedRouter } from "connected-react-router";
 import { Switch, Route, Link, useRouteMatch } from "react-router-dom";
 import { PageRoute } from "./SlateGraph/Page";
-import { docNamesSelector } from "./SlateGraph/globalSelectors";
 import { history } from "./store/configureStore";
 import { DrawingPageRoute } from "./Excalidraw/Page";
 import { drawingNamesSelector } from "./Excalidraw/globalSelectors";
+import AccessControlledPage from "./dropbox/Components/AccessControlledPage";
 
-const DocsNav: React.FC<{}> = (props) => {
-  const docNames = useSelector(docNamesSelector);
-  return (
-    <ul>
-      {docNames.map((n, i) => {
-        return (
-          <li key={n}>
-            <Link to={`/docs/${n}`}>{n}</Link>
-          </li>
-        );
-      })}
-      <li>
-        <Link to={`/docs/foo`}>foolink :)</Link>
-      </li>
-    </ul>
-  );
-};
 const DrawingsNav: React.FC<{}> = (props) => {
   const drawingNames = useSelector(drawingNamesSelector);
   return (
@@ -47,14 +30,12 @@ const Docs = React.memo(() => {
   const match = useRouteMatch();
   return (
     <div>
-      <h2>Topics</h2>
-      <DocsNav />
       <Switch>
         <Route path={`${match.path}/:docName`}>
           <PageRoute />
         </Route>
         <Route path={match.path}>
-          <h3>Please select a topic.</h3>
+          <h3>Please select a topic. [grid]</h3>
         </Route>
       </Switch>
     </div>
@@ -82,27 +63,9 @@ export const getApp = (history: History<unknown>) => {
     return (
       <div>
         <ConnectedRouter history={history}>
-          <div>
-            <ul>
-              <li>
-                <Link to="/">Home</Link>
-              </li>
-              <li>
-                <Link to="/about">About</Link>
-              </li>
-              <li>
-                <Link to="/docs">Docs</Link>
-              </li>
-              <li>
-                <Link to="/drawings">Drawings</Link>
-              </li>
-            </ul>
-          </div>
+          <AccessControlledPage>
           <div>
             <Switch>
-              <Route path="/about">
-                <div>About</div>
-              </Route>
               <Route path="/docs">
                 <Docs />
               </Route>
@@ -114,6 +77,7 @@ export const getApp = (history: History<unknown>) => {
               </Route>
             </Switch>
           </div>
+          </AccessControlledPage>
         </ConnectedRouter>
       </div>
     );

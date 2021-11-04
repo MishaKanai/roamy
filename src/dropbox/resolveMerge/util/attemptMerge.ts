@@ -84,6 +84,7 @@ const attemptMerge = (args: {
                 }
             } catch (e) {
                 // needs manual merge
+                console.error(e)
                 addNeedsMerge(docKey)
             }
         }
