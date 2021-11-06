@@ -8,7 +8,7 @@
     "@emotion/react": "^11.5.0",
     "@emotion/styled": "^11.3.0",
     "@excalidraw/excalidraw": "^0.7.0",
-    "@fontsource/roboto": "^4.5.1",
+    "@fontsource/courier-prime": "^4.5.0",
     "@mui/icons-material": "^5.0.5",
     "@mui/lab": "^5.0.0-alpha.53",
     "@mui/material": "^5.0.6",

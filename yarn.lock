@@ -1659,10 +1659,10 @@
   resolved "https://registry.yarnpkg.com/@excalidraw/excalidraw/-/excalidraw-0.7.0.tgz#672395c6381cd52de0dc19c80a2e450639928ef2"
   integrity sha512-D1yMXhOjWjCJIXT0puZD2QaGQ28QN2DNrVUQTsOouhPSELwhFoM7Exg/ulSwkLBI2l2KN7m39+2tj6QVijv4Sg==
 
-"@fontsource/roboto@^4.5.1":
-  version "4.5.1"
-  resolved "https://registry.yarnpkg.com/@fontsource/roboto/-/roboto-4.5.1.tgz#63f7b783f755d8f6727eb60198627e7e1be3ac20"
-  integrity sha512-3mhfL+eNPG/woMNqwD/OHaW5qMpeGEBsDwzmhFmjB1yUV+M+M9P0NhP/AyHvnGz3DrqkvZ7CPzNMa+UkVLeELg==
+"@fontsource/courier-prime@^4.5.0":
+  version "4.5.0"
+  resolved "https://registry.yarnpkg.com/@fontsource/courier-prime/-/courier-prime-4.5.0.tgz#049de98b6d4f7b32ffeaa1cab0387a0fc03b1fc3"
+  integrity sha512-pSm4w52hWo460nZCuluVW4uZl1f0V9IE426hKoSt1yTWFbbQ1qRJw1w0Z53hQo9BdBoH7YJLOaKOqbkgxyyI5g==
 
 "@hapi/address@2.x.x":
   version "2.1.4"

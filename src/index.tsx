@@ -2,10 +2,7 @@ import React from "react";
 import ReactDOM from "react-dom";
 import "./index.css";
 import App from "./App";
-import '@fontsource/roboto/300.css';
-import '@fontsource/roboto/400.css';
-import '@fontsource/roboto/500.css';
-import '@fontsource/roboto/700.css';
+import "@fontsource/courier-prime"
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import reportWebVitals from "./reportWebVitals";
 import { Provider } from "react-redux";
@@ -13,21 +10,27 @@ import configureStore from "./store/configureStore";
 import { PersistGate } from "redux-persist/integration/react";
 import CssBaseline from '@mui/material/CssBaseline';
 
-const theme = createTheme({
+const globalTheme = createTheme({
   palette: {
-    // mode: 'dark'
+    mode: 'dark'
   },
+  typography: {
+    fontFamily: "Courier Prime"
+  }
+})
+const theme = createTheme({
   components: {
-      MUIDataTable: {
-        styleOverrides: {
-          paper: {
-            boxShadow: "none",
-          }
+    MUIDataTable: {
+      styleOverrides: {
+        paper: {
+          boxShadow: "none",
+          backgroundColor: 'transparent',
+          backgroundImage: 'none'
         }
-      } as any,
-    } as any
-});
-
+      }
+    } as any,
+  } as any
+}, globalTheme)
 
 const { store, persistor } = configureStore();
 

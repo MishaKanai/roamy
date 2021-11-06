@@ -1,5 +1,6 @@
 import React, { useMemo } from "react";
 import Grow from "@mui/material/Grow";
+import { useTheme } from '@mui/material';
 import Paper from "@mui/material/Paper";
 import Popper from "@mui/material/Popper";
 import { Theme } from "@mui/material/styles";
@@ -47,6 +48,7 @@ export default function HoverBacklinks({
       setOpen(false);
     }
   }
+  const theme = useTheme()
   if (!backReferences?.length) {
     return null;
   }
@@ -55,12 +57,13 @@ export default function HoverBacklinks({
       <div onMouseLeave={() => setOpen(false)}>
         <button
           className="roamy-linkbutton"
+          style={{ color: theme.palette.primary.main, fontFamily: theme.typography.fontFamily }}
           ref={anchorRef}
           aria-controls={open ? "menu-list-grow" : undefined}
           aria-haspopup="true"
           onMouseEnter={handleOpen}
         >
-          {backReferences.length} {dontInclude ? "other " : ""}backLink
+          {backReferences.length} {dontInclude ? "other " : ""}backlink
           {backReferences.length > 1 ? "s" : ""}
         </button>
         <Popper
@@ -83,7 +86,7 @@ export default function HoverBacklinks({
                 <ul
                   style={{
                     listStyleType: "none",
-                    padding: ".5em",
+                    padding: "3px 6px",
                     margin: 0,
                   }}
                   id="menu-list-grow"

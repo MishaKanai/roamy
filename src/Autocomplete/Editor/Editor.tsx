@@ -27,7 +27,7 @@ import {
 import ReactDOM from "react-dom";
 import { handleChange } from "./utils/autocompleteUtils";
 import isHotkey from "is-hotkey";
-import { IconButton, useTheme } from "@mui/material";
+import { Card, IconButton, useTheme } from "@mui/material";
 import FormatBoldIcon from "@mui/icons-material/FormatBold";
 import FormatUnderlinedIcon from "@mui/icons-material/FormatUnderlined";
 import FormatItalicIcon from "@mui/icons-material/FormatItalic";
@@ -402,6 +402,7 @@ const SlateAutocompleteEditorComponent = <Triggers extends string[]>(
   );
   const handleBlur = useCallback((e) => setIsFocused(false), [setIsFocused]);
   const backgroundColor = useBackgroundColor();
+  const theme = useTheme()
   return (
     <div style={{ display: "initial" }}>
       <Slate editor={editor} value={value} onChange={_handleChange}>
@@ -472,34 +473,32 @@ const SlateAutocompleteEditorComponent = <Triggers extends string[]>(
         })}
         {target && chars.length > 0 && (
           <Portal>
-            <div
+            <Card
               ref={ref}
               style={{
                 top: "-9999px",
                 left: "-9999px",
                 position: "absolute",
                 zIndex: 999999,
-                padding: "3px",
-                background: "white",
-                borderRadius: "4px",
+                // padding: "3px",
+                // borderRadius: "4px",
                 boxShadow: "0 1px 5px rgba(0,0,0,.2)",
                 overflow: "auto",
                 maxHeight: "200px",
               }}
             >
-              {chars.map((char, i) => (
-                <div
-                  key={char.text}
-                  style={{
-                    padding: "1px 3px",
-                    borderRadius: "3px",
-                    background: i === index ? "#B4D5FF" : "transparent",
-                  }}
-                >
-                  {char.text}
-                </div>
-              ))}
-            </div>
+                {chars.map((char, i) => (
+                  <div
+                    key={char.text}
+                    style={{
+                      padding: "3px 6px",
+                      background: i === index ? theme.palette.action.focus : "transparent",
+                    }}
+                  >
+                    {char.text}
+                  </div>
+                ))}
+            </Card>
           </Portal>
         )}
       </Slate>
