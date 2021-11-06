@@ -220,6 +220,11 @@ const MarkButton: React.FC<{ format: HotKeyFormat; icon: JSX.Element }> = ({
   );
 };
 
+export type RenderEditableRegion = (args: {
+  EditableElement: JSX.Element;
+  editor: ReactEditor;
+}) => JSX.Element;
+
 interface SlateTemplateEditorProps<Triggers extends string[]> {
   title?: React.ReactNode;
   triggers: Triggers;
@@ -233,10 +238,7 @@ interface SlateTemplateEditorProps<Triggers extends string[]> {
   }[];
   value: Node[];
   setValue: (value: Node[]) => void;
-  renderEditableRegion: (args: {
-    EditableElement: JSX.Element;
-    editor: ReactEditor;
-  }) => JSX.Element;
+  renderEditableRegion: RenderEditableRegion;
   createDoc: (name: string) => void;
   docName: string;
 }

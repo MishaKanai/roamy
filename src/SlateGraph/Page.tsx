@@ -2,7 +2,7 @@ import React, { useCallback, useContext, useEffect, useMemo, useRef } from "reac
 import { useDispatch, useSelector } from "react-redux";
 import { useParams } from "react-router-dom";
 import { RootState } from "../store/createRootReducer";
-import SlateGraphEditor from "./Editor";
+import SlateGraphEditor, { defaultRenderEditableRegion } from "./Editor";
 import {
   createDocAction,
   deleteDocAction,
@@ -14,12 +14,17 @@ import HoverBacklinks from "../components/AnchoredPopper";
 import { v4 as uuidv4 } from 'uuid';
 import mergeContext from "../dropbox/resolveMerge/mergeContext";
 import { RootAction } from "../store/action";
+import { RenderEditableRegion } from "../Autocomplete/Editor/Editor";
 
 export const useRoamyDispatch = (): (action: RootAction) => void => {
   const mergeCtxt = useContext(mergeContext);
   const reduxDispatch = useDispatch();
   return mergeCtxt.inMergeContext ? mergeCtxt.dispatch : reduxDispatch;
 }
+
+const renderEditableRegionExtraPadding: RenderEditableRegion = ({ 
+  EditableElement
+ }) => <div style={{ paddingTop: '.5em' }}>{EditableElement}</div>
 
 interface PageProps {
   docName: string;
@@ -105,7 +110,7 @@ const Page: React.FC<PageProps> = React.memo(
       [docName, dispatch]
     );
     return (
-      <div style={{ margin: ".5em", marginTop: 0 }}>
+      <div style={{ margin: ".75em", marginTop: 0 }}>
         {/* backReferenceLinks && backReferenceLinks.length > 0 ? (
           <ul>{backReferenceLinks}</ul>
         ) : null */}
@@ -115,6 +120,7 @@ const Page: React.FC<PageProps> = React.memo(
           value={currDoc}
           setValue={setDoc}
           docName={docName}
+          renderEditableRegion={viewedFromParentDoc ? defaultRenderEditableRegion : renderEditableRegionExtraPadding}
         />
       </div>
     );

@@ -2,13 +2,13 @@ import React from "react";
 import { useSelector } from "react-redux";
 import { Node } from "slate";
 import { ReactEditor } from "slate-react";
-import SlateAutocompleteEditor from "../Autocomplete/Editor/Editor";
+import SlateAutocompleteEditor, { RenderEditableRegion } from "../Autocomplete/Editor/Editor";
 import { drawingNamesSelector } from "../Excalidraw/globalSelectors";
 import { docNamesSelector } from "./globalSelectors";
 
 const triggers = ["<<", "[[", "{{"] as ["<<", "[[", "{{"];
 
-const renderEditableRegion = ({
+export const defaultRenderEditableRegion: RenderEditableRegion = ({
   EditableElement,
 }: {
   editor: ReactEditor;
@@ -22,7 +22,8 @@ const SlateGraphEditor: React.FunctionComponent<{
   docName: string;
   setValue: (value: Node[]) => void;
   createDoc: (newDocName: string) => void;
-}> = React.memo(({ value, setValue, createDoc, docName, title }) => {
+  renderEditableRegion?: RenderEditableRegion;
+}> = React.memo(({ value, setValue, createDoc, docName, title, ...props }) => {
   const docNames = useSelector(docNamesSelector);
   const drawingNames = useSelector(drawingNamesSelector);
   const getSearchResults = React.useCallback(
@@ -43,7 +44,7 @@ const SlateGraphEditor: React.FunctionComponent<{
       docName={docName}
       key={docName}
       createDoc={createDoc}
-      renderEditableRegion={renderEditableRegion}
+      renderEditableRegion={props.renderEditableRegion ?? defaultRenderEditableRegion}
       value={value}
       setValue={setValue}
       triggers={triggers}
