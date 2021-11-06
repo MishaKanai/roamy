@@ -107,7 +107,6 @@ export default function SelectedFileAutocomplete() {
 
                     return filtered;
                 }}
-                id="select-file-autocomplete"
                 options={dbxEntries}
                 getOptionLabel={(option) => {
                     // e.g value selected with enter, right from the input
