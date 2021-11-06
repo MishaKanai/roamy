@@ -13,6 +13,8 @@ export interface SlateDocument {
     backReferences: string[]
     referencesHash: string;
     backReferencesHash: string;
+    createdDate: Date;
+    lastUpdatedDate: Date;
 }
 
 export type SlateDocuments = {
@@ -36,7 +38,8 @@ const slateDocumentsReducer = (state: SlateDocuments = {}, action: RootAction): 
                 }
                 return t
             }))
-            const backReferences = withBackref ? [withBackref] : []
+            const backReferences = withBackref ? [withBackref] : [];
+            const createdDate = new Date();
             return {
                 ...stateWithUpdatedBackrefsToCurrentDoc,
                 [docName]: {
@@ -46,7 +49,9 @@ const slateDocumentsReducer = (state: SlateDocuments = {}, action: RootAction): 
                     references,
                     referencesHash: hashSum(references),
                     backReferences,
-                    backReferencesHash: hashSum(backReferences)
+                    backReferencesHash: hashSum(backReferences),
+                    createdDate,
+                    lastUpdatedDate: createdDate
                 }
             }
         }
@@ -72,6 +77,7 @@ const slateDocumentsReducer = (state: SlateDocuments = {}, action: RootAction): 
                 }]
             }))
             const backReferences = state[docName]?.backReferences ?? [];
+            const lastUpdatedDate = new Date();
             return {
                 ...stateWithUpdatedBackrefsToCurrentDoc,
                 [docName]: {
@@ -81,7 +87,9 @@ const slateDocumentsReducer = (state: SlateDocuments = {}, action: RootAction): 
                     references,
                     referencesHash: hashSum(references),
                     backReferences,
-                    backReferencesHash: hashSum(backReferences)
+                    backReferencesHash: hashSum(backReferences),
+                    createdDate: state[docName]?.createdDate ?? lastUpdatedDate,
+                    lastUpdatedDate
                 }
             }
         }

@@ -42,7 +42,7 @@ function ResponsiveDrawer(props: ResponsiveDrawerProps) {
                 </div>
                 <Divider />
                 <List dense>
-                    <ListItem dense button>
+                    <ListItem dense button component={Link} to="/docs">
                         <ListItemIcon>
                             <SearchIcon />
                         </ListItemIcon>
@@ -110,7 +110,7 @@ function ResponsiveDrawer(props: ResponsiveDrawerProps) {
                 aria-label="open drawer"
                 edge="start"
                 onClick={handleDrawerToggle}
-                sx={{ mr: 2, display: { sm: 'none' }, position: 'fixed', left: '.6rem', top: '1px' }}
+                sx={{ mr: 2, display: { sm: 'none' }, position: 'fixed', left: '.6rem', top: '1px', zIndex: 5 }}
             >
                 <MenuIcon />
             </IconButton>

@@ -8,6 +8,8 @@ import { history } from "./store/configureStore";
 import { DrawingPageRoute } from "./Excalidraw/Page";
 import { drawingNamesSelector } from "./Excalidraw/globalSelectors";
 import AccessControlledPage from "./dropbox/Components/AccessControlledPage";
+import Box from '@mui/material/Box';
+import Datagrid from './Search/components/Datagrid'
 
 const DrawingsNav: React.FC<{}> = (props) => {
   const drawingNames = useSelector(drawingNamesSelector);
@@ -35,7 +37,9 @@ const Docs = React.memo(() => {
           <PageRoute />
         </Route>
         <Route path={match.path}>
-          <h3>Please select a topic. [grid]</h3>
+          <Box sx={{ m: 0 }}>
+            <Datagrid />
+          </Box>
         </Route>
       </Switch>
     </div>

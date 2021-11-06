@@ -16,7 +16,16 @@ import CssBaseline from '@mui/material/CssBaseline';
 const theme = createTheme({
   palette: {
     // mode: 'dark'
-  }
+  },
+  components: {
+      MUIDataTable: {
+        styleOverrides: {
+          paper: {
+            boxShadow: "none",
+          }
+        }
+      } as any,
+    } as any
 });
 
 
