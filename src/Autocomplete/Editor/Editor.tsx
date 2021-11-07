@@ -418,45 +418,43 @@ const SlateAutocompleteEditorComponent = <Triggers extends string[]>(
         >
           <b>{title}</b>
         </span>
-        <span>
-          <span
-            onMouseDownCapture={(e) => {
-              e.preventDefault();
-            }}
+        <span
+          onMouseDownCapture={(e) => {
+            e.preventDefault();
+          }}
+          style={{
+            visibility: isFocused ? undefined : "hidden",
+            justifyContent: "space-between",
+            zIndex: 200,
+            position: "sticky",
+            paddingTop: "3px",
+            top: 0,
+            right: 0,
+            display: "flex",
+            backgroundColor,
+          }}
+        >
+          <div style={{ fontSize: "large", padding: "2px" }}>
+            <b>{title}</b>
+          </div>
+          <div
             style={{
-              visibility: isFocused ? undefined : "hidden",
-              justifyContent: "space-between",
-              zIndex: 200,
-              position: "sticky",
-              paddingTop: "3px",
-              top: 0,
-              right: 0,
+              height: "100%",
+              padding: "2px",
               display: "flex",
-              backgroundColor,
+              flexDirection: "row",
             }}
           >
-            <div style={{ fontSize: "large", padding: "2px" }}>
-              <b>{title}</b>
-            </div>
-            <div
-              style={{
-                height: "100%",
-                padding: "2px",
-                display: "flex",
-                flexDirection: "row",
-              }}
-            >
-              <MarkButton format="bold" icon={<FormatBoldIcon />} />
-              <MarkButton format="italic" icon={<FormatItalicIcon />} />
-              <MarkButton format="underline" icon={<FormatUnderlinedIcon />} />
-              {/* <BlockButton format="heading-one" icon={<LooksOneIcon />} />
+            <MarkButton format="bold" icon={<FormatBoldIcon />} />
+            <MarkButton format="italic" icon={<FormatItalicIcon />} />
+            <MarkButton format="underline" icon={<FormatUnderlinedIcon />} />
+            {/* <BlockButton format="heading-one" icon={<LooksOneIcon />} />
               <BlockButton format="heading-two" icon={<LooksTwoIcon />} /> */}
-              <BlockButton
-                format="bulleted-list"
-                icon={<FormatListBulletedIcon />}
-              />
-            </div>
-          </span>
+            <BlockButton
+              format="bulleted-list"
+              icon={<FormatListBulletedIcon />}
+            />
+          </div>
         </span>
         {props.renderEditableRegion({
           editor,
@@ -487,17 +485,17 @@ const SlateAutocompleteEditorComponent = <Triggers extends string[]>(
                 maxHeight: "200px",
               }}
             >
-                {chars.map((char, i) => (
-                  <div
-                    key={char.text}
-                    style={{
-                      padding: "3px 6px",
-                      background: i === index ? theme.palette.action.focus : "transparent",
-                    }}
-                  >
-                    {char.text}
-                  </div>
-                ))}
+              {chars.map((char, i) => (
+                <div
+                  key={char.text}
+                  style={{
+                    padding: "3px 6px",
+                    background: i === index ? theme.palette.action.focus : "transparent",
+                  }}
+                >
+                  {char.text}
+                </div>
+              ))}
             </Card>
           </Portal>
         )}
