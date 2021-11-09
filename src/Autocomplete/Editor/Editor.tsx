@@ -47,6 +47,9 @@ import { v4 as uuidv4 } from 'uuid';
 import mergeContext from "../../dropbox/resolveMerge/mergeContext";
 import nestedEditorContext from "../nestedEditorContext";
 import useBackgroundColor from "./hooks/useBackgroundColor";
+import UniversalSticky from "./utils/UniversalSticky3";
+
+const isIos = /(iPad|iPhone|iPod)/g.test(navigator.userAgent);
 
 const Editable = React.memo(_Editable);
 
@@ -376,8 +379,6 @@ const SlateAutocompleteEditorComponent = <Triggers extends string[]>(
     (_value: SlateNode[]) => {
       // this gets called on clicks! we need to only update on different values in order to prevent losing focus when changing focus between parents/children/sibling editors
       if (!deepEqual(_value, value)) {
-        console.log("different values!");
-        console.log("c called ", _value);
         setValue(_value);
         handleChange(
           editor,
@@ -403,72 +404,99 @@ const SlateAutocompleteEditorComponent = <Triggers extends string[]>(
   const handleBlur = useCallback((e) => setIsFocused(false), [setIsFocused]);
   const backgroundColor = useBackgroundColor();
   const theme = useTheme()
+
+  const renderToolbarContents = () => (<>
+    <div style={{ fontSize: "large", padding: "2px" }}>
+      <b>{title}</b>
+    </div>
+    <div
+      style={{
+        height: "100%",
+        padding: "2px",
+        display: "flex",
+        flexDirection: "row",
+      }}
+    >
+      <MarkButton format="bold" icon={<FormatBoldIcon />} />
+      <MarkButton format="italic" icon={<FormatItalicIcon />} />
+      <MarkButton format="underline" icon={<FormatUnderlinedIcon />} />
+      {/* <BlockButton format="heading-one" icon={<LooksOneIcon />} />
+      <BlockButton format="heading-two" icon={<LooksTwoIcon />} /> */}
+      <BlockButton
+        format="bulleted-list"
+        icon={<FormatListBulletedIcon />}
+      />
+    </div>
+  </>
+  )
+  const toolbarStyle = {
+    // visibility: isFocused ? undefined : "hidden",
+    justifyContent: "space-between",
+    zIndex: 1004,
+    paddingTop: "3px",
+    width: '100%',
+    display: "flex",
+    backgroundColor,
+  } as const
+  const renderToolbar = () => (<div style={toolbarStyle}>{renderToolbarContents()}</div>);
+
+  const editable = props.renderEditableRegion({
+    editor,
+    EditableElement: (
+      <Editable
+        onFocus={handleFocus}
+        onBlur={handleBlur}
+        renderElement={renderElement}
+        renderLeaf={renderLeaf}
+        onKeyDown={onKeyDown}
+        placeholder="Enter some text..."
+      />
+    ),
+  })
+
   return (
-    <div style={{ display: "initial" }}>
-      <Slate editor={editor} value={value} onChange={_handleChange}>
-        <span
+    <div style={{ position: 'relative' }}>
+      <Slate editor={editor} value={value} onChange={_handleChange}>        
+      <span
           style={{
+            display: isFocused ? 'none' : undefined,
             position: "absolute",
-            zIndex: 100,
+            zIndex: 200,
             fontSize: "large",
             padding: "2px",
             paddingTop: "5px",
             backgroundColor,
+            width: '100%'
           }}
         >
           <b>{title}</b>
         </span>
-        <span
-          onMouseDownCapture={(e) => {
-            e.preventDefault();
-          }}
-          style={{
-            visibility: isFocused ? undefined : "hidden",
-            justifyContent: "space-between",
-            zIndex: 200,
-            position: "sticky",
-            paddingTop: "3px",
-            top: 0,
-            right: 0,
-            display: "flex",
-            backgroundColor,
-          }}
-        >
-          <div style={{ fontSize: "large", padding: "2px" }}>
-            <b>{title}</b>
-          </div>
-          <div
+        {isIos ? (
+          <UniversalSticky
+            isFocused={isFocused}
+            renderToolbar={renderToolbar}
+          >
+            {editable}
+          </UniversalSticky>
+        ) : (<>
+          <span
+            onMouseDownCapture={(e) => {
+              e.preventDefault();
+            }}
             style={{
-              height: "100%",
-              padding: "2px",
-              display: "flex",
-              flexDirection: "row",
+              ...toolbarStyle,
+              visibility: isFocused ? "visible" : "hidden",
+              position: "sticky",
+              paddingTop: "0px",
+              top: 0,
+              left: 0,
+              right: 0
             }}
           >
-            <MarkButton format="bold" icon={<FormatBoldIcon />} />
-            <MarkButton format="italic" icon={<FormatItalicIcon />} />
-            <MarkButton format="underline" icon={<FormatUnderlinedIcon />} />
-            {/* <BlockButton format="heading-one" icon={<LooksOneIcon />} />
-              <BlockButton format="heading-two" icon={<LooksTwoIcon />} /> */}
-            <BlockButton
-              format="bulleted-list"
-              icon={<FormatListBulletedIcon />}
-            />
-          </div>
-        </span>
-        {props.renderEditableRegion({
-          editor,
-          EditableElement: (
-            <Editable
-              onFocus={handleFocus}
-              onBlur={handleBlur}
-              renderElement={renderElement}
-              renderLeaf={renderLeaf}
-              onKeyDown={onKeyDown}
-              placeholder="Enter some text..."
-            />
-          ),
-        })}
+            {renderToolbar()}
+          </span>
+          {editable}
+        </>)}
         {target && chars.length > 0 && (
           <Portal>
             <Card
