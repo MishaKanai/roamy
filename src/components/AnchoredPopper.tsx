@@ -62,6 +62,7 @@ export default function HoverBacklinks({
           aria-controls={open ? "menu-list-grow" : undefined}
           aria-haspopup="true"
           onMouseEnter={handleOpen}
+          onClick={handleOpen}
         >
           {backReferences.length} {dontInclude ? "other " : ""}backlink
           {backReferences.length > 1 ? "s" : ""}
