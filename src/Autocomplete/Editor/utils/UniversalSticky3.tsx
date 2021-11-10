@@ -164,9 +164,13 @@ const UniversalSticky: React.FC<{
                 style={{ width: '100%' }}
             >
                 <div>
-                    <div style={style.position === 'absolute' ? { visibility: 'hidden' } : undefined}>{renderToolbar()}</div>
+                    <div
+                        style={style.position === 'absolute' ? { visibility: 'hidden' } : undefined}>{renderToolbar()}</div>
                     {isFocused ? (<Portal>
                         <div
+                            onMouseDownCapture={(e) => {
+                                e.preventDefault();
+                            }}
                             ref={tabListRef}
                             style={style}
                         >
