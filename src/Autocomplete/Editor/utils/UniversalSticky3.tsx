@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import debounce from 'lodash/debounce';
 import { registerHeightObserver, unregisterHeightObserver } from 'element-height-observer/dist/index';
 import { Portal } from '@mui/core';
+import { useMediaQuery } from '@mui/material';
 
 const UniversalSticky: React.FC<{ isFocused: boolean; renderToolbar: () => JSX.Element }> = ({
     isFocused,
@@ -16,6 +17,9 @@ const UniversalSticky: React.FC<{ isFocused: boolean; renderToolbar: () => JSX.E
     const panesClientHeightRef = useRef<number>(0);
     const _isMountedRef = useRef(false);
     const windowOffsetTopRef = useRef(0);
+    const windowOffsetLeftRef = useRef(0);
+    const large = useMediaQuery('(min-width:600px)');
+    
     const [style, setStyle] = useState<React.CSSProperties>({ display: 'none' });
     const getDomInfo = useCallback(() => {
         if (_isMountedRef.current) {
@@ -34,22 +38,34 @@ const UniversalSticky: React.FC<{ isFocused: boolean; renderToolbar: () => JSX.E
         if (!thisRectRef.current) {
             return null;
         }
-        return thisRectRef.current.top < 0 &&
+        return thisRectRef.current.top <= 0 &&
             thisRectRef.current.top + panesClientHeightRef.current >= 0 ? windowOffsetTopRef.current : null;
     }, [])
+    
     const writePos = useCallback(() => {
         const topPos = getTopPos();
         if (topPos !== null) {
             const newTop = topPos !== null ? topPos + 'px' : '';
-            setStyle({
-                top: newTop,
-                position: 'absolute',
-                zIndex: 2004,
-                left: thisRectRef.current?.x,
-                right: thisRectRef.current ? thisRectRef.current.x + thisRectRef.current.width : undefined,
-                width: thisRectRef.current ? thisRectRef.current.width + 'px' : undefined,
-                display: undefined,
-            })
+            if (large) {
+                setStyle({
+                    top: newTop,
+                    position: 'absolute',
+                    zIndex: 2004,
+                    left: thisRectRef.current?.x ?? 0,
+                    width: thisRectRef.current ? thisRectRef.current.width + 'px' : undefined,
+                    display: undefined,
+                })
+            } else {
+                const left = windowOffsetLeftRef.current;
+                setStyle({
+                    top: newTop,
+                    position: 'absolute',
+                    zIndex: 2004,
+                    left,
+                    width: '100vw',
+                    display: undefined,
+                })
+            }
         } else {
             setStyle({
                 position: undefined,
@@ -58,13 +74,15 @@ const UniversalSticky: React.FC<{ isFocused: boolean; renderToolbar: () => JSX.E
                 zIndex: undefined
             })
         }
-    }, [getTopPos, setStyle])
+    }, [getTopPos, setStyle, large])
     const handleScroll = useCallback(() => {
         getDomInfo()
         let top = window.pageYOffset || document!.documentElement!.scrollTop;
         if (_isMountedRef.current) {
             windowOffsetTopRef.current = top
+            windowOffsetLeftRef.current = window.scrollX;
         }
+
         writePos();
     }, [getDomInfo, writePos])
     useEffect(() => {
@@ -73,8 +91,9 @@ const UniversalSticky: React.FC<{ isFocused: boolean; renderToolbar: () => JSX.E
         getDomInfo();
         const debouncedOnScrollFn = debounce(() => {
             getDomInfo();
+            writePos()
         }, 75);
-        registerHeightObserver(document.getElementsByTagName('body')[0], debouncedOnScrollFn);
+        registerHeightObserver(document.getElementsByTagName('body')[0], { direction: 'both' }, debouncedOnScrollFn);
         (document.getElementsByClassName('element-height-observer-iframe')[0] as any).title =
             'element-height-observer-iframe';
         return () => {
@@ -85,7 +104,7 @@ const UniversalSticky: React.FC<{ isFocused: boolean; renderToolbar: () => JSX.E
             window.removeEventListener('scroll', handleScroll);
             unregisterHeightObserver(document.getElementsByTagName('body')[0]);
         }
-    }, [getDomInfo, handleScroll])
+    }, [getDomInfo, handleScroll, writePos])
 
     useEffect(() => {
         handleScroll()
@@ -96,7 +115,7 @@ const UniversalSticky: React.FC<{ isFocused: boolean; renderToolbar: () => JSX.E
             style={{ width: '100%' }}
         >
             <div>
-                <div>{renderToolbar()}</div>
+                <div style={style.position === 'absolute' ? { visibility: 'hidden'} : undefined}>{renderToolbar()}</div>
                 {isFocused ? (<Portal>
                     <div
                         ref={tabListRef}

@@ -434,7 +434,7 @@ const SlateAutocompleteEditorComponent = <Triggers extends string[]>(
     justifyContent: "space-between",
     zIndex: 1004,
     paddingTop: "3px",
-    width: '100%',
+    width: 'min(100%, 100vw)',
     display: "flex",
     backgroundColor,
   } as const
