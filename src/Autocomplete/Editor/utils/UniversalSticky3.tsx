@@ -4,10 +4,47 @@ import { registerHeightObserver, unregisterHeightObserver } from 'element-height
 import { Portal } from '@mui/core';
 import { useMediaQuery } from '@mui/material';
 
-const UniversalSticky: React.FC<{ isFocused: boolean; renderToolbar: () => JSX.Element }> = ({
+type WriteStyles = (setStyle: React.Dispatch<React.SetStateAction<React.CSSProperties>>, domRef: React.MutableRefObject<HTMLDivElement | null>, style: React.CSSProperties) => void;
+
+export const reactWriter: WriteStyles = (setStyle, domRef, style) => {
+    setStyle(style);
+};
+const domWriter: WriteStyles = (setStyle, domRef, style) => {
+    requestAnimationFrame(() => {
+        if (!domRef.current) {
+            return;
+        }
+        const currStyle = domRef.current.style;
+        if ((currStyle.position ?? '') !== (style.position ?? '')) {
+            domRef.current.style.position = style.position ?? '';
+        }
+        if (style.position === 'absolute' && typeof style.top === 'string' && currStyle.top !== style.top) {
+            domRef.current.style.top = style.top;
+        }
+        if ((currStyle.zIndex ?? '') !== '' + (style.zIndex ?? '')) {
+            domRef.current.style.zIndex = '' + (style.zIndex ?? '');
+        }
+        if ((currStyle.left ?? '') !== (typeof style.left === 'number' ? style.left + 'px' : (style.left ?? ''))) {
+            domRef.current.style.left = typeof style.left === 'number' ? style.left + 'px' : ''
+        }
+        if ((currStyle.width ?? '') !== (style.width ?? '')) {
+            domRef.current.style.width = (typeof style.width === 'number') ? style.width + 'px' : (style.width ?? '')
+        }
+        if ((currStyle.display ?? '') !== (style.display ?? '')) {
+            domRef.current.style.display = (typeof style.display === 'string') ? style.display : ''
+        }
+    })
+}
+const UniversalSticky: React.FC<{
+    isFocused: boolean;
+    renderToolbar: () => JSX.Element
+    // this is exposed so we can write styles directly to the DOM using requestAnimationFrame for better perf.
+    writeStyles?: WriteStyles
+}> = ({
     isFocused,
     renderToolbar,
-    children
+    children,
+    writeStyles = domWriter// reactWriter
 }) => {
     const divRef = useRef<HTMLDivElement | null>(null)
     const thisRectRef = useRef<DOMRect | null>(null);
@@ -47,7 +84,7 @@ const UniversalSticky: React.FC<{ isFocused: boolean; renderToolbar: () => JSX.E
         if (topPos !== null) {
             const newTop = topPos !== null ? topPos + 'px' : '';
             if (large) {
-                setStyle({
+                writeStyles(setStyle, tabListRef, {
                     top: newTop,
                     position: 'absolute',
                     zIndex: 2004,
@@ -57,7 +94,7 @@ const UniversalSticky: React.FC<{ isFocused: boolean; renderToolbar: () => JSX.E
                 })
             } else {
                 const left = windowOffsetLeftRef.current;
-                setStyle({
+                writeStyles(setStyle, tabListRef, {
                     top: newTop,
                     position: 'absolute',
                     zIndex: 2004,
@@ -67,14 +104,14 @@ const UniversalSticky: React.FC<{ isFocused: boolean; renderToolbar: () => JSX.E
                 })
             }
         } else {
-            setStyle({
+            writeStyles(setStyle, tabListRef, {
                 position: undefined,
                 display: 'none',
                 width: undefined,
                 zIndex: undefined
             })
         }
-    }, [getTopPos, setStyle, large])
+    }, [getTopPos, writeStyles, setStyle, large])
     const handleScroll = useCallback(() => {
         getDomInfo()
         let top = window.pageYOffset || document!.documentElement!.scrollTop;
