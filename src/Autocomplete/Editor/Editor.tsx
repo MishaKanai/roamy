@@ -342,9 +342,6 @@ const SlateAutocompleteEditorComponent = <Triggers extends string[]>(
                 }
                 insertPortal(editor, docRefName);
               } else if (trigger === "{{") {
-                if (isCreate) {
-                  createDoc(docRefName);
-                }
                 insertDrawing(editor, docRefName);
               }
               setTarget(null);
