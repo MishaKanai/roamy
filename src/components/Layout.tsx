@@ -48,7 +48,7 @@ function ResponsiveDrawer(props: ResponsiveDrawerProps) {
                         </ListItemIcon>
                         <ListItemText primary="Documents" />
                     </ListItem>
-                    <ListItem dense button>
+                    <ListItem dense button  component={Link} to="/graph">
                         <ListItemIcon>
                             <ScatterPlotIcon />
                         </ListItemIcon>
