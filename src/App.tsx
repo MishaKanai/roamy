@@ -10,6 +10,7 @@ import { drawingNamesSelector } from "./Excalidraw/globalSelectors";
 import AccessControlledPage from "./dropbox/Components/AccessControlledPage";
 import Box from '@mui/material/Box';
 import Datagrid from './Search/components/Datagrid'
+import Demo from "./GraphVis/Demo";
 
 const DrawingsNav: React.FC<{}> = (props) => {
   const drawingNames = useSelector(drawingNamesSelector);
@@ -76,8 +77,8 @@ export const getApp = (history: History<unknown>) => {
               <Route path="/drawings">
                 <Drawings />
               </Route>
-              <Route path="/">
-                <div>Home</div>
+              <Route path="/graph">
+                <Demo />
               </Route>
             </Switch>
           </div>
