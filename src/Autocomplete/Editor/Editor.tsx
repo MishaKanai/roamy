@@ -27,7 +27,7 @@ import {
 import ReactDOM from "react-dom";
 import { handleChange } from "./utils/autocompleteUtils";
 import isHotkey from "is-hotkey";
-import { Card, IconButton, useTheme } from "@mui/material";
+import { Card, IconButton, useTheme, List, ListItem } from "@mui/material";
 import FormatBoldIcon from "@mui/icons-material/FormatBold";
 import FormatUnderlinedIcon from "@mui/icons-material/FormatUnderlined";
 import FormatItalicIcon from "@mui/icons-material/FormatItalic";
@@ -48,6 +48,7 @@ import mergeContext from "../../dropbox/resolveMerge/mergeContext";
 import nestedEditorContext from "../nestedEditorContext";
 import useBackgroundColor from "./hooks/useBackgroundColor";
 import UniversalSticky from "./utils/UniversalSticky3";
+
 
 const isIos = /(iPad|iPhone|iPod)/g.test(navigator.userAgent);
 
@@ -298,6 +299,28 @@ const SlateAutocompleteEditorComponent = <Triggers extends string[]>(
       },
     ]);
   }, [getSearchResults, docName, search, trigger, editor]);
+
+  const selectItem = useCallback((selected: string) => {
+    Transforms.select(editor, target!);
+    const isCreate = selected.startsWith(CREATE_PREFIX);
+    const docRefName = isCreate
+      ? selected.slice(CREATE_PREFIX.length, -1)
+      : selected;
+    if (trigger === "[[") {
+      if (isCreate) {
+        createDoc(docRefName);
+      }
+      insertReference(editor, docRefName);
+    } else if (trigger === "<<") {
+      if (isCreate) {
+        createDoc(docRefName);
+      }
+      insertPortal(editor, docRefName);
+    } else if (trigger === "{{") {
+      insertDrawing(editor, docRefName);
+    }
+    setTarget(null);
+  }, [target, createDoc, editor, trigger])
   const onKeyDown = useCallback(
     (event) => {
       for (const hotkey in HOTKEYS) {
@@ -325,26 +348,7 @@ const SlateAutocompleteEditorComponent = <Triggers extends string[]>(
             const selected = chars[index]?.char;
             if (selected) {
               event.preventDefault();
-              Transforms.select(editor, target);
-
-              const isCreate = selected.startsWith(CREATE_PREFIX);
-              const docRefName = isCreate
-                ? selected.slice(CREATE_PREFIX.length, -1)
-                : selected;
-              if (trigger === "[[") {
-                if (isCreate) {
-                  createDoc(docRefName);
-                }
-                insertReference(editor, docRefName);
-              } else if (trigger === "<<") {
-                if (isCreate) {
-                  createDoc(docRefName);
-                }
-                insertPortal(editor, docRefName);
-              } else if (trigger === "{{") {
-                insertDrawing(editor, docRefName);
-              }
-              setTarget(null);
+              selectItem(selected);
             } else {
               console.log(chars, index);
               console.error("hit");
@@ -453,8 +457,8 @@ const SlateAutocompleteEditorComponent = <Triggers extends string[]>(
 
   return (
     <div style={{ position: 'relative' }}>
-      <Slate editor={editor} value={value} onChange={_handleChange}>        
-      <span
+      <Slate editor={editor} value={value} onChange={_handleChange}>
+        <span
           style={{
             display: isFocused ? 'none' : undefined,
             position: "absolute",
@@ -503,24 +507,20 @@ const SlateAutocompleteEditorComponent = <Triggers extends string[]>(
                 left: "-9999px",
                 position: "absolute",
                 zIndex: 999999,
-                // padding: "3px",
-                // borderRadius: "4px",
                 boxShadow: "0 1px 5px rgba(0,0,0,.2)",
                 overflow: "auto",
                 maxHeight: "200px",
               }}
             >
-              {chars.map((char, i) => (
-                <div
-                  key={char.text}
-                  style={{
-                    padding: "3px 6px",
-                    background: i === index ? theme.palette.action.focus : "transparent",
-                  }}
-                >
-                  {char.text}
-                </div>
-              ))}
+              <List dense>
+                {chars.map((char, i) => (
+                  <ListItem button dense key={char.text} onClick={() => selectItem(char.char)} style={{
+                    background: i === index ? theme.palette.action.focus : undefined,
+                  }}>
+                    {char.text}
+                  </ListItem>
+                ))}
+              </List>
             </Card>
           </Portal>
         )}
