@@ -1,34 +1,15 @@
 import React from "react";
-import { useSelector } from "react-redux";
 import { History } from "history";
 import { ConnectedRouter } from "connected-react-router";
-import { Switch, Route, Link, useRouteMatch } from "react-router-dom";
+import { Switch, Route, useRouteMatch } from "react-router-dom";
 import { PageRoute } from "./SlateGraph/Page";
 import { history } from "./store/configureStore";
 import { DrawingPageRoute } from "./Excalidraw/Page";
-import { drawingNamesSelector } from "./Excalidraw/globalSelectors";
 import AccessControlledPage from "./dropbox/Components/AccessControlledPage";
 import Box from '@mui/material/Box';
 import Datagrid from './Search/components/Datagrid'
 import Demo from "./GraphVis/Demo";
 
-const DrawingsNav: React.FC<{}> = (props) => {
-  const drawingNames = useSelector(drawingNamesSelector);
-  return (
-    <ul>
-      {drawingNames.map((n, i) => {
-        return (
-          <li key={n}>
-            <Link to={`/drawings/${n}`}>{n}</Link>
-          </li>
-        );
-      })}
-      <li>
-        <Link to={`/drawings/foo`}>foolink :)</Link>
-      </li>
-    </ul>
-  );
-};
 const Docs = React.memo(() => {
   const match = useRouteMatch();
   return (
@@ -49,9 +30,7 @@ const Docs = React.memo(() => {
 const Drawings = React.memo(() => {
   const match = useRouteMatch();
   return (
-    <div>
-      <h2>Drawings</h2>
-      <DrawingsNav />
+    <div style={{ paddingTop: '1.5em' }}>
       <Switch>
         <Route path={`${match.path}/:drawingName`}>
           <DrawingPageRoute />
