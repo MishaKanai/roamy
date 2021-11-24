@@ -20,6 +20,7 @@ import { ListSubheader } from '@mui/material';
 import { useSelector } from 'react-redux';
 import { docNamesSelector } from '../SlateGraph/globalSelectors';
 import { drawingNamesSelector } from '../Excalidraw/globalSelectors';
+import BasicSpeedDial from './SpeedDial';
 
 const drawerWidth = 240;
 
@@ -150,6 +151,7 @@ function ResponsiveDrawer(props: ResponsiveDrawerProps) {
                 sx={{ flexGrow: 1, pl: 3, width: { sm: `calc(100% - ${drawerWidth}px)` } }}
             >
                 {props.children}
+                <BasicSpeedDial />
             </Box>
         </Box>
     );
