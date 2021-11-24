@@ -19,5 +19,6 @@
     "declaration": true,
     "noEmit": false,
     "outDir": "lib/"
-  }
+  },
+  "include": ["src/node_modules.d.ts"]
 }
