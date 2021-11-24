@@ -4,6 +4,7 @@ import React, {
   useEffect,
   useMemo,
   useRef,
+  useState,
 } from "react";
 import { useSelector } from "react-redux";
 import { useParams } from "react-router-dom";
@@ -23,6 +24,7 @@ import { AppState, ExcalidrawProps } from "@excalidraw/excalidraw/types/types";
 import { drawingOptionsContext } from "../extension/drawingOptionsContext";
 import equal from "fast-deep-equal";
 import { useRoamyDispatch } from "../SlateGraph/Page";
+import { useTheme } from "@mui/material";
 
 interface DrawingPageProps {
   drawingName: string;
@@ -133,7 +135,8 @@ const DrawingPage: React.FC<DrawingPageProps> = React.memo(
           viewBackgroundColor: "transparent",
         },
       };
-    }, /* [stableStringify(currDrawing.elements)] */ [currDrawing.elements]);
+    }, /* [stableStringify(currDrawing.elements)] */[currDrawing.elements]);
+    const isDark = useTheme().palette.mode === 'dark';
     const drawing = (
       <Draw
         {...excalidrawProps}
@@ -141,16 +144,32 @@ const DrawingPage: React.FC<DrawingPageProps> = React.memo(
         initialData={initialData}
       />
     );
+
+    useEffect(() => {
+      setTimeout(() => {
+        window.dispatchEvent(new Event('resize'));
+      }, 0)
+    }, [preventScrollAndResize])
+
+    const [shown, setShown] = useState(false)
+    useEffect(() => {
+      const to = setTimeout(() => {
+          setShown(true)
+      }, 100);
+      return () => {
+        clearTimeout(to);
+      }
+    }, [])
     return (
-      <span style={{ margin: ".5em", marginTop: 0 }}>
+      <span style={shown ? undefined : { visibility: 'hidden' }}>
         <div style={{ position: "relative" }}>
           <div style={{ position: "absolute", top: viewedFromParentDoc ? -24 : -34, left: 0 }}>
-              {title}
+            {title}
           </div>
         </div>
-        <div style={viewedFromParentDoc ? {
+        <div style={Object.assign({ marginTop: '1.25em', paddingTop: '1em', paddingBottom: '1em' }, isDark ? { filter: 'invert(100%) hue-rotate(180deg)' } : {}, viewedFromParentDoc ? {
           overflowX: 'auto',
-        } : undefined}>
+        } as const : {})}>
           <div style={{ position: "relative" }}>
             {preventScrollAndResize && (
               // a perfect overlay of the drawing area
@@ -181,7 +200,6 @@ const DrawingPage: React.FC<DrawingPageProps> = React.memo(
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                border: "solid 1px #ddd",
               }}
               size={currDrawing.size}
               onResizeStop={(e, direction, ref, d) => {
@@ -231,6 +249,7 @@ export const DrawingPageRoute = React.memo(() => {
       <DrawingPage
         excalidrawProps={{
           gridModeEnabled: true,
+          zenModeEnabled: true,
         }}
         title={title}
         key={drawingName}

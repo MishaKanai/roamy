@@ -115,6 +115,7 @@ const MergeDrawings: React.FC<MergeDrawingsProps> = ({ left, right, drawingName,
                         overrideDrawing={curr}
                         excalidrawProps={{
                             gridModeEnabled: true,
+                            zenModeEnabled: true,
                         }}
                         drawingName={drawingName}
                     />
@@ -153,6 +154,7 @@ const MergeDrawings: React.FC<MergeDrawingsProps> = ({ left, right, drawingName,
                         overrideDrawing={curr}
                         excalidrawProps={{
                             gridModeEnabled: true,
+                            zenModeEnabled: true,
                         }}
                         drawingName={drawingName}
                     />

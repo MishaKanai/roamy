@@ -644,6 +644,7 @@ export const Element: React.FC<RenderElementProps & { parentDoc: string }> = (
                           editable
                             ? {
                               gridModeEnabled: true,
+                              zenModeEnabled: true,
                             }
                             : {
                               zenModeEnabled: true,
