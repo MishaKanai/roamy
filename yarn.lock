@@ -11644,10 +11644,10 @@ slate-history@^0.66.0:
   dependencies:
     is-plain-object "^5.0.0"
 
-slate-react@^0.67.0:
-  version "0.67.0"
-  resolved "https://registry.yarnpkg.com/slate-react/-/slate-react-0.67.0.tgz#e5fe179da611b66413c23e0f5d7e3412ffe51d87"
-  integrity sha512-aJDqDskN2Ny1Q2bUFmM9qG000BbDLkA8+pIsrK9Z30glmS7je+KWoR29zdHe2s/fuKRLVayxcvs+q1VQzc1dfw==
+slate-react@^0.71.0:
+  version "0.71.0"
+  resolved "https://registry.yarnpkg.com/slate-react/-/slate-react-0.71.0.tgz#abc96384777603950a36c09e9a8707d493733541"
+  integrity sha512-UgryclHduQyOUAtoCk/05/4z6CMSURV+WyTwNMJZB10QDVviI78LsLCWstSo0jDlewM8KAX150s3aC2EZwH70w==
   dependencies:
     "@types/is-hotkey" "^0.1.1"
     "@types/lodash" "^4.14.149"
@@ -11658,10 +11658,10 @@ slate-react@^0.67.0:
     scroll-into-view-if-needed "^2.2.20"
     tiny-invariant "1.0.6"
 
-slate@^0.66.5:
-  version "0.66.5"
-  resolved "https://registry.yarnpkg.com/slate/-/slate-0.66.5.tgz#bdd93a4422891341dd18a31ff7810f5cae60e40a"
-  integrity sha512-bG03uEKIm/gS6jQarKSNbHn2anemOON2vnSI3VGRd7MJJU5Yiwmutze0yHNO9uZwDLTB+LeDQYZeGu1ACWT0VA==
+slate@^0.71.0:
+  version "0.71.0"
+  resolved "https://registry.yarnpkg.com/slate/-/slate-0.71.0.tgz#37dea4eb05b8e78b76aa15c8a35b0aaf58beb8a1"
+  integrity sha512-DKK7Fk9UzCgN31X7safnJE0i9CbXv9pdnwTyt3NYak9xDFTltv27U+z9NCyi9M5ahqEK2fO5hjjDzPBuPOSRLQ==
   dependencies:
     immer "^9.0.6"
     is-plain-object "^5.0.0"

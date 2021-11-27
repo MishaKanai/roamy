@@ -19,12 +19,14 @@ import deepEqual from "fast-deep-equal";
 import HoverBacklinks from "../components/AnchoredPopper";
 import { ExcalidrawElement } from "@excalidraw/excalidraw/types/element/types";
 import Draw from "@excalidraw/excalidraw";
-import { Resizable } from "re-resizable";
-import { AppState, ExcalidrawProps } from "@excalidraw/excalidraw/types/types";
+import { Resizable, ResizeCallback } from "re-resizable";
+import { AppState, ExcalidrawImperativeAPI, ExcalidrawProps } from "@excalidraw/excalidraw/types/types";
 import { drawingOptionsContext } from "../extension/drawingOptionsContext";
 import equal from "fast-deep-equal";
 import { useRoamyDispatch } from "../SlateGraph/Page";
 import { useTheme } from "@mui/material";
+import * as excalidrawRegistry from "./registry";
+import uniqueId from 'lodash/uniqueId';
 
 interface DrawingPageProps {
   drawingName: string;
@@ -91,7 +93,7 @@ export const useDrawingPage = (
 
   const someRealChangeToDrawing_Ref = useRef(false);
   const setDrawing = useCallback(
-    (newDrawingElements: readonly ExcalidrawElement[], appState: AppState) => {
+    (newDrawingElements: readonly ExcalidrawElement[], appState: AppState, onUpdate?: () => void) => {
       if (
         // prevent updateDrawing on initial load.
         !someRealChangeToDrawing_Ref.current &&
@@ -102,16 +104,22 @@ export const useDrawingPage = (
         return;
       }
       someRealChangeToDrawing_Ref.current = true;
-
       dispatch(
         updateDrawingAction(drawingName, {
           elements: newDrawingElements as ExcalidrawElement[],
         })
       );
+      onUpdate?.();
     },
     [drawingName, dispatch]
   );
   return [currDrawing, setDrawing] as [typeof currDrawing, typeof setDrawing];
+};
+
+const resizableStyle: React.CSSProperties = {
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
 };
 
 const DrawingPage: React.FC<DrawingPageProps> = React.memo(
@@ -123,6 +131,13 @@ const DrawingPage: React.FC<DrawingPageProps> = React.memo(
     preventScrollAndResize = false,
     overrideDrawing
   }) => {
+    const [excalidrawInstance, setExcalidrawInstance] = useState<ExcalidrawImperativeAPI | null>(null);
+    const excalidrawRef = useCallback((node: ExcalidrawImperativeAPI | null) => {
+      if (node !== null) {
+        setExcalidrawInstance(node);
+      }
+    }, []);
+    // const excalidrawRef = useRef<ExcalidrawImperativeAPI | null>(null);
     const dispatch = useRoamyDispatch();
     const [_currDrawing, setDrawing] = useDrawingPage(drawingName, {
       viewedFromParentDoc,
@@ -136,32 +151,81 @@ const DrawingPage: React.FC<DrawingPageProps> = React.memo(
         },
       };
     }, /* [stableStringify(currDrawing.elements)] */[currDrawing.elements]);
+
+    const registryId = useMemo(() => uniqueId(drawingName), [drawingName]);
+    useEffect(() => {
+      if (excalidrawInstance) {
+        excalidrawRegistry.register(drawingName, registryId, excalidrawInstance);
+      }
+      return () => {
+        excalidrawRegistry.unregister(drawingName, registryId);
+      }
+    }, [drawingName, registryId, excalidrawInstance])
+
     const isDark = useTheme().palette.mode === 'dark';
+
     const drawing = (
       <Draw
+        ref={excalidrawRef}
         {...excalidrawProps}
         onChange={setDrawing}
         initialData={initialData}
       />
     );
 
+    // wait until triggering resize event before showing, due to bug where toolbar isn't correctly
+    // aligned until interaction
     useEffect(() => {
-      setTimeout(() => {
+      const to = setTimeout(() => {
         window.dispatchEvent(new Event('resize'));
-      }, 0)
+      }, 50)
+      return () => {
+        clearTimeout(to);
+      }
     }, [preventScrollAndResize])
 
     const [shown, setShown] = useState(false)
     useEffect(() => {
       const to = setTimeout(() => {
-          setShown(true)
+        setShown(true)
       }, 100);
       return () => {
         clearTimeout(to);
       }
     }, [])
+    const handleMouseUp = useCallback(() => {
+      
+      const appState = excalidrawInstance?.getAppState();
+      // only trigger sync for mouse up from drawing
+      // i.e. don't sync if there's no selected selements when we mouse up.
+      if (appState && Object.keys(appState.selectedElementIds).length === 0) {
+        return;
+      }
+      excalidrawRegistry.triggerSync(drawingName, registryId, {
+        elements: excalidrawInstance?.getSceneElements(),
+      });
+    }, [drawingName, registryId, excalidrawInstance])
+
+    const handleKeyUp = useCallback(() => {
+      excalidrawRegistry.triggerSync(drawingName, registryId, {
+        elements: excalidrawInstance?.getSceneElements(),
+      });
+    }, [drawingName, registryId, excalidrawInstance])
+
+    const currHeight = currDrawing.size.height;
+    const currWidth = currDrawing.size.width;
+    const handleResizeStop: ResizeCallback = useCallback((e, direction, ref, d) => {
+      dispatch(
+        updateDrawingAction(drawingName, {
+          size: {
+            height: currHeight + d.height,
+            width: currWidth + d.width,
+          },
+        })
+      );
+    }, [dispatch, currHeight, currWidth, drawingName])
     return (
-      <span style={shown ? undefined : { visibility: 'hidden' }}>
+      <span onKeyUp={handleKeyUp} onMouseUp={handleMouseUp} style={shown ? undefined : { visibility: 'hidden' }}>
         <div style={{ position: "relative" }}>
           <div style={{ position: "absolute", top: viewedFromParentDoc ? -24 : -34, left: 0 }}>
             {title}
@@ -196,22 +260,9 @@ const DrawingPage: React.FC<DrawingPageProps> = React.memo(
             </div>
           ) : (
             <Resizable
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
+              style={resizableStyle}
               size={currDrawing.size}
-              onResizeStop={(e, direction, ref, d) => {
-                dispatch(
-                  updateDrawingAction(drawingName, {
-                    size: {
-                      height: currDrawing.size.height + d.height,
-                      width: currDrawing.size.width + d.width,
-                    },
-                  })
-                );
-              }}
+              onResizeStop={handleResizeStop}
             >
               {drawing}
             </Resizable>

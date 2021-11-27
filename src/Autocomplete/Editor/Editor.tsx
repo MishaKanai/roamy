@@ -5,6 +5,7 @@ import React, {
   useEffect,
   useState,
   useContext,
+  useReducer,
 } from "react";
 import {
   Node,
@@ -52,7 +53,8 @@ import UniversalSticky from "./utils/UniversalSticky3";
 
 const isIos = /(iPad|iPhone|iPod)/g.test(navigator.userAgent);
 
-const Editable = React.memo(_Editable);
+// const Editable = React.memo(_Editable);
+const Editable = _Editable;
 
 type ReferenceElement = {
   type: "reference";
@@ -224,6 +226,45 @@ const MarkButton: React.FC<{ format: HotKeyFormat; icon: JSX.Element }> = ({
   );
 };
 
+const getToolbarStyle = (backgroundColor: string) => ({
+  justifyContent: "space-between",
+  zIndex: 1004,
+  paddingTop: "3px",
+  width: 'min(100%, 100vw)',
+  display: "flex",
+  backgroundColor,
+} as const);
+
+const Toolbar = React.memo(({ title }: { title: React.ReactNode }) => {
+  const backgroundColor = useBackgroundColor();
+  const toolbarStyle = useMemo(() => getToolbarStyle(backgroundColor), [backgroundColor]);
+  return (
+    <div style={toolbarStyle}>
+      <div style={{ fontSize: "large", padding: "2px" }}>
+        <b>{title}</b>
+      </div>
+      <div
+        style={{
+          height: "100%",
+          padding: "2px",
+          display: "flex",
+          flexDirection: "row",
+        }}
+      >
+        <MarkButton format="bold" icon={<FormatBoldIcon />} />
+        <MarkButton format="italic" icon={<FormatItalicIcon />} />
+        <MarkButton format="underline" icon={<FormatUnderlinedIcon />} />
+        {/* <BlockButton format="heading-one" icon={<LooksOneIcon />} />
+    <BlockButton format="heading-two" icon={<LooksTwoIcon />} /> */}
+        <BlockButton
+          format="bulleted-list"
+          icon={<FormatListBulletedIcon />}
+        />
+      </div>
+    </div>
+  )
+})
+
 export type RenderEditableRegion = (args: {
   EditableElement: JSX.Element;
   editor: ReactEditor;
@@ -280,6 +321,14 @@ const SlateAutocompleteEditorComponent = <Triggers extends string[]>(
   );
   const renderLeaf = useCallback((props) => <Leaf {...props} />, []);
   const editor: ReactEditor = useEditor();
+  // editor.children = value is what sets Slate's value when the 'value' prop changes externally.
+  // we use useMemo so this is updated before the child renders, so it's up to date
+  // (if we used useEffect, we would have to trigger a second rendering after to show the changes.)
+  useMemo(() => {
+    editor.children = value;
+  }, [value, editor])
+
+
   const chars = useMemo(() => {
     const precedingText = getPrecedingText(editor);
     const results = getSearchResults(search, trigger, precedingText);
@@ -406,40 +455,8 @@ const SlateAutocompleteEditorComponent = <Triggers extends string[]>(
   const backgroundColor = useBackgroundColor();
   const theme = useTheme()
 
-  const renderToolbarContents = () => (<>
-    <div style={{ fontSize: "large", padding: "2px" }}>
-      <b>{title}</b>
-    </div>
-    <div
-      style={{
-        height: "100%",
-        padding: "2px",
-        display: "flex",
-        flexDirection: "row",
-      }}
-    >
-      <MarkButton format="bold" icon={<FormatBoldIcon />} />
-      <MarkButton format="italic" icon={<FormatItalicIcon />} />
-      <MarkButton format="underline" icon={<FormatUnderlinedIcon />} />
-      {/* <BlockButton format="heading-one" icon={<LooksOneIcon />} />
-      <BlockButton format="heading-two" icon={<LooksTwoIcon />} /> */}
-      <BlockButton
-        format="bulleted-list"
-        icon={<FormatListBulletedIcon />}
-      />
-    </div>
-  </>
-  )
-  const toolbarStyle = {
-    // visibility: isFocused ? undefined : "hidden",
-    justifyContent: "space-between",
-    zIndex: 1004,
-    paddingTop: "3px",
-    width: 'min(100%, 100vw)',
-    display: "flex",
-    backgroundColor,
-  } as const
-  const renderToolbar = () => (<div style={toolbarStyle}>{renderToolbarContents()}</div>);
+  const toolbarStyle = useMemo(() => getToolbarStyle(backgroundColor), [backgroundColor])
+  const renderToolbar = useCallback(() => <Toolbar title={title} />, [title]);
 
   const editable = props.renderEditableRegion({
     editor,
@@ -529,7 +546,7 @@ const SlateAutocompleteEditorComponent = <Triggers extends string[]>(
   );
 };
 
-export const Leaf: React.FC<RenderLeafProps> = ({ attributes, children, leaf }) => {
+export const Leaf: React.FC<RenderLeafProps> = React.memo(({ attributes, children, leaf }) => {
   if ((leaf as any).bold) {
     children = <strong>{children}</strong>;
   }
@@ -543,7 +560,7 @@ export const Leaf: React.FC<RenderLeafProps> = ({ attributes, children, leaf }) 
   }
 
   return <span {...attributes}>{children}</span>;
-};
+});
 const insertDrawing = (editor: ReactEditor, drawingReference: string) => {
   const drawing: DrawingElement = {
     type: "drawing",
@@ -593,6 +610,7 @@ const Reference: React.FC<RenderElementProps> = ({
       {...attributes}
       contentEditable={false}
       style={{
+        userSelect: "none",
         verticalAlign: "baseline",
         display: "inline-block",
         fontSize: "0.9em",
@@ -630,7 +648,7 @@ export const Element: React.FC<RenderElementProps & { parentDoc: string }> = (
       const drawingName = (props.element as any).drawingReference as string;
       return (
         <div {...attributes}>
-          <div contentEditable={false}>
+          <div contentEditable={false} style={{ userSelect: "none" }}>
             <mergeContext.Consumer>{({ inMergeContext }) => inMergeContext ? (
               <b>{'{{'}{drawingName}{'}}'}</b>
             ) : (
@@ -700,6 +718,7 @@ export const Element: React.FC<RenderElementProps & { parentDoc: string }> = (
           <div
             contentEditable={false}
             style={{
+              userSelect: "none",
               border: "1px solid " + theme.palette.divider,
               margin: ".25em",
               padding: ".25em",

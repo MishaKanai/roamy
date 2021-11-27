@@ -27,7 +27,7 @@ const drawerWidth = 240;
 interface ResponsiveDrawerProps {
     children: JSX.Element;
 }
-function ResponsiveDrawer(props: ResponsiveDrawerProps) {
+const ResponsiveDrawer = React.memo((props: ResponsiveDrawerProps) => {
     const [mobileOpen, setMobileOpen] = React.useState(false);
 
     const handleDrawerToggle = () => {
@@ -155,6 +155,6 @@ function ResponsiveDrawer(props: ResponsiveDrawerProps) {
             </Box>
         </Box>
     );
-}
+})
 
 export default ResponsiveDrawer;
