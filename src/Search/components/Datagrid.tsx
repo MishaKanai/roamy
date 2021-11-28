@@ -16,11 +16,15 @@ const DataTable = () => {
     })
     const dispatch = useDispatch()
     return <MUIDataTable
-        title={"Documents"}
+        title={"Concepts"}
         data={data}
         columns={[
             { name: "Name", options: { filterOptions: { fullWidth: true } } },
-            { name: "Created", options: { customBodyRender: (value) => moment(value).format(DATETIME_FORMAT) } },
+            { name: "Created", options: { sortCompare: (order) => ({ data: data1 }, { data: data2}) => {
+                const date1 = moment(data1);
+                const res = date1.isBefore(data2) ? 1 : date1.isAfter(data2) ? -1 : 0;
+                return res * (order === 'asc' ? 1 : -1)
+            }, customBodyRender: (value) => moment(value).format(DATETIME_FORMAT) } },
             { name: "Last Updated", options: { customBodyRender: (value) => moment(value).format(DATETIME_FORMAT) } }
         ]}
         options={{
