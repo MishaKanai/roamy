@@ -45,7 +45,7 @@ const Drawings = React.memo(() => {
 export const getApp = (history: History<unknown>) => {
   function App() {
     return (
-      <div>
+      <div style={{ height: '100%' }}>
         <ConnectedRouter history={history}>
           <AccessControlledPage>
           <div>

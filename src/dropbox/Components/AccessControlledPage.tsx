@@ -2,10 +2,11 @@ import React, { useContext } from "react";
 import { useSelector } from "react-redux";
 import { RootState } from "../../store/createRootReducer";
 import { DropboxAuth } from "dropbox";
-import PickDbxFile, { fileSelectPendingContext, FileSelectPendingProvider } from "./PickFile";
+import { fileSelectPendingContext, FileSelectPendingProvider } from "./PickFile";
 import { CircularProgress } from "@mui/material";
 import MergeEditorWrap from "../resolveMerge/components/MergePopup";
 import Layout from '../../components/Layout';
+import LandingPage from "./LandingPage";
 // aka app key
 const CLIENT_ID = "9r1uwr2l55chuy7";
 // var REDIRECT_URI = 'http://localhost:8080/pkce-browser';
@@ -51,14 +52,15 @@ const AccessControlledPage: React.FC<AccessControlledPageProps> = (props) => {
 
   const mergeResolvedKey = useSelector((state: RootState) => Boolean(state.merge.state === 'resolved'))
   if (!isAuthorized) {
-    return (
-      <div>
-        <button onClick={doAuth}>Authorize</button>
-      </div>
-    );
+    return <LandingPage dbxAuth={doAuth}>Authorize</LandingPage>
   }
   const content = <FileSelectPendingWrapper key={mergeResolvedKey + ''}>
-    <div>{fileSelected ? props.children : <PickDbxFile />}</div>
+    <div>{fileSelected ? props.children :
+     // <PickDbxFile />
+      <div>
+          {/* Land here after login */}
+      </div>
+     }</div>
   </FileSelectPendingWrapper>
 
   return <FileSelectPendingProvider><div>
