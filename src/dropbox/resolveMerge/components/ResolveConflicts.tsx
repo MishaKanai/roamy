@@ -69,7 +69,7 @@ const ResolveConflicts: React.FC<{
             })}
         </CardContent>
         <CardActions>
-            <Button color="primary" variant="contained" style={{ textTransform: 'capitalize' }} onClick={() => {
+            <Button color="primary" variant="contained" onClick={() => {
                     submitMerge(mergedState.documents, mergedState.drawings, remoteRev)
                 }}>
                 Submit

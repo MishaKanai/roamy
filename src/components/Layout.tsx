@@ -1,5 +1,6 @@
 import * as React from 'react';
 import Box from '@mui/material/Box';
+import moment from 'moment';
 import Divider from '@mui/material/Divider';
 import { Link } from 'react-router-dom';
 import Drawer from '@mui/material/Drawer';
@@ -9,87 +10,177 @@ import ListItem from '@mui/material/ListItem';
 import ListItemIcon from '@mui/material/ListItemIcon';
 import ListItemText from '@mui/material/ListItemText';
 import MenuIcon from '@mui/icons-material/Menu';
-import SearchIcon from '@mui/icons-material/Search';
-import SubjectIcon from '@mui/icons-material/Subject';
-import ScatterPlotIcon from '@mui/icons-material/ScatterPlot';
 import LogoutIcon from '@mui/icons-material/Logout';
 import SelectedFileAutocomplete from '../dropbox/Components/SelectedFileAutocomplete';
-import HistoryIcon from '@mui/icons-material/History';
-import CreateIcon from '@mui/icons-material/Create';
+// import HistoryIcon from '@mui/icons-material/History';
+// import CreateIcon from '@mui/icons-material/Create';
+// import AddIcon from '@mui/icons-material/Add';
+// import SettingsIcon from '@mui/icons-material/Settings';
 import { ListSubheader } from '@mui/material';
+import { useLocation } from 'react-router';
 import { useSelector } from 'react-redux';
-import { docNamesSelector } from '../SlateGraph/globalSelectors';
-import { drawingNamesSelector } from '../Excalidraw/globalSelectors';
 import BasicSpeedDial from './SpeedDial';
+import useFileSelected from '../dropbox/hooks/useFileSelected';
+import NetworkIcon from '../icons/NetworkIcon';
+import TableIcon from '../icons/TableIcon';
+import PenTipIcon from '../icons/PenTip';
+import DocumentIcon from '../icons/DocumentIcon';
+import { RootState } from '../store/createRootReducer';
+import { parsePath } from '../RecentlyOpened/store/reducer';
 
 const drawerWidth = 240;
+
+const useRecentlyUpdated = () => {
+    const documents = useSelector((state: RootState) => state.documents);
+    const drawings = useSelector((state: RootState) => state.drawings);
+    return React.useMemo(() => {
+        return [...Object.values(documents).map(d => ({ ...d, type: 'document' } as const)),
+        ...Object.values(drawings).map(d => ({ ...d, type: 'drawing' } as const))
+        ].sort((a, b) => {
+            const date1 = moment(a.lastUpdatedDate);
+            let res = date1.isAfter(b.lastUpdatedDate) ? -1 : date1.isBefore(b.lastUpdatedDate) ? 1 : 0;
+            return res;
+        })
+    }, [documents, drawings])
+}
+const useRecentlyOpened = () => {
+    const { pathname } = useLocation();
+    const { documents, drawings } = useSelector((state: RootState) => state.recentlyOpened);
+    return React.useMemo(() => {
+        const current = parsePath(pathname);
+        return [...Object.entries(documents).map(([name, date]) => ({ name, date, type: 'document' } as const)),
+        ...Object.entries(drawings).map(([name, date]) => ({ name, date, type: 'drawing' } as const))
+        ].filter(({ name, type }) => !current || type !== current.type || name !== current.name)
+        .sort((a, b) => {
+            const date1 = moment(a.date);
+            let res = date1.isAfter(b.date) ? -1 : date1.isBefore(b.date) ? 1 : 0;
+            return res;
+        })
+    }, [documents, drawings, pathname])
+}
+
 
 interface ResponsiveDrawerProps {
     children: JSX.Element;
 }
 const ResponsiveDrawer = React.memo((props: ResponsiveDrawerProps) => {
+    const fileLoaded = Boolean(useFileSelected());
     const [mobileOpen, setMobileOpen] = React.useState(false);
 
     const handleDrawerToggle = () => {
         setMobileOpen(!mobileOpen);
     };
-    const docNames = useSelector(docNamesSelector);
-    const drawingNames = useSelector(drawingNamesSelector);
+    const recentlyUpdated = useRecentlyUpdated();
+    const recentlyOpened = useRecentlyOpened();
     const drawer = (
         <div style={{ display: 'flex', flexDirection: 'column', height: '100%', justifyContent: 'space-between' }}>
-            <div>
-                <div style={{ margin: '1em' }}>
-                    <SelectedFileAutocomplete />
+            <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
+                <div>
+                    <div style={{ margin: '1em' }}>
+                        <SelectedFileAutocomplete />
+                    </div>
+                    <Divider />
+                    {fileLoaded && <div>
+                        <List dense>
+                            <ListItem dense button component={Link} to="/docs">
+                                <ListItemIcon>
+                                    <TableIcon />
+                                </ListItemIcon>
+                                <ListItemText primary="Concepts" />
+                            </ListItem>
+                            <ListItem dense button component={Link} to="/graph">
+                                <ListItemIcon>
+                                    <NetworkIcon />
+                                </ListItemIcon>
+                                <ListItemText primary="Graph View" />
+                            </ListItem>
+                            {/*
+                        <ListItem dense button>
+                            <ListItemIcon>
+                                <HistoryIcon />
+                            </ListItemIcon>
+                            <ListItemText primary="History" />
+                        </ListItem>
+                        */}
+                        </List>
+                        <Divider />
+                    </div>}
                 </div>
-                <Divider />
-                <List dense>
-                    <ListItem dense button component={Link} to="/docs">
-                        <ListItemIcon>
-                            <SearchIcon />
-                        </ListItemIcon>
-                        <ListItemText primary="Documents" />
-                    </ListItem>
-                    <ListItem dense button  component={Link} to="/graph">
-                        <ListItemIcon>
-                            <ScatterPlotIcon />
-                        </ListItemIcon>
-                        <ListItemText primary="Graph View" />
-                    </ListItem>
-                    <ListItem dense button>
-                        <ListItemIcon>
-                            <HistoryIcon />
-                        </ListItemIcon>
-                        <ListItemText primary="History" />
-                    </ListItem>
-                </List>
-                <Divider />
-                <List dense
-                    subheader={
-                        <ListSubheader component="div" id="nested-list-subheader">
-                            Recently Opened
-                        </ListSubheader>
-                    }>
-                    {docNames.map((docName) => (
-                        <ListItem key={docName} dense button component={Link} to={`/docs/${docName}`}>
-                            <ListItemIcon>
-                                <SubjectIcon />
-                            </ListItemIcon>
-                            <ListItemText primary={docName} />
-                        </ListItem>
-                    ))}
-                    {drawingNames.map((drawingName) => (
-                        <ListItem key={drawingName} dense button component={Link} to={`/drawings/${drawingName}`}>
-                            <ListItemIcon>
-                                <CreateIcon />
-                            </ListItemIcon>
-                            <ListItemText primary={drawingName} />
-                        </ListItem>
-                    ))}
-                </List>
+                {/* <div style={{ display: 'flex', justifyContent: 'space-between', flexDirection: 'row-reverse', padding: '4px 16px' }}>
+                    <IconButton color="primary" size="small">
+                        <AddIcon />
+                    </IconButton>
+                </div> */}
+                 {fileLoaded && <div style={{ overflow: 'auto' }}>
+                    <List dense
+                        subheader={
+                            <ListSubheader component="div" id="recentlyopened-list-subheader">
+                                Recently Opened
+                            </ListSubheader>
+                        }>
+                        {recentlyOpened.map(d => {
+                            const key = d.name + ':' + d.type
+                            if (d.type === 'document') {
+                                return (
+                                    <ListItem key={key} dense button component={Link} to={`/docs/${d.name}`}>
+                                        <ListItemIcon>
+                                            <DocumentIcon />
+                                        </ListItemIcon>
+                                        <ListItemText primary={d.name} />
+                                    </ListItem>
+                                )
+                            }
+                            return (
+                                <ListItem key={key} dense button component={Link} to={`/drawings/${d.name}`}>
+                                    <ListItemIcon>
+                                        <PenTipIcon />
+                                    </ListItemIcon>
+                                    <ListItemText primary={d.name} />
+                                </ListItem>
+                            )
+                        })}
+                    </List>
+                </div>}
+                {false && fileLoaded && <div style={{ overflow: 'auto' }}>
+                    <List dense
+                        subheader={
+                            <ListSubheader component="div" id="nested-list-subheader">
+                                Recently Changed
+                            </ListSubheader>
+                        }>
+                        {recentlyUpdated.map(d => {
+                            const key = d.name + ':' + d.type
+                            if (d.type === 'document') {
+                                return (
+                                    <ListItem key={key} dense button component={Link} to={`/docs/${d.name}`}>
+                                        <ListItemIcon>
+                                            <DocumentIcon />
+                                        </ListItemIcon>
+                                        <ListItemText primary={d.name} />
+                                    </ListItem>
+                                )
+                            }
+                            return (
+                                <ListItem key={key} dense button component={Link} to={`/drawings/${d.name}`}>
+                                    <ListItemIcon>
+                                        <PenTipIcon />
+                                    </ListItemIcon>
+                                    <ListItemText primary={d.name} />
+                                </ListItem>
+                            )
+                        })}
+                    </List>
+                </div>}
             </div>
             <div>
                 <Divider />
                 <List dense>
+                    {/* <ListItem dense button>
+                        <ListItemIcon>
+                            <SettingsIcon />
+                        </ListItemIcon>
+                        <ListItemText primary="Settings" />
+                    </ListItem> */}
                     <ListItem dense button onClick={() => {
                         localStorage.clear()
                         window.location.href = "/";
@@ -151,7 +242,7 @@ const ResponsiveDrawer = React.memo((props: ResponsiveDrawerProps) => {
                 sx={{ flexGrow: 1, pl: 3, width: { sm: `calc(100% - ${drawerWidth}px)` } }}
             >
                 {props.children}
-                <BasicSpeedDial />
+                {fileLoaded && <BasicSpeedDial />}
             </Box>
         </Box>
     );

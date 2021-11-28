@@ -9,6 +9,7 @@ import authReducer, { DropboxAuthState } from '../dropbox/store/reducer';
 import storage from "redux-persist/lib/storage";
 import { persistReducer } from 'redux-persist'
 import mergeReducer, { MergeState } from "../dropbox/resolveMerge/store/reducer";
+import recentlyOpenedReducer, { RecentlyOpenedState } from "../RecentlyOpened/store/reducer";
 
 const authPersistConfig = {
   key: 'auth',
@@ -21,6 +22,7 @@ export type RootState = {
   drawings: DrawingDocuments;
   auth: DropboxAuthState;
   merge: MergeState;
+  recentlyOpened: RecentlyOpenedState;
 };
 const createRootReducer = (history: History) =>
   combineReducers<RootState>({
@@ -28,7 +30,8 @@ const createRootReducer = (history: History) =>
     documents: slateDocumentsReducer,
     drawings: drawingsReducer,
     auth: persistReducer(authPersistConfig, authReducer) as typeof authReducer,
-    merge: mergeReducer
+    merge: mergeReducer,
+    recentlyOpened: recentlyOpenedReducer
   });
 
 export default createRootReducer;

@@ -10,26 +10,44 @@ import configureStore from "./store/configureStore";
 import { PersistGate } from "redux-persist/integration/react";
 import CssBaseline from '@mui/material/CssBaseline';
 
+const extraComponents: any = {
+  MUIDataTable: {
+    styleOverrides: {
+      paper: {
+        boxShadow: "none",
+        backgroundColor: 'transparent',
+        backgroundImage: 'none'
+      }
+    }
+  }
+}
+
 const globalTheme = createTheme({
   palette: {
     mode: 'dark'
   },
   typography: {
-    fontFamily: "Courier Prime"
+    fontFamily: "Courier Prime",
   }
 })
 const theme = createTheme({
   components: {
-    MUIDataTable: {
+    MuiButton: {
       styleOverrides: {
-        paper: {
-          boxShadow: "none",
-          backgroundColor: 'transparent',
-          backgroundImage: 'none'
+        root: {
+          textTransform: 'capitalize'
         }
       }
-    } as any,
-  } as any
+    },
+    MuiListItemText: {
+      styleOverrides: {
+        root: {
+          overflowWrap: 'break-word'
+        }
+      }
+    },
+    ...extraComponents,
+  }
 }, globalTheme)
 
 const { store, persistor } = configureStore();

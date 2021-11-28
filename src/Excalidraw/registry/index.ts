@@ -1,4 +1,3 @@
-import { ImportedDataState } from "@excalidraw/excalidraw/types/data/types";
 import { ExcalidrawImperativeAPI } from "@excalidraw/excalidraw/types/types";
 /*
     When we mount Drawings, we register our excalidraw instances here.
@@ -16,12 +15,7 @@ const excalidrawRegistry: {
             instance: ExcalidrawImperativeAPI;
         }
     }
-} = {
-
-}
-console.log({
-    excalidrawRegistry
-})
+} = {}
 
 export const register = (drawingName: string, id: string, instance: ExcalidrawImperativeAPI) => {
     if (!excalidrawRegistry[drawingName]) {

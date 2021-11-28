@@ -12,6 +12,8 @@ export interface DrawingDocument {
     drawingHash: string;
     backReferences: string[]
     backReferencesHash: string;
+    createdDate: Date;
+    lastUpdatedDate: Date;
 }
 
 export type DrawingDocuments = {
@@ -80,7 +82,8 @@ const drawingsReducer = (state: DrawingDocuments = {}, action: RootAction): Draw
         // DRAWING CRUD
         case getType(actions.createDrawingAction): {
             const { drawing, drawingName, withBackref } = action.payload;
-            const backReferences = withBackref ? [withBackref] : []
+            const backReferences = withBackref ? [withBackref] : [];
+            const createdDate = new Date();
             return {
                 ...state,
                 [drawingName]: {
@@ -88,13 +91,15 @@ const drawingsReducer = (state: DrawingDocuments = {}, action: RootAction): Draw
                     drawing,
                     drawingHash: hashSum(drawing),
                     backReferences,
-                    backReferencesHash: hashSum(backReferences)
+                    backReferencesHash: hashSum(backReferences),
+                    createdDate,
+                    lastUpdatedDate: createdDate
                 }
             }
         }
         case getType(actions.updateDrawingAction): {
             const { newDrawing: _newDrawing, drawingName } = action.payload;
-            const { backReferences, backReferencesHash, drawing: prevDrawing, drawingHash: prevDrawingHash } = state[drawingName]
+            const { backReferences, backReferencesHash, drawing: prevDrawing, drawingHash: prevDrawingHash, createdDate } = state[drawingName]
             const newDrawing = Object.assign({}, prevDrawing, _newDrawing)
             const newDrawingHash = hashSum(newDrawing);
             if (newDrawingHash === prevDrawingHash) {
@@ -107,7 +112,9 @@ const drawingsReducer = (state: DrawingDocuments = {}, action: RootAction): Draw
                     drawing: newDrawing,
                     drawingHash: newDrawingHash,
                     backReferences,
-                    backReferencesHash
+                    backReferencesHash,
+                    createdDate: createdDate ?? new Date(),
+                    lastUpdatedDate: new Date()
                 }
             }
         }
