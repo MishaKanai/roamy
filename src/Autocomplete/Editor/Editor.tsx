@@ -7,12 +7,12 @@ import React, {
   useContext,
 } from "react";
 import {
-  Node,
   Editor,
   Transforms,
   Range,
   createEditor,
   Element as SlateElement,
+  Descendant,
 } from "slate";
 import { withHistory } from "slate-history";
 import {
@@ -33,7 +33,7 @@ import FormatUnderlinedIcon from "@mui/icons-material/FormatUnderlined";
 import FormatItalicIcon from "@mui/icons-material/FormatItalic";
 import FormatListBulletedIcon from "@mui/icons-material/FormatListBulleted";
 import Page from "../../SlateGraph/Page";
-import { DrawingElement, SlateNode } from "../../SlateGraph/store/domain";
+import { DrawingElement, CustomElement, CustomEditor, PortalElement, ReferenceElement } from "../../SlateGraph/slate.d";
 import Link from "../../components/Link";
 import deepEqual from "fast-deep-equal";
 import HoverBacklinks from "../../components/AnchoredPopper";
@@ -55,35 +55,24 @@ const isIos = /(iPad|iPhone|iPod)/g.test(navigator.userAgent);
 // const Editable = React.memo(_Editable);
 const Editable = _Editable;
 
-type ReferenceElement = {
-  type: "reference";
-  docReference: string;
-  children: Node[];
-};
-type PortalElement = {
-  type: "portal";
-  portalReference: string;
-  children: Node[];
-};
-
 /*
     TODO: allow editor composition, like adding 'withTables
 */
 
-const withReferences = (editor: ReactEditor) => {
+const withReferences = (editor: CustomEditor) => {
   const { isInline, isVoid } = editor;
 
-  editor.isInline = (element: SlateElement) => {
-    return (element as any).type === "reference" ? true : isInline(element);
+  editor.isInline = (element: CustomElement) => {
+    return element.type === "reference" ? true : isInline(element);
   };
 
-  editor.isVoid = (element: SlateElement) => {
-    return (element as any).type === "reference" ? true : isVoid(element);
+  editor.isVoid = (element: CustomElement) => {
+    return element.type === "reference" ? true : isVoid(element);
   };
 
   return editor;
 };
-const withPortals = (editor: ReactEditor) => {
+const withPortals = (editor: CustomEditor) => {
   const { isVoid } = editor;
   editor.isVoid = (element: any) => {
     return element.type === "portal" ? true : isVoid(element);
@@ -91,7 +80,7 @@ const withPortals = (editor: ReactEditor) => {
   return editor;
 };
 
-const getPrecedingText = (editor: ReactEditor) =>
+const getPrecedingText = (editor: CustomEditor) =>
   (editor.selection &&
     Editor.string(
       editor,
@@ -182,7 +171,7 @@ const toggleBlock = (editor: Editor, format: BlockFormat) => {
 
   if (!isActive && isList) {
     const block = { type: format, children: [] };
-    Transforms.wrapNodes(editor, block);
+    Transforms.wrapNodes(editor, block as CustomElement);
   }
 };
 
@@ -280,8 +269,8 @@ interface SlateTemplateEditorProps<Triggers extends string[]> {
     text: string;
     char: string;
   }[];
-  value: Node[];
-  setValue: (value: Node[]) => void;
+  value: Descendant[];
+  setValue: (value: Descendant[]) => void;
   renderEditableRegion: RenderEditableRegion;
   createDoc: (name: string) => void;
   docName: string;
@@ -319,7 +308,7 @@ const SlateAutocompleteEditorComponent = <Triggers extends string[]>(
     [docName]
   );
   const renderLeaf = useCallback((props) => <Leaf {...props} />, []);
-  const editor: ReactEditor = useEditor();
+  const editor = useEditor();
   // editor.children = value is what sets Slate's value when the 'value' prop changes externally.
   // we use useMemo so this is updated before the child renders, so it's up to date
   // (if we used useEffect, we would have to trigger a second rendering after to show the changes.)
@@ -425,7 +414,7 @@ const SlateAutocompleteEditorComponent = <Triggers extends string[]>(
   }, [chars.length, editor, index, search, target]);
   const [isFocused, setIsFocused] = useState(false);
   const _handleChange = useCallback(
-    (_value: SlateNode[]) => {
+    (_value: Descendant[]) => {
       // this gets called on clicks! we need to only update on different values in order to prevent losing focus when changing focus between parents/children/sibling editors
       if (!deepEqual(_value, value)) {
         setValue(_value);
@@ -560,7 +549,7 @@ export const Leaf: React.FC<RenderLeafProps> = React.memo(({ attributes, childre
 
   return <span {...attributes}>{children}</span>;
 });
-const insertDrawing = (editor: ReactEditor, drawingReference: string) => {
+const insertDrawing = (editor: CustomEditor, drawingReference: string) => {
   const drawing: DrawingElement = {
     type: "drawing",
     drawingReference,
@@ -572,7 +561,7 @@ const insertDrawing = (editor: ReactEditor, drawingReference: string) => {
   ]);
   Transforms.move(editor);
 };
-const insertPortal = (editor: ReactEditor, portalReference: string) => {
+const insertPortal = (editor: CustomEditor, portalReference: string) => {
   const portal: PortalElement = {
     type: "portal",
     portalReference,
@@ -584,7 +573,7 @@ const insertPortal = (editor: ReactEditor, portalReference: string) => {
   ]);
   Transforms.move(editor);
 };
-const insertReference = (editor: ReactEditor, docReference: string) => {
+const insertReference = (editor: CustomEditor, docReference: string) => {
   const reference: ReferenceElement = {
     type: "reference",
     docReference,

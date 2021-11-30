@@ -1,13 +1,13 @@
 import { getType } from 'typesafe-actions'
 import { RootAction } from '../../store/action'
 import * as actions from './actions';
-import { SlateNode } from './domain'
 import getReferencesFromNodes from './util/getReferencesFromNodes';
 import hashSum from 'hash-sum';
+import { Descendant } from 'slate';
 
 export interface SlateDocument {
     name: string;
-    document: SlateNode[];
+    document: Descendant[];
     documentHash: string;
     references: string[]; // to other docs
     backReferences: string[]

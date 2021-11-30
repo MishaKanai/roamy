@@ -1,13 +1,13 @@
 import React, { useCallback } from 'react';
+import { Descendant } from 'slate';
 import {
     Slate,
     Editable,
 } from "slate-react";
 import { useEditor, Element, Leaf } from "./Editor";
-import { SlateNode } from "../../SlateGraph/store/domain";
 
 interface ReadOnlyDocProps {
-    document: SlateNode[];
+    document: Descendant[];
     docName: string;
 }
 const ReadOnlyDoc: React.FC<ReadOnlyDocProps> = ({ document, docName }) => {

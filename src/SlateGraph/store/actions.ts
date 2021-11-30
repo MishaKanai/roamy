@@ -1,10 +1,10 @@
+import { Descendant } from 'slate';
 import { createCustomAction } from 'typesafe-actions';
 import { CREATE_DOC, UPDATE_DOC, DELETE_DOC, REPLACE_DOCS } from './constants'
-import { SlateNode } from './domain';
 import { SlateDocuments } from './reducer';
 
 export const updateDocAction = createCustomAction(UPDATE_DOC, type => {
-    return (docName: string, newDoc: SlateNode[], prevDoc: SlateNode[]) => {
+    return (docName: string, newDoc: Descendant[], prevDoc: Descendant[]) => {
         return {
             type,
             payload: {
@@ -17,7 +17,7 @@ export const updateDocAction = createCustomAction(UPDATE_DOC, type => {
 });
 
 export const createDocAction = createCustomAction(CREATE_DOC, type => {
-    return (docName: string, doc: SlateNode[], options?: {
+    return (docName: string, doc: Descendant[], options?: {
         withBackref?: string;
     }) => {
         return {

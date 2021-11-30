@@ -8,13 +8,13 @@ import {
   deleteDocAction,
   updateDocAction,
 } from "./store/actions";
-import { SlateNode } from "./store/domain";
 import deepEqual from "fast-deep-equal";
 import HoverBacklinks from "../components/AnchoredPopper";
 import { v4 as uuidv4 } from 'uuid';
 import mergeContext from "../dropbox/resolveMerge/mergeContext";
 import { RootAction } from "../store/action";
 import { RenderEditableRegion } from "../Autocomplete/Editor/Editor";
+import { Descendant } from "slate";
 
 export const useRoamyDispatch = (): (action: RootAction) => void => {
   const mergeCtxt = useContext(mergeContext);
@@ -28,7 +28,7 @@ const renderEditableRegionExtraPadding: RenderEditableRegion = ({
 
 interface PageProps {
   docName: string;
-  currDoc?: SlateNode[];
+  currDoc?: Descendant[];
   viewedFromParentDoc?: string;
   title?: React.ReactNode;
 }
@@ -44,7 +44,7 @@ const createInitialEmptyDoc = () => [
       },
     ],
   },
-];
+] as any as Descendant[];
 export const useCreateChildDoc = (docName: string) => {
   const dispatch = useRoamyDispatch();
   const createChildDoc = useCallback(
@@ -63,7 +63,7 @@ export const useCreateChildDoc = (docName: string) => {
 }
 const Page: React.FC<PageProps> = React.memo(
   ({ docName, viewedFromParentDoc, title, currDoc: currDocProp }) => {
-    const initialDoc: SlateNode[] = useMemo(createInitialEmptyDoc, []);
+    const initialDoc: Descendant[] = useMemo(createInitialEmptyDoc, []);
     const currDoc = useSelector(
       (state: RootState) => currDocProp ?? state.documents[docName]?.document ?? initialDoc
     );
@@ -104,7 +104,7 @@ const Page: React.FC<PageProps> = React.memo(
       };
     }, []); // eslint-disable-line
     const setDoc = useCallback(
-      (newDoc: SlateNode[]) => {
+      (newDoc: Descendant[]) => {
         dispatch(updateDocAction(docName, newDoc, currDocRef.current));
       },
       [docName, dispatch]

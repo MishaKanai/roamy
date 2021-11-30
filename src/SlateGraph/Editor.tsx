@@ -1,6 +1,6 @@
 import React from "react";
 import { useSelector } from "react-redux";
-import { Node } from "slate";
+import { Descendant } from "slate";
 import { ReactEditor } from "slate-react";
 import SlateAutocompleteEditor, { RenderEditableRegion } from "../Autocomplete/Editor/Editor";
 import { drawingNamesSelector } from "../Excalidraw/globalSelectors";
@@ -18,9 +18,9 @@ export const defaultRenderEditableRegion: RenderEditableRegion = ({
 };
 const SlateGraphEditor: React.FunctionComponent<{
   title?: React.ReactNode;
-  value: Node[];
+  value: Descendant[];
   docName: string;
-  setValue: (value: Node[]) => void;
+  setValue: (value: Descendant[]) => void;
   createDoc: (newDocName: string) => void;
   renderEditableRegion?: RenderEditableRegion;
 }> = React.memo(({ value, setValue, createDoc, docName, title, ...props }) => {

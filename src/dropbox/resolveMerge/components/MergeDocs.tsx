@@ -2,17 +2,17 @@ import { Checkbox, FormControlLabel, useTheme } from '@mui/material';
 import React, { useCallback, useContext, useState } from 'react';
 import ReadOnlyDoc from '../../../Autocomplete/Editor/ReadOnly';
 import Page from '../../../SlateGraph/Page';
-import { SlateNode } from '../../../SlateGraph/store/domain';
 import EditIcon from '@mui/icons-material/Edit';
 import ToggleButton from '@mui/material/ToggleButton';
 import mergeContext from '../mergeContext';
 import { updateDocAction } from '../../../SlateGraph/store/actions';
+import { Descendant } from 'slate';
 
 interface MergeDocsProps {
     docName: string
-    left: SlateNode[];
-    right: SlateNode[];
-    curr: SlateNode[];
+    left: Descendant[];
+    right: Descendant[];
+    curr: Descendant[];
 }
 const MergeDocs: React.FC<MergeDocsProps> = ({ left, right, docName, curr }) => {
     const mergeCtxt = useContext(mergeContext);
