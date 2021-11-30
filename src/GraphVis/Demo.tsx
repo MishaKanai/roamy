@@ -4,6 +4,7 @@ import { Theme, useTheme } from "@mui/material";
 import { useSelector } from "react-redux";
 import { RootState } from "../store/createRootReducer";
 import { createSelector } from "reselect";
+import Search from "../Search/components/Search";
 
 const getOptions = (theme: Theme) => {
     const contrastTextColor = theme.palette.getContrastText(theme.palette.background.default);
@@ -106,8 +107,15 @@ const AppGraph = () => {
       }
     }, [nodes, edges])
 
+  /*
+    TODO
+    debounce listener to window resize, and remount when finished.
+  */
   return (
     <div>
+      <div style={{ marginTop: '1em' }}>
+        <Search />       
+      </div>
       <Graph graph={graph} options={getOptions(theme)} events={events} style={{ height: "640px" }} />
     </div>
   );
