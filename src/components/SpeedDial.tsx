@@ -60,7 +60,7 @@ const StyledSpeedDial = styled(SpeedDial)(({ theme }) => ({
   }));
 
 
-export default function MainSpeedDial() {
+const MainSpeedDial = React.memo(() => {
   const [open, setOpen] = React.useState<'none' | 'drawing' | 'doc'>('none');
   return (
     <>
@@ -87,4 +87,5 @@ export default function MainSpeedDial() {
       </StyledSpeedDial>
     </>
   );
-}
+})
+export default MainSpeedDial;
