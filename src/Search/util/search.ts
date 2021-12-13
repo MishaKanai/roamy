@@ -56,7 +56,7 @@ const traverseDocs = (docs: SlateDocuments, cb: DocTextCb) => {
     })(doc.document)
   })
 }
-interface InvertedIndex {
+export interface InvertedIndex {
   [word: string]: {
     [docName: string]: {
       // in the future we may include 'type' of occurrence
