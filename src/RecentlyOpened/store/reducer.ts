@@ -1,5 +1,8 @@
 import { RootAction } from '../../store/action';
 import produce from 'immer'
+import { deleteDocAction } from '../../SlateGraph/store/actions';
+import { deleteDrawingAction } from '../../Excalidraw/store/actions';
+import { getType } from 'typesafe-actions';
 
 export interface RecentlyOpenedState {
     documents: {
@@ -12,8 +15,8 @@ export interface RecentlyOpenedState {
 
 
 export const parsePath = (path: string) => {
-    const isDoc = path.includes('/docs/');
-    const isDrawing = path.includes('/drawings')
+    const isDoc = path.startsWith('/docs/');
+    const isDrawing = path.startsWith('/drawings/')
     if (isDoc || isDrawing) {
         const name = path.slice(path.lastIndexOf('/') + 1);
         return {
@@ -47,6 +50,18 @@ const recentlyOpenedReducer = (state: RecentlyOpenedState = createInitialState()
     switch (action.type) {
         case '@@router/LOCATION_CHANGE': {
             return mergeState(state, action.payload.location.pathname)
+        }
+        case getType(deleteDocAction): {
+            return {
+                ...state,
+                documents: Object.fromEntries(Object.entries(state.documents).filter(([name]) => name !== action.payload.docName))
+            }
+        }
+        case getType(deleteDrawingAction): {
+            return {
+                ...state,
+                drawings: Object.fromEntries(Object.entries(state.drawings).filter(([name]) => name !== action.payload.drawingName))
+            }
         }
         default:
             return state;
