@@ -2,10 +2,6 @@ import { useSelector } from "react-redux";
 import { RootState } from "../../store/createRootReducer";
 
 const useFileSelected = () => {
-    const auth = useSelector((state: RootState) => state.auth);
-    if (auth.state === 'authorized') {
-        return auth.selectedFilePath;
-    }
-    return null;
+    return useSelector((state: RootState) => state.auth?.state === 'authorized' ? state.auth.selectedFilePath : null);
 }
 export default useFileSelected

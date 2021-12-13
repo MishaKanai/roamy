@@ -27,12 +27,15 @@ import PenTipIcon from '../icons/PenTip';
 import DocumentIcon from '../icons/DocumentIcon';
 import { RootState } from '../store/createRootReducer';
 import { parsePath } from '../RecentlyOpened/store/reducer';
+import { useDebounce } from 'use-debounce/lib';
 
 const drawerWidth = 240;
 
 const useRecentlyUpdated = () => {
-    const documents = useSelector((state: RootState) => state.documents);
-    const drawings = useSelector((state: RootState) => state.drawings);
+    const _documents = useSelector((state: RootState) => state.documents);
+    const _drawings = useSelector((state: RootState) => state.drawings);
+    const [drawings] = useDebounce(_drawings, 1000)
+    const [documents] = useDebounce(_documents, 1000)
     return React.useMemo(() => {
         return [...Object.values(documents).map(d => ({ ...d, type: 'document' } as const)),
         ...Object.values(drawings).map(d => ({ ...d, type: 'drawing' } as const))
@@ -51,14 +54,85 @@ const useRecentlyOpened = () => {
         return [...Object.entries(documents).map(([name, date]) => ({ name, date, type: 'document' } as const)),
         ...Object.entries(drawings).map(([name, date]) => ({ name, date, type: 'drawing' } as const))
         ].filter(({ name, type }) => !current || type !== current.type || name !== current.name)
-        .sort((a, b) => {
-            const date1 = moment(a.date);
-            let res = date1.isAfter(b.date) ? -1 : date1.isBefore(b.date) ? 1 : 0;
-            return res;
-        })
+            .sort((a, b) => {
+                const date1 = moment(a.date);
+                let res = date1.isAfter(b.date) ? -1 : date1.isBefore(b.date) ? 1 : 0;
+                return res;
+            })
     }, [documents, drawings, pathname])
 }
 
+const RecentlyUpdatedList = () => {
+    const recentlyUpdated = useRecentlyUpdated();
+    return (
+        <div style={{ overflow: 'auto' }}>
+            <List dense
+                subheader={
+                    <ListSubheader component="div" id="nested-list-subheader">
+                        Recently Changed
+                    </ListSubheader>
+                }>
+                {recentlyUpdated.map(d => {
+                    const key = d.name + ':' + d.type
+                    if (d.type === 'document') {
+                        return (
+                            <ListItem key={key} dense button component={Link} to={`/docs/${d.name}`}>
+                                <ListItemIcon>
+                                    <DocumentIcon />
+                                </ListItemIcon>
+                                <ListItemText primary={d.name} />
+                            </ListItem>
+                        )
+                    }
+                    return (
+                        <ListItem key={key} dense button component={Link} to={`/drawings/${d.name}`}>
+                            <ListItemIcon>
+                                <PenTipIcon />
+                            </ListItemIcon>
+                            <ListItemText primary={d.name} />
+                        </ListItem>
+                    )
+                })}
+            </List>
+        </div>
+    )
+}
+
+const RecentlyOpenedList = () => {
+    const recentlyOpened = useRecentlyOpened();
+    return (
+        <div style={{ overflow: 'auto' }}>
+            <List dense
+                subheader={
+                    <ListSubheader component="div" id="recentlyopened-list-subheader">
+                        Recently Opened
+                    </ListSubheader>
+                }>
+                {recentlyOpened.map(d => {
+                    const key = d.name + ':' + d.type
+                    if (d.type === 'document') {
+                        return (
+                            <ListItem key={key} dense button component={Link} to={`/docs/${d.name}`}>
+                                <ListItemIcon>
+                                    <DocumentIcon />
+                                </ListItemIcon>
+                                <ListItemText primary={d.name} />
+                            </ListItem>
+                        )
+                    }
+                    return (
+                        <ListItem key={key} dense button component={Link} to={`/drawings/${d.name}`}>
+                            <ListItemIcon>
+                                <PenTipIcon />
+                            </ListItemIcon>
+                            <ListItemText primary={d.name} />
+                        </ListItem>
+                    )
+                })}
+            </List>
+        </div>
+    )
+}
 
 interface ResponsiveDrawerProps {
     children: JSX.Element;
@@ -70,8 +144,7 @@ const ResponsiveDrawer = React.memo((props: ResponsiveDrawerProps) => {
     const handleDrawerToggle = () => {
         setMobileOpen(!mobileOpen);
     };
-    const recentlyUpdated = useRecentlyUpdated();
-    const recentlyOpened = useRecentlyOpened();
+
     const drawer = (
         <div style={{ display: 'flex', flexDirection: 'column', height: '100%', justifyContent: 'space-between' }}>
             <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
@@ -111,66 +184,8 @@ const ResponsiveDrawer = React.memo((props: ResponsiveDrawerProps) => {
                         <AddIcon />
                     </IconButton>
                 </div> */}
-                 {fileLoaded && <div style={{ overflow: 'auto' }}>
-                    <List dense
-                        subheader={
-                            <ListSubheader component="div" id="recentlyopened-list-subheader">
-                                Recently Opened
-                            </ListSubheader>
-                        }>
-                        {recentlyOpened.map(d => {
-                            const key = d.name + ':' + d.type
-                            if (d.type === 'document') {
-                                return (
-                                    <ListItem key={key} dense button component={Link} to={`/docs/${d.name}`}>
-                                        <ListItemIcon>
-                                            <DocumentIcon />
-                                        </ListItemIcon>
-                                        <ListItemText primary={d.name} />
-                                    </ListItem>
-                                )
-                            }
-                            return (
-                                <ListItem key={key} dense button component={Link} to={`/drawings/${d.name}`}>
-                                    <ListItemIcon>
-                                        <PenTipIcon />
-                                    </ListItemIcon>
-                                    <ListItemText primary={d.name} />
-                                </ListItem>
-                            )
-                        })}
-                    </List>
-                </div>}
-                {false && fileLoaded && <div style={{ overflow: 'auto' }}>
-                    <List dense
-                        subheader={
-                            <ListSubheader component="div" id="nested-list-subheader">
-                                Recently Changed
-                            </ListSubheader>
-                        }>
-                        {recentlyUpdated.map(d => {
-                            const key = d.name + ':' + d.type
-                            if (d.type === 'document') {
-                                return (
-                                    <ListItem key={key} dense button component={Link} to={`/docs/${d.name}`}>
-                                        <ListItemIcon>
-                                            <DocumentIcon />
-                                        </ListItemIcon>
-                                        <ListItemText primary={d.name} />
-                                    </ListItem>
-                                )
-                            }
-                            return (
-                                <ListItem key={key} dense button component={Link} to={`/drawings/${d.name}`}>
-                                    <ListItemIcon>
-                                        <PenTipIcon />
-                                    </ListItemIcon>
-                                    <ListItemText primary={d.name} />
-                                </ListItem>
-                            )
-                        })}
-                    </List>
-                </div>}
+                {fileLoaded && <RecentlyOpenedList />}
+                {false && fileLoaded && <RecentlyUpdatedList />}
             </div>
             <div>
                 <Divider />
