@@ -195,24 +195,37 @@ const BlockButton: React.FC<{ format: BlockFormat; icon: JSX.Element }> = ({
 };
 
 const CREATE_PREFIX = 'create "';
-const MarkButton: React.FC<{ format: HotKeyFormat; icon: JSX.Element }> = ({
+const MarkButton: React.FC<{ format: HotKeyFormat; icon: JSX.Element }> = React.memo(({
   format,
   icon,
 }) => {
   const editor = useSlate();
+  const handleMouseDown = useCallback((event: React.MouseEvent<HTMLButtonElement>) => {
+    event.preventDefault();
+    toggleMark(editor, format);
+  }, [editor, format])
+
+  const markIsActive = isMarkActive(editor, format)
+  const theme = useTheme();
+  const style = useMemo(() => {
+    if (markIsActive) {
+      return {
+        color: theme.palette.primary.main
+      }
+    }
+    return undefined;
+  }, [markIsActive, theme])
+
   return (
     <IconButton
-      style={isMarkActive(editor, format) ? { color: "black" } : undefined}
+      style={style}
       size="small"
-      onMouseDown={(event: React.MouseEvent<HTMLButtonElement>) => {
-        event.preventDefault();
-        toggleMark(editor, format);
-      }}
+      onMouseDown={handleMouseDown}
     >
       {icon}
     </IconButton>
   );
-};
+});
 
 const getToolbarStyle = (backgroundColor: string) => ({
   justifyContent: "space-between",
@@ -553,7 +566,7 @@ const insertDrawing = (editor: CustomEditor, drawingReference: string) => {
   const drawing: DrawingElement = {
     type: "drawing",
     drawingReference,
-    children: [{ text: "" }],
+    children: [{ text: "{{" + drawingReference + "}}" }],
   };
   Transforms.insertNodes(editor, [
     drawing,
@@ -577,11 +590,11 @@ const insertReference = (editor: CustomEditor, docReference: string) => {
   const reference: ReferenceElement = {
     type: "reference",
     docReference,
-    children: [{ text: "<<" + docReference + ">>" }],
+    children: [{ text: "[[" + docReference + "]]" }],
   };
   Transforms.insertNodes(editor, [
     reference,
-    { type: "paragraph", children: [{ text: "" }] } as any,
+    // { type: "paragraph", children: [{ text: "" }] } as any,
   ]);
   Transforms.move(editor);
 };
