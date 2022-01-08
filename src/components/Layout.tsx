@@ -54,7 +54,10 @@ const useRecentlyOpened = () => {
         const current = parsePath(pathname);
         return [...Object.entries(documents).map(([name, date]) => ({ name, date, type: 'document' } as const)),
         ...Object.entries(drawings).map(([name, date]) => ({ name, date, type: 'drawing' } as const))
-        ].filter(({ name, type }) => !current || type !== current.type || name !== current.name)
+        ].map((entry) => {
+            const { name, type } = entry;
+            return {  ...entry, isCurrent: Boolean(current && type === current.type && name === current.name), }
+        })
             .sort((a, b) => {
                 const date1 = moment(a.date);
                 let res = date1.isAfter(b.date) ? -1 : date1.isBefore(b.date) ? 1 : 0;
@@ -113,7 +116,7 @@ const RecentlyOpenedList = () => {
                     const key = d.name + ':' + d.type
                     if (d.type === 'document') {
                         return (
-                            <ListItem key={key} dense button component={Link} to={`/docs/${d.name}`}>
+                            <ListItem disabled={d.isCurrent} key={key} dense button component={Link} to={`/docs/${d.name}`}>
                                 <ListItemIcon>
                                     <DocumentIcon />
                                 </ListItemIcon>
