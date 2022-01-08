@@ -1,7 +1,7 @@
 import { DropboxResponseError } from "dropbox";
 import { getType } from "typesafe-actions";
 import { RootAction } from "../../store/action";
-import { authSuccessAction, selectFilePathAction, syncDebounceStartAction, syncFailureAction, syncStartAction, syncSuccessAction } from './actions';
+import { authSuccessAction, clearCurrentFileAction, selectFilePathAction, syncDebounceStartAction, syncFailureAction, syncStartAction, syncSuccessAction } from './actions';
 
 type Success = {
     _type: 'success'
@@ -31,6 +31,16 @@ export type DropboxAuthState = {
 } | AuthorizedAuthState
 const dropboxAuthReducer = (state: DropboxAuthState = { state: 'not_authorized'}, action: RootAction): DropboxAuthState => {
     switch (action.type) {
+        case getType(clearCurrentFileAction): {
+            if (state.state !== 'authorized') {
+                return state;
+            }
+            return {
+                ...state,
+                selectedFilePath: '',
+                syncing: { _type: 'initial' }
+            }
+        }
         case getType(authSuccessAction): {
             return {
                 state: 'authorized',

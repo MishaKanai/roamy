@@ -8,8 +8,6 @@ import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../../store/createRootReducer';
 import CreateCollectionDialog from './CreateFileDialog';
 import { push as pushAction } from 'connected-react-router';
-import { CircularProgress } from '@mui/material';
-
 
 const filter = createFilterOptions<DropboxFileOptionType>();
 

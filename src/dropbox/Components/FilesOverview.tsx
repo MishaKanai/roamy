@@ -9,6 +9,8 @@ import moment from 'moment'
 import { RootState } from '../../store/createRootReducer';
 import AddIcon from '@mui/icons-material/Add';
 import CreateCollectionDialog from './CreateFileDialog';
+import Popup from '../../components/Popup';
+import CollectionSettings from './CollectionSettings';
 
 
 
@@ -48,7 +50,14 @@ const DbxFilesOverview: React.FC<{}> = (props) => {
                             {item.path_lower === currFile ? <span /> : <Button onClick={() => {
                                 loadExistingFile(item.path_lower!)
                             }} size="small" variant="outlined" color="primary">Open</Button>}
-                            <IconButton size="small"><SettingsIcon /></IconButton>
+                            <Popup<string>
+                                renderDialogContent={({ closeDialog, optionalData }) => (
+                                    <CollectionSettings onDelete={closeDialog} collectionFile={optionalData!} />
+                                )}
+                                renderToggler={({ openDialog }) => (
+                                    <IconButton onClick={openDialog(item.path_lower!)} size="small"><SettingsIcon /></IconButton>
+                                )}
+                            />
                         </CardActions>
                     </Card>
                 ))}

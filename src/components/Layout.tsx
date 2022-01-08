@@ -16,7 +16,7 @@ import HomeIcon from '@mui/icons-material/Home';
 // import HistoryIcon from '@mui/icons-material/History';
 // import CreateIcon from '@mui/icons-material/Create';
 // import AddIcon from '@mui/icons-material/Add';
-// import SettingsIcon from '@mui/icons-material/Settings';
+import SettingsIcon from '@mui/icons-material/Settings';
 import { ListSubheader } from '@mui/material';
 import { useLocation } from 'react-router';
 import { useSelector } from 'react-redux';
@@ -205,12 +205,15 @@ const ResponsiveDrawer = React.memo((props: ResponsiveDrawerProps) => {
                 </>)}
                 <Divider />
                 <List dense>
-                    {/* <ListItem dense button>
+                    <ListItem dense button component={Link} to="/settings">
                         <ListItemIcon>
                             <SettingsIcon />
                         </ListItemIcon>
                         <ListItemText primary="Settings" />
-                    </ListItem> */}
+                    </ListItem>
+                </List>
+                <Divider />
+                <List dense>
                     <ListItem dense button onClick={() => {
                         localStorage.clear()
                         window.location.href = "/";

@@ -1,4 +1,4 @@
-import { useContext, useReducer, useRef } from 'react';
+import { useContext, useReducer } from 'react';
 import { useCallback, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { replaceDrawingsAction } from "../../Excalidraw/store/actions";
@@ -11,7 +11,7 @@ import useDbx from '../hooks/useDbx';
 import { fileSelectPendingContext } from '../contexts/fileSelectPending';
 import { RootState } from '../../store/createRootReducer';
 import { getCollections, getCollectionsFailure, getCollectionsSuccess } from '../collections/actions';
-import { Dropbox, DropboxResponse, DropboxResponseError, files } from 'dropbox';
+import { Dropbox, DropboxResponseError, files } from 'dropbox';
 const folderPath = "";
 
 const fetchEntries = (() => {
@@ -47,12 +47,9 @@ const fetchEntries = (() => {
     return fetch
 })();
 
-const useFetchCollections = (dbx?: Dropbox | null) => {
+export const useFetchCollections = (dbx?: Dropbox | null) => {
     const dispatch = useDispatch();
-    const collectionsState = useSelector((state: RootState) => state.collections);
-    const [retryKey, retry] = useReducer(state => state + 1, 1);
-
-    useEffect(() => {
+    const fetchCollections = useCallback(() => {
         if (!dbx) {
             return;
         }
@@ -62,7 +59,17 @@ const useFetchCollections = (dbx?: Dropbox | null) => {
             entries => dispatch(getCollectionsSuccess(entries ?? [])),
             error => dispatch(getCollectionsFailure(error))
         )
-    }, [dbx, dispatch, retryKey]);
+    }, [dbx, dispatch]);
+    return fetchCollections;
+}
+
+const useFetchCollectionsOnMount = (dbx?: Dropbox | null) => {
+    const collectionsState = useSelector((state: RootState) => state.collections);
+    const [retryKey, retry] = useReducer(state => state + 1, 1);
+    const fetchCollections = useFetchCollections(dbx);
+    useEffect(() => {
+       fetchCollections()
+    }, [retryKey, fetchCollections]);
     return {
         retry,
         collectionsState
@@ -72,7 +79,7 @@ const useFetchCollections = (dbx?: Dropbox | null) => {
 export const useDbxEntries = () => {
     const dispatch = useDispatch();
     const dbx = useDbx()
-    const { retry, collectionsState } = useFetchCollections(dbx);
+    const { retry, collectionsState } = useFetchCollectionsOnMount(dbx);
     const { setState: setFilePendingState } = useContext(fileSelectPendingContext);
 
     const createNewEmptyFile = useCallback((fileName: string) => {

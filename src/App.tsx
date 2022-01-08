@@ -10,6 +10,7 @@ import Box from '@mui/material/Box';
 import Datagrid from './Search/components/Datagrid'
 import Demo from "./GraphVis/Demo";
 import Home from "./components/Home";
+import CollectionSettings from "./dropbox/Components/CollectionSettings";
 
 const Docs = React.memo(() => {
   const match = useRouteMatch();
@@ -59,6 +60,9 @@ export const getApp = (history: History) => {
               </Route>
               <Route path="/graph">
                 <Demo />
+              </Route>
+              <Route path="/settings">
+                <CollectionSettings />
               </Route>
               <Route path="/">
                 <Home />
