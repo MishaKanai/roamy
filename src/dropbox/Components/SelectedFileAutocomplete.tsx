@@ -1,23 +1,20 @@
 /* eslint-disable no-use-before-define */
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import TextField from '@mui/material/TextField';
-import Dialog from '@mui/material/Dialog';
-import DialogTitle from '@mui/material/DialogTitle';
-import DialogContent from '@mui/material/DialogContent';
-import DialogContentText from '@mui/material/DialogContentText';
-import DialogActions from '@mui/material/DialogActions';
-import Button from '@mui/material/Button';
 import Autocomplete, { createFilterOptions } from '@mui/material/Autocomplete';
 import { files } from "dropbox";
 import { useDbxEntries } from '../hooks/useDbxEntries';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../../store/createRootReducer';
+import CreateCollectionDialog from './CreateFileDialog';
+import { push as pushAction } from 'connected-react-router';
+
 
 const filter = createFilterOptions<DropboxFileOptionType>();
 
 export default function SelectedFileAutocomplete() {
     const currentFilePath = useSelector((state: RootState) => state.auth.state === 'authorized' ? state.auth.selectedFilePath : null)
-    const { entries, createNewEmptyFile, loadExistingFile } = useDbxEntries();
+    const { entries, loadExistingFile } = useDbxEntries();
     const dbxEntries: DropboxFileOptionType[] = React.useMemo(() => {
         return entries?.flatMap(entry =>
             entry['.tag'] === 'file' && entry.path_lower ?
@@ -30,44 +27,18 @@ export default function SelectedFileAutocomplete() {
         title: currentFilePath
     } : null, [currentFilePath])
     const [value, setValue] = React.useState<DropboxFileOptionType | null>(initialValue);
-    const [open, toggleOpen] = React.useState(false);
-
-    const handleClose = () => {
-        setDialogValue({
-            path_lower: ''
-        });
-        toggleOpen(false);
-    };
-
-    const [dialogValue, setDialogValue] = React.useState({
-        path_lower: '',
-    });
-
-    // called from dialog
-    const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
-        event.preventDefault();
-        const { path_lower } = dialogValue;
-        const fileString = path_lower.endsWith('.json') ? path_lower : path_lower + '.json';
-        createNewEmptyFile(fileString)?.then(cnf => {
-            setValue({
-                title: fileString,
-                path_lower: fileString
-            })
-            handleClose();
-        })
-    };
-
-    const promptCreate = (fileName: string) => {
-        // timeout to avoid instant validation of the dialog's form.
-        setTimeout(() => {
-            toggleOpen(true);
-            setDialogValue({
-                path_lower: fileName.endsWith('.json') ? fileName : fileName + '.json'
-            });
-        });
-    }
+    useEffect(() => {
+        setValue(initialValue);
+    }, [initialValue])
+    const dispatch = useDispatch();
     return (
-        <React.Fragment>
+        <CreateCollectionDialog onCreate={filename => {
+            setValue({
+                title: filename,
+                path_lower: filename
+            });
+            dispatch(pushAction('/graph'))
+        }}>{({ promptCreate }) => (
             <Autocomplete
                 value={value}
                 onBlur={() => {
@@ -133,34 +104,7 @@ export default function SelectedFileAutocomplete() {
                     <TextField {...params} size="small" label="Document" variant="outlined" />
                 )}
             />
-            <Dialog open={open} onClose={handleClose} aria-labelledby="form-dialog-title">
-                <form onSubmit={handleSubmit}>
-                    <DialogTitle id="form-dialog-title">Create a new document</DialogTitle>
-                    <DialogContent>
-                        <DialogContentText>
-                            Create a new document in Dropbox
-                        </DialogContentText>
-                        <TextField
-                            autoFocus
-                            margin="dense"
-                            id="path_lower"
-                            value={dialogValue.path_lower}
-                            onChange={(event) => setDialogValue({ ...dialogValue, path_lower: event.target.value })}
-                            label="FileName"
-                            type="text"
-                        />
-                    </DialogContent>
-                    <DialogActions>
-                        <Button onClick={handleClose} color="primary">
-                            Cancel
-                        </Button>
-                        <Button type="submit" color="primary">
-                            Add
-                        </Button>
-                    </DialogActions>
-                </form>
-            </Dialog>
-        </React.Fragment>
+        )}</CreateCollectionDialog>
     );
 }
 

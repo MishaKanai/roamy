@@ -1,11 +1,7 @@
 import React from 'react';
 import { useDispatch, useSelector } from "react-redux";
 import SettingsIcon from '@mui/icons-material/Settings';
-import Box from '@mui/material/Box';
-import { styled } from '@mui/material/styles';
-import Paper from '@mui/material/Paper';
 import Card from '@mui/material/Card';
-import Stack from '@mui/material/Stack';
 import Masonry from '@mui/lab/Masonry';
 import { Button, CardActions, CardContent, CardHeader, IconButton, useTheme } from '@mui/material';
 // import { replaceDrawingsAction } from "../../Excalidraw/store/actions";
@@ -15,6 +11,7 @@ import { useDbxEntries } from '../hooks/useDbxEntries';
 import moment from 'moment'
 import { RootState } from '../../store/createRootReducer';
 import AddIcon from '@mui/icons-material/Add';
+import CreateCollectionDialog from './CreateFileDialog';
 
 
 
@@ -49,13 +46,14 @@ const DbxFilesOverview: React.FC<{}> = (props) => {
                         </CardActions>
                     </Card>
                 ))}
-                <div style={{ border: '1px dashed ' + theme.palette.primary.main, position: 'relative', borderRadius: '4px' }}>
+                <CreateCollectionDialog>{({ promptCreate }) => (
+                    <div style={{ border: '1px dashed ' + theme.palette.primary.main, position: 'relative', borderRadius: '4px' }}>
                     <div style={{
                         position: 'absolute',
                         top: '50%',
                         left: '50%',
                         transform: 'translate(-50%, -50%)'
-                    }}><Button color="primary">Create a new Collection <AddIcon /></Button></div>
+                    }}><Button onClick={() => promptCreate()} color="primary">Create a new Collection <AddIcon /></Button></div>
                     <Card style={{ visibility: 'hidden' }}>
                         <CardHeader title="spacer" />
                         <CardContent>
@@ -70,6 +68,8 @@ const DbxFilesOverview: React.FC<{}> = (props) => {
                         </CardActions>
                     </Card>
                 </div>
+                )}</CreateCollectionDialog>
+                
             </Masonry>
         </div>
     );
