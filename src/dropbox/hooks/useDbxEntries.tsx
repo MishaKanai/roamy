@@ -1,7 +1,6 @@
-import { useContext } from 'react';
-import { files } from "dropbox";
-import { useCallback, useEffect, useState } from "react";
-import { useDispatch } from "react-redux";
+import { useContext, useReducer, useRef } from 'react';
+import { useCallback, useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import { replaceDrawingsAction } from "../../Excalidraw/store/actions";
 import { DrawingDocuments } from "../../Excalidraw/store/reducer";
 import { replaceDocsAction } from "../../SlateGraph/store/actions";
@@ -10,38 +9,72 @@ import { selectFilePathAction } from "../store/actions";
 import { push as pushAction } from 'connected-react-router';
 import useDbx from '../hooks/useDbx';
 import { fileSelectPendingContext } from '../contexts/fileSelectPending';
+import { RootState } from '../../store/createRootReducer';
+import { getCollections, getCollectionsFailure, getCollectionsSuccess } from '../collections/actions';
+import { Dropbox, DropboxResponse, DropboxResponseError, files } from 'dropbox';
 const folderPath = "";
 
-export const useDbxEntries = () => {
-    const [entries, setEntries] =
-        useState<files.ListFolderResult["entries"] | null>(null);
-    const dbx = useDbx()
+const fetchEntries = (() => {
+    let fetches = 0;
+    const fetch = (
+        dbx: Dropbox,
+        onPending: () => void,
+        onSuccess: (response: files.ListFolderResult['entries'] | null) => void,
+        onError: (error: DropboxResponseError<any>) => void
+    ) => {
+        if (fetches === 0) {
+            onPending();
+            fetches = fetches + 1;
+            dbx
+                .filesListFolder({
+                    path: folderPath,
+                    recursive: true,
+                    include_non_downloadable_files: false,
+                })
+                .then(function (response) {
+                    const entries = response?.result?.entries?.filter((e) =>
+                        e.path_lower?.endsWith(".json")
+                    );
+                    onSuccess(entries)
+                })
+                .catch(function (error) {
+                    onError(error)
+                }).finally(() => {
+                    fetches = fetches - 1;
+                });
+        }
+    }
+    return fetch
+})();
+
+const useFetchCollections = (dbx?: Dropbox | null) => {
+    const dispatch = useDispatch();
+    const collectionsState = useSelector((state: RootState) => state.collections);
+    const [retryKey, retry] = useReducer(state => state + 1, 1);
+
     useEffect(() => {
         if (!dbx) {
             return;
         }
-        dbx
-            .filesListFolder({
-                path: folderPath,
-                recursive: true,
-                include_non_downloadable_files: false,
-            })
-            .then(function (response) {
-                console.log(response);
-                const entries = response?.result?.entries?.filter((e) =>
-                    e.path_lower?.endsWith(".json")
-                );
-                if (entries) {
-                    setEntries(entries);
-                }
-            })
-            .catch(function (error) {
-                console.log(error);
-                // handle retry logic later.
-            });
-    }, [dbx]);
-    const { setState: setFilePendingState } = useContext(fileSelectPendingContext);
+        fetchEntries(
+            dbx,
+            () => dispatch(getCollections()),
+            entries => dispatch(getCollectionsSuccess(entries ?? [])),
+            error => dispatch(getCollectionsFailure(error))
+        )
+    }, [dbx, dispatch, retryKey]);
+    return {
+        retry,
+        collectionsState
+    }
+}
+
+export const useDbxEntries = () => {
     const dispatch = useDispatch();
+    const dbx = useDbx()
+    const { retry, collectionsState } = useFetchCollections(dbx);
+    const { setState: setFilePendingState } = useContext(fileSelectPendingContext);
+
     const createNewEmptyFile = useCallback((fileName: string) => {
         const path = fileName.startsWith('/') ? fileName : "/" + fileName;
         if (!dbx) {
@@ -118,5 +151,5 @@ export const useDbxEntries = () => {
                 });
         }
     }, [dbx, dispatch, setFilePendingState])
-    return { entries, dbx, createNewEmptyFile, loadExistingFile };
+    return { collectionsState, dbx, createNewEmptyFile, loadExistingFile, retry };
 }

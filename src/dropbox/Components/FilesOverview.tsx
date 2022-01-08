@@ -1,12 +1,9 @@
 import React from 'react';
-import { useDispatch, useSelector } from "react-redux";
+import { useSelector } from "react-redux";
 import SettingsIcon from '@mui/icons-material/Settings';
 import Card from '@mui/material/Card';
 import Masonry from '@mui/lab/Masonry';
-import { Button, CardActions, CardContent, CardHeader, IconButton, useTheme } from '@mui/material';
-// import { replaceDrawingsAction } from "../../Excalidraw/store/actions";
-// import { replaceDocsAction } from "../../SlateGraph/store/actions";
-// import { selectFilePathAction } from "../store/actions";
+import { Button, CardActions, CardContent, CardHeader, CircularProgress, IconButton, useTheme } from '@mui/material';
 import { useDbxEntries } from '../hooks/useDbxEntries';
 import moment from 'moment'
 import { RootState } from '../../store/createRootReducer';
@@ -16,19 +13,28 @@ import CreateCollectionDialog from './CreateFileDialog';
 
 
 const DbxFilesOverview: React.FC<{}> = (props) => {
-    const { dbx, entries, loadExistingFile } = useDbxEntries();
+    const { collectionsState, loadExistingFile } = useDbxEntries();
     const currFile: string | null = useSelector((state: RootState) => state.auth.state === 'authorized' ? state.auth.selectedFilePath : null)
-    const dispatch = useDispatch();
     const theme = useTheme()
-    if (!entries) {
+    console.log({
+        collectionsState
+    })
+    if (collectionsState._tag === 'error') {
+        return <div>Failed to fetch</div>
+    }
+    if (collectionsState._tag === 'initial') {
         return null;
     }
-
-    console.log({ entries })
+    if (collectionsState._tag === 'pending' && !collectionsState.prevData) {
+        return <CircularProgress />;
+    }
+    if (collectionsState._tag === 'success' && !collectionsState.data) {
+        return null;
+    }
     return (
-        <div>
+        <div style={collectionsState._tag === 'pending' ? { opacity: .8 } : undefined }>
             <Masonry columns={{ xs: 1, sm: 2, md: 3 }} spacing={1}>
-                {entries.map((item, index) => (
+                {(collectionsState._tag === 'success' ? collectionsState.data : collectionsState.prevData)?.map((item, index) => (
                     item['.tag'] === 'file' && item.path_lower &&
                     <Card key={index}>
                         <CardHeader title={item.name.endsWith('.json') ? item.name.slice(0, '.json'.length * -1) : item.name} />

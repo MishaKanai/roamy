@@ -8,20 +8,22 @@ import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../../store/createRootReducer';
 import CreateCollectionDialog from './CreateFileDialog';
 import { push as pushAction } from 'connected-react-router';
+import { CircularProgress } from '@mui/material';
 
 
 const filter = createFilterOptions<DropboxFileOptionType>();
 
 export default function SelectedFileAutocomplete() {
     const currentFilePath = useSelector((state: RootState) => state.auth.state === 'authorized' ? state.auth.selectedFilePath : null)
-    const { entries, loadExistingFile } = useDbxEntries();
+    const { collectionsState, loadExistingFile } = useDbxEntries();
     const dbxEntries: DropboxFileOptionType[] = React.useMemo(() => {
+        const entries = collectionsState._tag === 'success' ? collectionsState.data : collectionsState._tag === 'pending' ? collectionsState.prevData ?? null : null;
         return entries?.flatMap(entry =>
             entry['.tag'] === 'file' && entry.path_lower ?
                 [{ path_lower: entry.path_lower, title: entry.path_lower, inputValue: entry.path_lower }] :
                 []
         ) ?? []
-    }, [entries])
+    }, [collectionsState])
     const initialValue = useMemo(() => currentFilePath ? {
         path_lower: currentFilePath,
         title: currentFilePath
