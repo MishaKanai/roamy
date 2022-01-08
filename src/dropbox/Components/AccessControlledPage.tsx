@@ -2,11 +2,12 @@ import React, { useContext } from "react";
 import { useSelector } from "react-redux";
 import { RootState } from "../../store/createRootReducer";
 import { DropboxAuth } from "dropbox";
-import { fileSelectPendingContext, FileSelectPendingProvider } from "./PickFile";
 import { CircularProgress } from "@mui/material";
 import MergeEditorWrap from "../resolveMerge/components/MergePopup";
 import Layout from '../../components/Layout';
 import LandingPage from "./LandingPage";
+import { fileSelectPendingContext, FileSelectPendingProvider } from "../contexts/fileSelectPending";
+import Home from "../../components/Home";
 // aka app key
 const CLIENT_ID = "9r1uwr2l55chuy7";
 // var REDIRECT_URI = 'http://localhost:8080/pkce-browser';
@@ -58,7 +59,7 @@ const AccessControlledPage: React.FC<AccessControlledPageProps> = (props) => {
     <div>{fileSelected ? props.children :
      // <PickDbxFile />
       <div>
-          {/* Land here after login */}
+          <Home />
       </div>
      }</div>
   </FileSelectPendingWrapper>

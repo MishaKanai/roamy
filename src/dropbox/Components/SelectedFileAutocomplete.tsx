@@ -9,7 +9,7 @@ import DialogActions from '@mui/material/DialogActions';
 import Button from '@mui/material/Button';
 import Autocomplete, { createFilterOptions } from '@mui/material/Autocomplete';
 import { files } from "dropbox";
-import { useDbxEntries } from './PickFile';
+import { useDbxEntries } from '../hooks/useDbxEntries';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../store/createRootReducer';
 

@@ -12,6 +12,7 @@ import ListItemText from '@mui/material/ListItemText';
 import MenuIcon from '@mui/icons-material/Menu';
 import LogoutIcon from '@mui/icons-material/Logout';
 import SelectedFileAutocomplete from '../dropbox/Components/SelectedFileAutocomplete';
+import HomeIcon from '@mui/icons-material/Home';
 // import HistoryIcon from '@mui/icons-material/History';
 // import CreateIcon from '@mui/icons-material/Create';
 // import AddIcon from '@mui/icons-material/Add';
@@ -138,8 +139,11 @@ interface ResponsiveDrawerProps {
     children: JSX.Element;
 }
 const ResponsiveDrawer = React.memo((props: ResponsiveDrawerProps) => {
-    const fileLoaded = Boolean(useFileSelected());
+    const fileSelected = useFileSelected();
+    const fileLoaded = Boolean(fileSelected);
     const [mobileOpen, setMobileOpen] = React.useState(false);
+    const pathname = useLocation().pathname
+    const atHome = pathname === '/' || pathname === '';
 
     const handleDrawerToggle = () => {
         setMobileOpen(!mobileOpen);
@@ -188,6 +192,17 @@ const ResponsiveDrawer = React.memo((props: ResponsiveDrawerProps) => {
                 {false && fileLoaded && <RecentlyUpdatedList />}
             </div>
             <div>
+                {!atHome && (<>
+                    <Divider />
+                    <List dense>
+                        <ListItem dense button component={Link} to="/">
+                            <ListItemIcon>
+                                <HomeIcon />
+                            </ListItemIcon>
+                            <ListItemText primary="Home" />
+                        </ListItem>
+                    </List>
+                </>)}
                 <Divider />
                 <List dense>
                     {/* <ListItem dense button>
@@ -257,7 +272,7 @@ const ResponsiveDrawer = React.memo((props: ResponsiveDrawerProps) => {
                 sx={{ flexGrow: 1, pl: 3, width: { sm: `calc(100% - ${drawerWidth}px)` } }}
             >
                 {props.children}
-                {fileLoaded && <BasicSpeedDial />}
+                {fileLoaded && !atHome && <BasicSpeedDial />}
             </Box>
         </Box>
     );

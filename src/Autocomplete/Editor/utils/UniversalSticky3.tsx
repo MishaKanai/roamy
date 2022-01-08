@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import debounce from 'lodash/debounce';
 import { registerHeightObserver, unregisterHeightObserver } from 'element-height-observer/dist/index';
-import { Portal } from '@mui/core';
+import { Portal } from '@mui/material';
 import { useMediaQuery, useTheme } from '@mui/material';
 
 type WriteStyles = (setStyle: React.Dispatch<React.SetStateAction<React.CSSProperties>>, domRef: React.MutableRefObject<HTMLDivElement | null>, style: React.CSSProperties) => void;

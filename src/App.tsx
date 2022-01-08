@@ -9,6 +9,7 @@ import AccessControlledPage from "./dropbox/Components/AccessControlledPage";
 import Box from '@mui/material/Box';
 import Datagrid from './Search/components/Datagrid'
 import Demo from "./GraphVis/Demo";
+import Home from "./components/Home";
 
 const Docs = React.memo(() => {
   const match = useRouteMatch();
@@ -42,7 +43,7 @@ const Drawings = React.memo(() => {
     </div>
   );
 });
-export const getApp = (history: History<unknown>) => {
+export const getApp = (history: History) => {
   function App() {
     return (
       <div style={{ height: '100%' }}>
@@ -58,6 +59,9 @@ export const getApp = (history: History<unknown>) => {
               </Route>
               <Route path="/graph">
                 <Demo />
+              </Route>
+              <Route path="/">
+                <Home />
               </Route>
             </Switch>
           </div>

@@ -3,6 +3,7 @@ import produce from 'immer'
 import { deleteDocAction } from '../../SlateGraph/store/actions';
 import { deleteDrawingAction } from '../../Excalidraw/store/actions';
 import { getType } from 'typesafe-actions';
+import { selectFilePathAction } from '../../dropbox/store/actions';
 
 export interface RecentlyOpenedState {
     documents: {
@@ -48,6 +49,11 @@ const createInitialState = (): RecentlyOpenedState => {
 
 const recentlyOpenedReducer = (state: RecentlyOpenedState = createInitialState(), action: RootAction): RecentlyOpenedState => {
     switch (action.type) {
+        case getType(selectFilePathAction):
+            return {
+                drawings: {},
+                documents: {}
+            }
         case '@@router/LOCATION_CHANGE': {
             return mergeState(state, action.payload.location.pathname)
         }

@@ -7,6 +7,6 @@ const Link: React.FC<LinkProps> = props => {
     if (inMerge.inMergeContext) {
         return <span>{props.children}</span>
     }
-    return <MuiLink component={RouterLink} {...props} />
+    return <MuiLink component={RouterLink as any} {...(props as any)} />
 }
 export default Link;
