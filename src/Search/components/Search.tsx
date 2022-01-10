@@ -17,7 +17,18 @@ const Search: React.FC<{}> = () => {
                     <ul>
                         {Array.from(matches).map((text, i) => <li key={i}>{
                             (() => {
-                                const matches = text.match(new RegExp(inputText, 'i')) ?? [];
+                                const matches = (() => {
+                                    let acc = []
+                                    let results = text.matchAll(new RegExp(inputText, 'ig'))
+                                    while(true) {
+                                        let ni = results.next();
+                                        if (ni.done) {
+                                            break;
+                                        }
+                                        acc.push(ni.value)
+                                    }
+                                    return acc;
+                                })();
 
                                 return text.split(new RegExp(inputText, 'i')).reduce((prev, curr, i) => {
                                     const highlightColor = theme.palette.secondary.light;
