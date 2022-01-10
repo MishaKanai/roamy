@@ -11,6 +11,7 @@ import Datagrid from './Search/components/Datagrid'
 import Demo from "./GraphVis/Demo";
 import Home from "./components/Home";
 import CollectionSettings from "./dropbox/Components/CollectionSettings";
+import MasonrySearch from "./Search/components/Masonry";
 
 const Docs = React.memo(() => {
   const match = useRouteMatch();
@@ -22,7 +23,8 @@ const Docs = React.memo(() => {
         </Route>
         <Route path={match.path}>
           <Box sx={{ m: 0 }}>
-            <Datagrid />
+            <MasonrySearch />
+            {/* <Datagrid /> */}
           </Box>
         </Route>
       </Switch>
