@@ -7,7 +7,6 @@ import { history } from "./store/configureStore";
 import { DrawingPageRoute } from "./Excalidraw/Page";
 import AccessControlledPage from "./dropbox/Components/AccessControlledPage";
 import Box from '@mui/material/Box';
-import Datagrid from './Search/components/Datagrid'
 import Demo from "./GraphVis/Demo";
 import Home from "./components/Home";
 import CollectionSettings from "./dropbox/Components/CollectionSettings";
@@ -24,7 +23,6 @@ const Docs = React.memo(() => {
         <Route path={match.path}>
           <Box sx={{ m: 0 }}>
             <MasonrySearch />
-            {/* <Datagrid /> */}
           </Box>
         </Route>
       </Switch>
