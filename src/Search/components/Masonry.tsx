@@ -33,12 +33,12 @@ const MasonrySearch: React.FC<{}> = () => {
                     })()}
                     <div style={{ display: 'flex', justifyContent: 'space-between'}}>
                         <div>
-                            <ul>
+                            <ul style={{ padding: 0 }}>
                                 {item.backReferences.map(r => <li  style={{ listStyle: 'none' }} key={r}><Link to={'/docs/' + r}>&#8592;&nbsp;{r}</Link></li>)}
                             </ul>
                         </div>
                         <div style={{ textAlign: 'right'}}>
-                            <ul>
+                            <ul style={{ padding: 0 }}>
                                 {item.references.map(r => <li style={{ listStyle: 'none' }} key={r}><Link to={'/docs/' + r}>{r}&nbsp;&#8594;</Link></li>)}
                             </ul>
                         </div>
