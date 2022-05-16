@@ -32,6 +32,13 @@ const globalTheme = createTheme({
 })
 const theme = createTheme({
   components: {
+    MuiFab: {
+      styleOverrides: {
+        root: {
+          textTransform: 'capitalize'
+        }
+      }
+    },
     MuiButton: {
       styleOverrides: {
         root: {

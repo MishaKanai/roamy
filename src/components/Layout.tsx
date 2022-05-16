@@ -20,7 +20,6 @@ import SettingsIcon from '@mui/icons-material/Settings';
 import { ListSubheader } from '@mui/material';
 import { useLocation } from 'react-router';
 import { useSelector } from 'react-redux';
-import BasicSpeedDial from './SpeedDial';
 import useFileSelected from '../dropbox/hooks/useFileSelected';
 import NetworkIcon from '../icons/NetworkIcon';
 import TableIcon from '../icons/TableIcon';
@@ -29,6 +28,7 @@ import DocumentIcon from '../icons/DocumentIcon';
 import { RootState } from '../store/createRootReducer';
 import { parsePath } from '../RecentlyOpened/store/reducer';
 import { useDebounce } from 'use-debounce/lib';
+import CreateFab from './FabArea';
 
 const drawerWidth = 240;
 
@@ -278,7 +278,7 @@ const ResponsiveDrawer = React.memo((props: ResponsiveDrawerProps) => {
                 sx={{ flexGrow: 1, pl: 3, width: { sm: `calc(100% - ${drawerWidth}px)` } }}
             >
                 {props.children}
-                {fileLoaded && !atHome && <BasicSpeedDial />}
+                {fileLoaded && !atHome && <CreateFab />}
             </Box>
         </Box>
     );
