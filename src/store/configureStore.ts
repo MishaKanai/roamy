@@ -25,7 +25,7 @@ import {
 } from "../dropbox/store/reducer";
 import { mergeTriggeredAction } from "../dropbox/resolveMerge/store/actions";
 // aka app key
-const CLIENT_ID = "9r1uwr2l55chuy7";
+const CLIENT_ID = "24bu717gh43au0o";
 const REDIRECT_URI = window.location.protocol + "//" + window.location.host;
 const dbxAuth = new DropboxAuth({
   clientId: CLIENT_ID,
@@ -61,6 +61,16 @@ const persistedReducer: Reducer<RootState & PersistPartial, RootAction> =
 const composeEnhancers =
   (window as any).__REDUX_DEVTOOLS_EXTENSION_COMPOSE__ || compose;
 
+/*
+  TODO
+  - Remote is a dropbox folder, containing an index file, and all the other documents+drawings in individual files.
+  - When we initially fetch, we compose our local state from all those files + the index.
+
+  - Keep a second, local model of what we think the fully assembled JSON is like
+  - When we save changes, we save only what diffs need to be made to our local model, to dropbox (so a file + maybe the index)
+  - if a merge conflict occurs, we download the entire remote, and automerge/prompt.
+
+*/
 const syncDropboxToStore = (
   accessToken: string,
   store: Store<RootState & PersistPartial, RootAction>

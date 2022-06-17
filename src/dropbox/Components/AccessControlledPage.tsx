@@ -9,7 +9,7 @@ import LandingPage from "./LandingPage";
 import { fileSelectPendingContext, FileSelectPendingProvider } from "../contexts/fileSelectPending";
 import Home from "../../components/Home";
 // aka app key
-const CLIENT_ID = "9r1uwr2l55chuy7";
+const CLIENT_ID = "24bu717gh43au0o";
 // var REDIRECT_URI = 'http://localhost:8080/pkce-browser';
 const REDIRECT_URI = window.location.protocol + "//" + window.location.host;
 var dbxAuth = new DropboxAuth({
