@@ -82,6 +82,44 @@ export const useDbxEntries = () => {
     const { retry, collectionsState } = useFetchCollectionsOnMount(dbx);
     const { setState: setFilePendingState } = useContext(fileSelectPendingContext);
 
+    /*
+        call this 'createNewEmptyCollection -
+        create a new folder with the collection name, and an 'index.json'
+        which contains some data to be figured out.
+        
+    */
+        const createNewEmptyCollection = useCallback((collectionName: string) => {
+            const path = (collectionName.startsWith('/') ? collectionName : "/" + collectionName) + '/index.json';
+            if (!dbx) {
+                return;
+            }
+            const data = {
+                documents: {},
+                drawings: {},
+            };
+            setFilePendingState({ _type: 'pending' })
+            return dbx
+                .filesUpload({
+                    path,
+                    contents: new File([JSON.stringify(data, null, 2)], 'index.json', {
+                        type: "application/json",
+                    }),
+                    // ...other dropbox args
+                })
+                .then((response) => {
+                    console.log(response);
+                    // dispatch(pushAction('/'))
+                    // dispatch(selectFilePathAction(path, response.result.rev));
+                    // dispatch(replaceDocsAction(data.documents));
+                    // dispatch(replaceDrawingsAction(data.drawings));
+                })
+                .then(() => {
+                    setFilePendingState({ _type: 'ok' })
+                }).catch(err => {
+                    console.error(err)
+                    setFilePendingState({ _type: 'error', message: 'an error occurred - check the console.' })
+                });
+        }, [dbx, dispatch, setFilePendingState])
     const createNewEmptyFile = useCallback((fileName: string) => {
         const path = fileName.startsWith('/') ? fileName : "/" + fileName;
         if (!dbx) {
@@ -114,6 +152,7 @@ export const useDbxEntries = () => {
                 setFilePendingState({ _type: 'error', message: 'an error occurred - check the console.' })
             });
     }, [dbx, dispatch, setFilePendingState])
+
     const loadExistingFile = useCallback((path_lower: string) => {
         const fileWeWant = path_lower;
         if (fileWeWant && dbx) {
@@ -158,5 +197,13 @@ export const useDbxEntries = () => {
                 });
         }
     }, [dbx, dispatch, setFilePendingState])
-    return { collectionsState, dbx, createNewEmptyFile, loadExistingFile, retry };
-}
+    return {
+        collectionsState,
+        createNewEmptyCollection,
+        dbx,
+        createNewEmptyFile,
+        loadExistingFile,
+        retry
+    };
+    }
+

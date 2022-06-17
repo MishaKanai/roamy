@@ -6,7 +6,7 @@ import { files } from "dropbox";
 import { useDbxEntries } from '../hooks/useDbxEntries';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../../store/createRootReducer';
-import CreateCollectionDialog from './CreateFileDialog';
+import CreateCollectionDialog from './CreateCollectionDialog';
 import { push as pushAction } from 'connected-react-router';
 
 const filter = createFilterOptions<DropboxFileOptionType>();

@@ -8,7 +8,7 @@ import { useDbxEntries } from '../hooks/useDbxEntries';
 import moment from 'moment'
 import { RootState } from '../../store/createRootReducer';
 import AddIcon from '@mui/icons-material/Add';
-import CreateCollectionDialog from './CreateFileDialog';
+import CreateCollectionDialog from './CreateCollectionDialog';
 import Popup from '../../components/Popup';
 import CollectionSettings from './CollectionSettings';
 
