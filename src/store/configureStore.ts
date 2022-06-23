@@ -1,12 +1,11 @@
 import { createStore, applyMiddleware, compose, Reducer, Store } from "redux";
 import { persistStore, persistReducer } from "redux-persist";
-import storage from "redux-persist/lib/storage"; // defaults to localStorage for web
+import storageSession from "redux-persist/lib/storage/session"; // defaults to localStorage for web
 import { routerMiddleware } from "connected-react-router";
 import createRootReducer, { RootState } from "./createRootReducer";
 import { createBrowserHistory } from "history";
 import { PersistPartial } from "redux-persist/es/persistReducer";
 import { RootAction } from "./action";
-
 import { DropboxAuth, Dropbox, DropboxResponseError } from "dropbox";
 import parseQueryString from "../dropbox/util/parseQueryString";
 import {
@@ -19,12 +18,9 @@ import {
 import debounce from "lodash/debounce";
 import { DrawingDocuments } from "../Excalidraw/store/reducer";
 import { SlateDocuments } from "../SlateGraph/store/reducer";
-import {
-  AuthorizedAuthState,
-  DropboxAuthState,
-} from "../dropbox/store/reducer";
 import { mergeTriggeredAction } from "../dropbox/resolveMerge/store/actions";
 import upload from "../dropbox/util/upload";
+import { AuthorizedCollectionState, CollectionState } from "../dropbox/store/activeCollectionReducer";
 // aka app key
 const CLIENT_ID = "24bu717gh43au0o";
 const REDIRECT_URI = window.location.protocol + "//" + window.location.host;
@@ -47,8 +43,8 @@ export const history = createBrowserHistory();
 
 const persistConfig = {
   key: "root",
-  storage,
-  blacklist: ['auth']
+  storage: storageSession,
+  blacklist: ['dbx']
 };
 
 // had to make this type explicit for the export as lib:
@@ -94,19 +90,20 @@ const syncDropboxToStore = (
   let drawingsChanged = (drawings: DrawingDocuments) =>
     drawings !== prevDrawings;
   const isAuthorized = (
-    authState: DropboxAuthState
-  ): authState is AuthorizedAuthState => {
+    authState: CollectionState
+  ): authState is AuthorizedCollectionState => {
     return authState.state === "authorized";
   };
   const sync = () => {
     const state = store.getState();
-    const auth = state.auth;
-    if (auth.state !== 'authorized') {
+    const auth = state.dbx.auth;
+    const collection = state.dbx.collection;
+    if (auth.state !== 'authorized' || collection.state !== 'authorized') {
       return;
     }
 
-    const rev = auth.rev!;
-    const filePath = auth.selectedFilePath;
+    const rev = collection.rev!;
+    const filePath = collection.selectedFilePath;
     const { documents, drawings } = state;
 
     store.dispatch(syncStartAction());
@@ -116,15 +113,15 @@ const syncDropboxToStore = (
       rev,
       documents,
       drawings,
-      auth.revisions,
+      collection.revisions,
       docsPendingUpload,
       drawingsPendingUpload)
       .then(async ({response, revisions }) => {
         store.dispatch(syncSuccessAction(response.result.rev, revisions));
       })
       .catch((error: DropboxResponseError<unknown>) => {
-        const auth = store.getState().auth;
-        if (auth.state === 'authorized' && auth.rev !== rev) {
+        const collection = store.getState().dbx.collection;
+        if (collection.state === 'authorized' && collection.rev !== rev) {
           throw new Error('This shouldn\'t happen if we prevent debouncedSync calls while a request is currently pending' +
             ' and simply mark a flag to do an extra sync after success.');
         } else {
@@ -141,7 +138,7 @@ const syncDropboxToStore = (
   );
   let performFollowupSyncWhenRevChanges: string | null = null;
   store.subscribe(() => {
-    const { auth, documents, drawings, merge } = store.getState();
+    const { dbx: { collection }, documents, drawings, merge } = store.getState();
     if (merge.state === 'conflict') {
       // prevent sync here, because we replace documents while the merge is in the conflict state,
       // causing a debounced sync to begin, before we get to change our auth.rev,
@@ -149,11 +146,11 @@ const syncDropboxToStore = (
       return;
     }
     if (
-      isAuthorized(auth) &&
-      auth.selectedFilePath &&
-      auth.rev &&
+      isAuthorized(collection) &&
+      collection.selectedFilePath &&
+      collection.rev &&
       (
-        (performFollowupSyncWhenRevChanges && performFollowupSyncWhenRevChanges !== auth.rev) ||
+        (performFollowupSyncWhenRevChanges && performFollowupSyncWhenRevChanges !== collection.rev) ||
         (documentsChanged(documents) || drawingsChanged(drawings))
       )
     ) {
@@ -181,20 +178,20 @@ const syncDropboxToStore = (
       setPrevDocuments(documents);
       setPrevDrawings(drawings);
       if (
-        auth.syncing?._type !== "debounced_pending" &&
-        auth.syncing?._type !== "request_pending"
+        collection.syncing?._type !== "debounced_pending" &&
+        collection.syncing?._type !== "request_pending"
       ) {
         store.dispatch(syncDebounceStartAction());
       }
       // debouncedSync(auth.rev, auth.selectedFilePath, documents, drawings);
-      if (auth.syncing?._type === 'request_pending') {
+      if (collection.syncing?._type === 'request_pending') {
         /*
         If we start attempting debounced syncs we might get into a conflict revision-wise
         where we get a revision #, start a fetch, a previous sync succeeds, and our current request hits the backend
         with an old revision #.
         */
         // lets just mark that we need to perform an extra sync after our current one succeeds.
-        performFollowupSyncWhenRevChanges = auth.rev;
+        performFollowupSyncWhenRevChanges = collection.rev;
       } else {
         debouncedSync();
       }
@@ -224,8 +221,8 @@ const configureStore = () => {
     } else {
       const initialState = store.getState();
       const accessToken =
-        initialState.auth.state === "authorized" &&
-        initialState.auth.accessToken;
+        initialState.dbx.auth.state === "authorized" &&
+        initialState.dbx.auth.accessToken;
       if (accessToken) {
         syncDropboxToStore(accessToken, store);
       }

@@ -46,10 +46,11 @@ const FileSelectPendingWrapper: React.FC<{}> = props => {
 }
 
 const AccessControlledPage: React.FC<AccessControlledPageProps> = (props) => {
-  const auth = useSelector((state: RootState) => state.auth);
+  const collection = useSelector((state: RootState) => state.dbx.collection);
+  const auth = useSelector((state: RootState) => state.dbx.auth);
   const isAuthorized = auth.state === "authorized";
   const fileSelected =
-    auth.state === "authorized" && Boolean(auth.selectedFilePath);
+    collection.state === "authorized" && Boolean(collection.selectedFilePath);
 
   const mergeResolvedKey = useSelector((state: RootState) => Boolean(state.merge.state === 'resolved'))
   if (!isAuthorized) {

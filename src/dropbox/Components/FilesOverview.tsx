@@ -16,11 +16,8 @@ import CollectionSettings from './CollectionSettings';
 
 const DbxFilesOverview: React.FC<{}> = (props) => {
     const { collectionsState, loadExistingCollection } = useDbxEntries();
-    const currFile: string | null = useSelector((state: RootState) => state.auth.state === 'authorized' ? state.auth.selectedFilePath : null)
+    const currFile: string | null = useSelector((state: RootState) => state.dbx.collection.state === 'authorized' ? state.dbx.collection.selectedFilePath : null)
     const theme = useTheme()
-    console.log({
-        collectionsState
-    })
     if (collectionsState._tag === 'error') {
         return <div>Failed to fetch</div>
     }

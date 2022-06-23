@@ -218,7 +218,8 @@ const ResponsiveDrawer = React.memo((props: ResponsiveDrawerProps) => {
                 <Divider />
                 <List dense>
                     <ListItem dense button onClick={() => {
-                        localStorage.clear()
+                        localStorage.clear();
+                        sessionStorage.clear();
                         window.location.href = "/";
                     }}>
                         <ListItemIcon>

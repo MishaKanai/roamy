@@ -2,7 +2,7 @@ import { Dropbox } from "dropbox";
 import { DrawingDocument, DrawingDocuments } from "../../Excalidraw/store/reducer";
 import { SlateDocument, SlateDocuments } from "../../SlateGraph/store/reducer";
 import { IndexFileStructure } from "../domain";
-import { AuthorizedAuthState } from "../store/reducer";
+import { AuthorizedCollectionState } from "../store/activeCollectionReducer";
 import loadFileJSON from "./loadFileJSON";
 
 
@@ -23,7 +23,7 @@ const fetchDataFromCollectionAndCompose = async (dbx: Dropbox, indexFilePath: st
     ])
     const documents: SlateDocuments = {};
     const drawings: DrawingDocuments = {};
-    const revisions: AuthorizedAuthState['revisions'] = {
+    const revisions: AuthorizedCollectionState['revisions'] = {
         documents: {},
         drawings: {}
     }

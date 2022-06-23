@@ -6,7 +6,7 @@ import { RootState } from "../../store/createRootReducer";
 const useDbx = () => {
     const accessToken = useSelector(
         (state: RootState) =>
-          state.auth.state === "authorized" && state.auth.accessToken
+          state.dbx.auth.state === "authorized" && state.dbx.auth.accessToken
       );
       const dbx = useMemo(() => {
         return accessToken ? new Dropbox({ accessToken }) : null;

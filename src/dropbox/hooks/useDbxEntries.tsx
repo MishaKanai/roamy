@@ -2,9 +2,7 @@ import { useContext, useReducer } from 'react';
 import { useCallback, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { replaceDrawingsAction } from "../../Excalidraw/store/actions";
-import { DrawingDocument, DrawingDocuments } from "../../Excalidraw/store/reducer";
 import { replaceDocsAction } from "../../SlateGraph/store/actions";
-import { SlateDocument, SlateDocuments } from "../../SlateGraph/store/reducer";
 import { selectFilePathAction } from "../store/actions";
 import { push as pushAction } from 'connected-react-router';
 import useDbx from '../hooks/useDbx';
@@ -13,7 +11,6 @@ import { RootState } from '../../store/createRootReducer';
 import { getCollections, getCollectionsFailure, getCollectionsSuccess } from '../collections/actions';
 import { Dropbox, DropboxResponseError, files } from 'dropbox';
 import { IndexFileStructure } from '../domain';
-import loadFileJSON from '../util/loadFileJSON';
 import fetchDataFromCollectionAndCompose from '../util/fetchEntireCollection';
 const folderPath = "";
 
@@ -110,7 +107,6 @@ export const useDbxEntries = () => {
                 // ...other dropbox args
             })
             .then((response) => {
-                console.log(response);
                 dispatch(pushAction('/'))
                 dispatch(selectFilePathAction(path, response.result.rev, { documents: {}, drawings: {}}));
                 dispatch(replaceDocsAction({}));

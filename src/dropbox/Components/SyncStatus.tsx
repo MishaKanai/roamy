@@ -16,7 +16,7 @@ export const TypingIndicator: React.FC<{}> = () => (
 
 interface SyncStatusProps {}
 const SyncStatus: React.FC<SyncStatusProps> = (props) => {
-  const auth = useSelector((state: RootState) => state.auth);
+  const collection = useSelector((state: RootState) => state.dbx.collection);
   const renderLogin = () => null;
   const renderDebouncePending = () => <TypingIndicator />;
   const renderRequestPending = () => (
@@ -28,17 +28,17 @@ const SyncStatus: React.FC<SyncStatusProps> = (props) => {
       <WarnIcon color="error" style={{ display: 'block', margin: 'auto'}} />
   );
   const renderSuccess = (date: Date) => null;
-  return auth.state === "not_authorized"
+  return collection.state === "not_authorized"
     ? renderLogin()
-    : !auth.syncing || auth.syncing._type === "initial"
+    : !collection.syncing || collection.syncing._type === "initial"
     ? null
-    : auth.syncing._type === "debounced_pending"
+    : collection.syncing._type === "debounced_pending"
     ? renderDebouncePending()
-    : auth.syncing._type === "request_pending"
+    : collection.syncing._type === "request_pending"
     ? renderRequestPending()
-    : auth.syncing._type === "failure"
-    ? renderFailure(auth.syncing.error, auth.syncing.date)
-    : renderSuccess(auth.syncing.date);
+    : collection.syncing._type === "failure"
+    ? renderFailure(collection.syncing.error, collection.syncing.date)
+    : renderSuccess(collection.syncing.date);
 };
 
 export default SyncStatus;

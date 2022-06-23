@@ -17,7 +17,7 @@ import { replaceDrawingsAction } from '../../../Excalidraw/store/actions';
 import upload from '../../util/upload';
 
 const useAutomerge = () => {
-    const _lastRev = useSelector((state: RootState) => state.auth.state === 'authorized' && state.auth.rev)
+    const _lastRev = useSelector((state: RootState) => state.dbx.collection.state === 'authorized' && state.dbx.collection.rev)
     const lastRevRef = useRef(_lastRev);
     const documents = useSelector((state: RootState) => state.documents);
     const drawings = useSelector((state: RootState) => state.drawings);
@@ -108,7 +108,7 @@ const useAutomerge = () => {
     }, [state, lastRevState, setAutomergeState, documents, drawings])
 
     const someFetchError = Boolean(state.type === 'error' || lastRevState.type === 'error');
-    
+
     useEffect(() => {
         if (someFetchError) {
             setAutomergeState({ type: 'failed', reason: 'failed_fetch' })
@@ -122,34 +122,34 @@ export const useSubmitMergedDoc = () => {
     const store = useStore<RootState>();
     const submitMergedDoc = useCallback((documents: SlateDocuments, drawings: DrawingDocuments, remoteRev: string) => {
         const state = store.getState();
-        const auth = state.auth;
-        const filePath = auth.state === 'authorized' && auth.selectedFilePath
+        const collection = state.dbx.collection;
+        const filePath = collection.state === 'authorized' && collection.selectedFilePath
         if (!dbx || !filePath) { return; }
         const docsPendingUpload = new Set<string>();
         Object.values(documents).forEach(doc => {
             const existingDoc = state.documents[doc.name];
-            if (!existingDoc || (doc.documentHash !== existingDoc.documentHash &&
-                doc.backReferencesHash !== existingDoc.backReferencesHash)) {
+            if (!existingDoc || doc.documentHash !== existingDoc.documentHash ||
+                doc.backReferencesHash !== existingDoc.backReferencesHash) {
                 docsPendingUpload.add(doc.name);
             }
         })
         const drawingsPendingUpload = new Set<string>();
         Object.values(drawings).forEach(drawing => {
             const existingDrawing = state.drawings[drawing.name];
-            if (!existingDrawing || (drawing.drawingHash !== existingDrawing.drawingHash &&
-                drawing.backReferencesHash !== existingDrawing.backReferencesHash)) {
+            if (!existingDrawing || drawing.drawingHash !== existingDrawing.drawingHash ||
+                drawing.backReferencesHash !== existingDrawing.backReferencesHash) {
                 drawingsPendingUpload.add(drawing.name);
             }
         })
         store.dispatch(replaceDocsAction(documents));
         store.dispatch(replaceDrawingsAction(drawings));
-        
+
         upload(dbx,
             filePath,
             remoteRev,
             documents,
             drawings,
-            auth.revisions,
+            collection.revisions,
             docsPendingUpload,
             drawingsPendingUpload
         ).then(({ response, revisions }) => {

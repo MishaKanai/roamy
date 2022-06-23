@@ -49,7 +49,7 @@ function a11yProps(index: number) {
 const DeleteButton: React.FC<{ filename: string; onDelete?: () => void }> = ({ filename, onDelete }) => {
     const dbx = useDbx();
     const pathname = useLocation().pathname
-    const currFile = useSelector((state: RootState) => state.auth.state === 'authorized' ? state.auth.selectedFilePath : null);
+    const currFile = useSelector((state: RootState) => state.dbx.collection.state === 'authorized' ? state.dbx.collection.selectedFilePath : null);
     const fetchCollections = useFetchCollections(dbx);
     const [loading, setLoading] = React.useState(false);
     const dispatch = useDispatch();
@@ -77,7 +77,7 @@ interface CollectionSettingsProps {
     onDelete?: () => void;
 }
 const CollectionSettings: React.FC<CollectionSettingsProps> = ({ collectionFile: _collectionFile, onDelete }) => {
-    const currFile = useSelector((state: RootState) => state.auth.state === 'authorized' ? state.auth.selectedFilePath : null)
+    const currFile = useSelector((state: RootState) => state.dbx.collection.state === 'authorized' ? state.dbx.collection.selectedFilePath : null)
     const collectionFile = (_collectionFile || currFile);
     const [value, setValue] = React.useState(0);
 

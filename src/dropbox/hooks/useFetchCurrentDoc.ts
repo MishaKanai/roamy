@@ -27,7 +27,7 @@ const pending = { type: 'pending' } as const;
 const useFetchCurrentDoc = () => {
     const dbx = useDbx()
     const [state, setState] = useState<FetchCurrentDocState>(initial)
-    const currentFile = useSelector((state: RootState) => state.auth.state === 'authorized' ? state.auth.selectedFilePath : null)
+    const currentFile = useSelector((state: RootState) => state.dbx.collection.state === 'authorized' ? state.dbx.collection.selectedFilePath : null)
     const fetchCurrentDoc = useCallback(async (rev?: string) => {
         if (!dbx) {
             throw new Error('no dbx instance');

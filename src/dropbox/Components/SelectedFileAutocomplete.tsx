@@ -12,7 +12,7 @@ import { push as pushAction } from 'connected-react-router';
 const filter = createFilterOptions<DropboxFileOptionType>();
 
 export default function SelectedFileAutocomplete() {
-    const currentFilePath = useSelector((state: RootState) => state.auth.state === 'authorized' ? state.auth.selectedFilePath : null)
+    const currentFilePath = useSelector((state: RootState) => state.dbx.collection.state === 'authorized' ? state.dbx.collection.selectedFilePath : null)
     const { collectionsState, loadExistingCollection } = useDbxEntries();
     const dbxEntries: DropboxFileOptionType[] = React.useMemo(() => {
         const entries = collectionsState._tag === 'success' ? collectionsState.data : collectionsState._tag === 'pending' ? collectionsState.prevData ?? null : null;

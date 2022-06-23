@@ -3,7 +3,7 @@ import hash_sum from "hash-sum";
 import { DrawingDocuments } from "../../Excalidraw/store/reducer";
 import { SlateDocuments } from "../../SlateGraph/store/reducer";
 import { IndexFileStructure } from "../domain";
-import { AuthorizedAuthState } from "../store/reducer";
+import { AuthorizedCollectionState } from "../store/activeCollectionReducer";
 
 const upload = async (
     dbx: Dropbox,
@@ -11,7 +11,7 @@ const upload = async (
     indexFileRev: string,
     documents: SlateDocuments,
     drawings: DrawingDocuments,
-    existingRevisions: AuthorizedAuthState['revisions'],
+    existingRevisions: AuthorizedCollectionState['revisions'],
     docsPendingUpload: Set<string>,
     drawingsPendingUpload: Set<string>,
 ) => {
