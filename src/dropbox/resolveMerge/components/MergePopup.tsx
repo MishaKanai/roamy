@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useReducer, useRef, useState } from 'react';
 import LoadingOverlay from 'react-loading-overlay-ts';
 import { Dialog } from '@mui/material';
-import { useDispatch, useSelector } from 'react-redux';
+import { useSelector, useStore } from 'react-redux';
 import { RootState } from '../../../store/createRootReducer';
 import useFetchCurrentDoc from '../../hooks/useFetchCurrentDoc';
 import { SlateDocuments } from '../../../SlateGraph/store/reducer';
@@ -14,6 +14,7 @@ import ResolveConflicts from './ResolveConflicts';
 import { mergeTriggeredAction } from '../store/actions';
 import attemptMerge from '../util/attemptMerge';
 import { replaceDrawingsAction } from '../../../Excalidraw/store/actions';
+import upload from '../../util/upload';
 
 const useAutomerge = () => {
     const _lastRev = useSelector((state: RootState) => state.auth.state === 'authorized' && state.auth.rev)
@@ -68,7 +69,7 @@ const useAutomerge = () => {
             const left = documents;
             const right = state.data.documents;
             const initial = lastRevState.data.documents;
-           
+
             const [mergedState, docsNeedingMerge, drawingsNeedingMerge] = attemptMerge({
                 documents: {
                     left,
@@ -107,6 +108,7 @@ const useAutomerge = () => {
     }, [state, lastRevState, setAutomergeState, documents, drawings])
 
     const someFetchError = Boolean(state.type === 'error' || lastRevState.type === 'error');
+    
     useEffect(() => {
         if (someFetchError) {
             setAutomergeState({ type: 'failed', reason: 'failed_fetch' })
@@ -117,42 +119,47 @@ const useAutomerge = () => {
 
 export const useSubmitMergedDoc = () => {
     const dbx = useDbx()
-    const dispatch = useDispatch()
-    const filePath = useSelector((state: RootState) => state.auth.state === 'authorized' && state.auth.selectedFilePath)
+    const store = useStore<RootState>();
     const submitMergedDoc = useCallback((documents: SlateDocuments, drawings: DrawingDocuments, remoteRev: string) => {
+        const state = store.getState();
+        const auth = state.auth;
+        const filePath = auth.state === 'authorized' && auth.selectedFilePath
         if (!dbx || !filePath) { return; }
-        dispatch(replaceDocsAction(documents));
-        dispatch(replaceDrawingsAction(drawings));
-        dbx.filesUpload({
-            mode: {
-                ".tag": "update",
-                update: remoteRev,
-            },
-            path: filePath,
-            contents: new File(
-                [
-                    JSON.stringify(
-                        {
-                            documents,
-                            drawings,
-                        },
-                        null,
-                        2
-                    ),
-                ],
-                filePath.slice(1),
-                {
-                    type: "application/json",
-                }
-            ),
-        }).then(response => {
-            dispatch(syncSuccessAction(response.result.rev));
-        }).catch((error: DropboxResponseError<unknown>) => {
-            if (error.status === 409) {
-                dispatch(mergeTriggeredAction({ documents, drawings }))
+        const docsPendingUpload = new Set<string>();
+        Object.values(documents).forEach(doc => {
+            const existingDoc = state.documents[doc.name];
+            if (!existingDoc || (doc.documentHash !== existingDoc.documentHash &&
+                doc.backReferencesHash !== existingDoc.backReferencesHash)) {
+                docsPendingUpload.add(doc.name);
             }
         })
-    }, [dbx, dispatch, filePath])
+        const drawingsPendingUpload = new Set<string>();
+        Object.values(drawings).forEach(drawing => {
+            const existingDrawing = state.drawings[drawing.name];
+            if (!existingDrawing || (drawing.drawingHash !== existingDrawing.drawingHash &&
+                drawing.backReferencesHash !== existingDrawing.backReferencesHash)) {
+                drawingsPendingUpload.add(drawing.name);
+            }
+        })
+        store.dispatch(replaceDocsAction(documents));
+        store.dispatch(replaceDrawingsAction(drawings));
+        
+        upload(dbx,
+            filePath,
+            remoteRev,
+            documents,
+            drawings,
+            auth.revisions,
+            docsPendingUpload,
+            drawingsPendingUpload
+        ).then(({ response, revisions }) => {
+            store.dispatch(syncSuccessAction(response.result.rev, revisions));
+        }).catch((error: DropboxResponseError<unknown>) => {
+            if (error.status === 409) {
+                store.dispatch(mergeTriggeredAction({ documents, drawings }))
+            }
+        })
+    }, [dbx, store])
     return submitMergedDoc;
 }
 

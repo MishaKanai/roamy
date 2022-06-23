@@ -15,7 +15,7 @@ import CollectionSettings from './CollectionSettings';
 
 
 const DbxFilesOverview: React.FC<{}> = (props) => {
-    const { collectionsState, loadExistingFile } = useDbxEntries();
+    const { collectionsState, loadExistingCollection } = useDbxEntries();
     const currFile: string | null = useSelector((state: RootState) => state.auth.state === 'authorized' ? state.auth.selectedFilePath : null)
     const theme = useTheme()
     console.log({
@@ -36,10 +36,10 @@ const DbxFilesOverview: React.FC<{}> = (props) => {
     return (
         <div style={collectionsState._tag === 'pending' ? { opacity: .8 } : undefined }>
             <Masonry columns={{ xs: 1, sm: 2, md: 3 }} spacing={1}>
-                {(collectionsState._tag === 'success' ? collectionsState.data : collectionsState.prevData)?.map((item, index) => (
-                    item['.tag'] === 'file' && item.path_lower &&
-                    <Card key={index}>
-                        <CardHeader title={item.name.endsWith('.json') ? item.name.slice(0, '.json'.length * -1) : item.name} />
+                {(collectionsState._tag === 'success' ? collectionsState.data : collectionsState.prevData)?.flatMap((item, index) => (
+                    item['.tag'] === 'file' && item.path_lower && item.path_lower.endsWith('/index.json') ?
+                    [<Card key={index}>
+                        <CardHeader title={item.path_lower.slice(1 /* starting '/' */, '/index.json'.length * -1)} />
                         <CardContent>
                             <table>
                                 <tr><th>Last modified</th><td>{moment(item.server_modified).format('MM/DD/YYYY')}</td></tr>
@@ -48,7 +48,7 @@ const DbxFilesOverview: React.FC<{}> = (props) => {
                         </CardContent>
                         <CardActions style={{ display: 'flex', justifyContent: 'space-between' }}>
                             {item.path_lower === currFile ? <span /> : <Button onClick={() => {
-                                loadExistingFile(item.path_lower!)
+                                loadExistingCollection(item.path_lower!)
                             }} size="small" variant="outlined" color="primary">Open</Button>}
                             <Popup<string>
                                 renderDialogContent={({ closeDialog, optionalData }) => (
@@ -59,7 +59,7 @@ const DbxFilesOverview: React.FC<{}> = (props) => {
                                 )}
                             />
                         </CardActions>
-                    </Card>
+                    </Card>] : []
                 ))}
                 <CreateCollectionDialog>{({ promptCreate }) => (
                     <div style={{ border: '1px dashed ' + theme.palette.primary.main, position: 'relative', borderRadius: '4px' }}>

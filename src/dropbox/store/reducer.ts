@@ -25,6 +25,14 @@ export type AuthorizedAuthState = {
     selectedFilePath: string,
     rev?: string,
     syncing?: SyncingState
+    revisions?: {
+        documents: {
+            [docName: string]: string;
+        }
+        drawings: {
+            [docName: string]: string;
+        }
+    }
 }
 export type DropboxAuthState = {
     state: 'not_authorized',
@@ -55,6 +63,7 @@ const dropboxAuthReducer = (state: DropboxAuthState = { state: 'not_authorized'}
                     ...state,
                     selectedFilePath: action.payload.path,
                     rev: action.payload.rev,
+                    revisions: action.payload.revisions,
                     syncing: { _type: 'success', date: new Date() }
                 }
             }
@@ -85,6 +94,7 @@ const dropboxAuthReducer = (state: DropboxAuthState = { state: 'not_authorized'}
                 return {
                     ...state,
                     rev: action.payload.rev,
+                    revisions: action.payload.revisions,
                     syncing: { _type: 'success', date: action.payload.date }
                 }
             }

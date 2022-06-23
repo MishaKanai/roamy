@@ -24,6 +24,7 @@ import {
   DropboxAuthState,
 } from "../dropbox/store/reducer";
 import { mergeTriggeredAction } from "../dropbox/resolveMerge/store/actions";
+import upload from "../dropbox/util/upload";
 // aka app key
 const CLIENT_ID = "24bu717gh43au0o";
 const REDIRECT_URI = window.location.protocol + "//" + window.location.host;
@@ -75,8 +76,11 @@ const syncDropboxToStore = (
   accessToken: string,
   store: Store<RootState & PersistPartial, RootAction>
 ) => {
-  console.log("syncDropboxToStore");
+  const docsPendingUpload = new Set<string>();
+  const drawingsPendingUpload = new Set<string>();
+
   const dbx = new Dropbox({ accessToken });
+
   let prevDocuments: SlateDocuments = store.getState().documents;
   let prevDrawings: DrawingDocuments = store.getState().drawings;
   let setPrevDocuments = (documents: SlateDocuments) => {
@@ -94,65 +98,35 @@ const syncDropboxToStore = (
   ): authState is AuthorizedAuthState => {
     return authState.state === "authorized";
   };
-  const sync = (
-    // rev: string,
-    // filePath: string,
-    // documents: SlateDocuments,
-    // drawings: DrawingDocuments
-  ) => {
+  const sync = () => {
     const state = store.getState();
-    if (state.auth.state !== 'authorized') {
+    const auth = state.auth;
+    if (auth.state !== 'authorized') {
       return;
     }
 
-    const rev = state.auth.rev!;
-    const filePath = state.auth.selectedFilePath;
+    const rev = auth.rev!;
+    const filePath = auth.selectedFilePath;
     const { documents, drawings } = state;
+
     store.dispatch(syncStartAction());
-    dbx
-      .filesUpload({
-        mode: {
-          ".tag": "update",
-          update: rev,
-        },
-        path: filePath, // `/path/to/file-name.json`
-        contents: new File(
-          [
-            JSON.stringify(
-              {
-                documents,
-                drawings,
-              },
-              null,
-              2
-            ),
-          ],
-          filePath.slice(1),
-          {
-            type: "application/json",
-          }
-        ),
-        // ...other dropbox args
-      })
-      .then((response) => {
-        // setPrevDocuments(documents);
-        // setPrevDrawings(drawings);
-        store.dispatch(syncSuccessAction(response.result.rev));
-        // on success we can dispatch "upload complete" or something like that
+
+    upload(dbx,
+      filePath,
+      rev,
+      documents,
+      drawings,
+      auth.revisions,
+      docsPendingUpload,
+      drawingsPendingUpload)
+      .then(async ({response, revisions }) => {
+        store.dispatch(syncSuccessAction(response.result.rev, revisions));
       })
       .catch((error: DropboxResponseError<unknown>) => {
-        // if we dont setPrev here, we will loop because the dispatched failure
-        // will trigger the subscriber and it will see the documents don't match the cached ones
-        // setPrevDocuments(documents);
-        // setPrevDrawings(drawings);
         const auth = store.getState().auth;
         if (auth.state === 'authorized' && auth.rev !== rev) {
           throw new Error('This shouldn\'t happen if we prevent debouncedSync calls while a request is currently pending' +
             ' and simply mark a flag to do an extra sync after success.');
-          // retry because rev has changed, and that probably caused a 409
-          // due to debounced call of this function.
-          // auth.rev will always contain the most recent revision, so we are good if we just retry
-          // sync()
         } else {
           store.dispatch(syncFailureAction(error));
           if (error.status === 409) {
@@ -167,7 +141,13 @@ const syncDropboxToStore = (
   );
   let performFollowupSyncWhenRevChanges: string | null = null;
   store.subscribe(() => {
-    const { auth, documents, drawings } = store.getState();
+    const { auth, documents, drawings, merge } = store.getState();
+    if (merge.state === 'conflict') {
+      // prevent sync here, because we replace documents while the merge is in the conflict state,
+      // causing a debounced sync to begin, before we get to change our auth.rev,
+      // leading to auth.rev !== rev in the sync function.
+      return;
+    }
     if (
       isAuthorized(auth) &&
       auth.selectedFilePath &&
@@ -178,6 +158,26 @@ const syncDropboxToStore = (
       )
     ) {
       performFollowupSyncWhenRevChanges = null;
+      if (documentsChanged(documents)) {
+        // calculate different documents
+        const docKeysChanged = Object.entries(documents).filter(([docName, doc]) => {
+          return doc.documentHash !== prevDocuments[docName]?.documentHash ||
+            doc.backReferencesHash !== prevDocuments[docName]?.backReferencesHash
+        }).map(([docName]) => docName);
+        docKeysChanged.forEach(dk => {
+          docsPendingUpload.add(dk);
+        })
+      }
+      if (drawingsChanged(drawings)) {
+        // calculate different documents
+        const drawingKeysChanged = Object.entries(drawings).filter(([drawingName, drawing]) => {
+          return drawing.drawingHash !== prevDrawings[drawingName]?.drawingHash ||
+            drawing.backReferencesHash !== prevDrawings[drawingName]?.backReferencesHash
+        }).map(([drawingName]) => drawingName);
+        drawingKeysChanged.forEach(dk => {
+          drawingsPendingUpload.add(dk);
+        })
+      }
       setPrevDocuments(documents);
       setPrevDrawings(drawings);
       if (
@@ -219,14 +219,10 @@ const configureStore = () => {
           syncDropboxToStore(accessToken, store);
         })
         .catch((error) => {
-          console.log('here')
           console.error(error);
         });
     } else {
       const initialState = store.getState();
-      console.log({
-        initialState,
-      });
       const accessToken =
         initialState.auth.state === "authorized" &&
         initialState.auth.accessToken;

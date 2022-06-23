@@ -6,8 +6,8 @@ import slateDocumentsReducer, {
 import { History } from "history";
 import drawingsReducer, { DrawingDocuments } from "../Excalidraw/store/reducer";
 import authReducer, { DropboxAuthState } from '../dropbox/store/reducer';
-import storage from "redux-persist/lib/storage";
-import { persistReducer } from 'redux-persist'
+import storage from 'redux-persist/lib/storage';
+import { persistReducer } from 'redux-persist';
 import mergeReducer, { MergeState } from "../dropbox/resolveMerge/store/reducer";
 import recentlyOpenedReducer, { RecentlyOpenedState } from "../RecentlyOpened/store/reducer";
 import collectionsReducer, { CollectionsState } from "../dropbox/collections/reducer";
@@ -15,8 +15,9 @@ import collectionsReducer, { CollectionsState } from "../dropbox/collections/red
 const authPersistConfig = {
   key: 'auth',
   storage: storage,
-  whitelist: ['state', 'accessToken', 'rev', 'selectedFilePath']
+  whitelist: ['state', 'accessToken', 'rev', 'revisions', 'selectedFilePath']
 }
+
 export type RootState = {
   router: RouterState<unknown>;
   documents: SlateDocuments;

@@ -2,9 +2,9 @@ import { useContext, useReducer } from 'react';
 import { useCallback, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { replaceDrawingsAction } from "../../Excalidraw/store/actions";
-import { DrawingDocuments } from "../../Excalidraw/store/reducer";
+import { DrawingDocument, DrawingDocuments } from "../../Excalidraw/store/reducer";
 import { replaceDocsAction } from "../../SlateGraph/store/actions";
-import { SlateDocuments } from "../../SlateGraph/store/reducer";
+import { SlateDocument, SlateDocuments } from "../../SlateGraph/store/reducer";
 import { selectFilePathAction } from "../store/actions";
 import { push as pushAction } from 'connected-react-router';
 import useDbx from '../hooks/useDbx';
@@ -12,6 +12,9 @@ import { fileSelectPendingContext } from '../contexts/fileSelectPending';
 import { RootState } from '../../store/createRootReducer';
 import { getCollections, getCollectionsFailure, getCollectionsSuccess } from '../collections/actions';
 import { Dropbox, DropboxResponseError, files } from 'dropbox';
+import { IndexFileStructure } from '../domain';
+import loadFileJSON from '../util/loadFileJSON';
+import fetchDataFromCollectionAndCompose from '../util/fetchEntireCollection';
 const folderPath = "";
 
 const fetchEntries = (() => {
@@ -68,7 +71,7 @@ const useFetchCollectionsOnMount = (dbx?: Dropbox | null) => {
     const [retryKey, retry] = useReducer(state => state + 1, 1);
     const fetchCollections = useFetchCollections(dbx);
     useEffect(() => {
-       fetchCollections()
+        fetchCollections()
     }, [retryKey, fetchCollections]);
     return {
         retry,
@@ -88,44 +91,12 @@ export const useDbxEntries = () => {
         which contains some data to be figured out.
         
     */
-        const createNewEmptyCollection = useCallback((collectionName: string) => {
-            const path = (collectionName.startsWith('/') ? collectionName : "/" + collectionName) + '/index.json';
-            if (!dbx) {
-                return;
-            }
-            const data = {
-                documents: {},
-                drawings: {},
-            };
-            setFilePendingState({ _type: 'pending' })
-            return dbx
-                .filesUpload({
-                    path,
-                    contents: new File([JSON.stringify(data, null, 2)], 'index.json', {
-                        type: "application/json",
-                    }),
-                    // ...other dropbox args
-                })
-                .then((response) => {
-                    console.log(response);
-                    // dispatch(pushAction('/'))
-                    // dispatch(selectFilePathAction(path, response.result.rev));
-                    // dispatch(replaceDocsAction(data.documents));
-                    // dispatch(replaceDrawingsAction(data.drawings));
-                })
-                .then(() => {
-                    setFilePendingState({ _type: 'ok' })
-                }).catch(err => {
-                    console.error(err)
-                    setFilePendingState({ _type: 'error', message: 'an error occurred - check the console.' })
-                });
-        }, [dbx, dispatch, setFilePendingState])
-    const createNewEmptyFile = useCallback((fileName: string) => {
-        const path = fileName.startsWith('/') ? fileName : "/" + fileName;
+    const createNewEmptyCollection = useCallback((collectionName: string) => {
+        const path = (collectionName.startsWith('/') ? collectionName : "/" + collectionName) + '/index.json';
         if (!dbx) {
             return;
         }
-        const data = {
+        const data: IndexFileStructure = {
             documents: {},
             drawings: {},
         };
@@ -133,7 +104,7 @@ export const useDbxEntries = () => {
         return dbx
             .filesUpload({
                 path,
-                contents: new File([JSON.stringify(data, null, 2)], fileName, {
+                contents: new File([JSON.stringify(data, null, 2)], 'index.json', {
                     type: "application/json",
                 }),
                 // ...other dropbox args
@@ -141,9 +112,9 @@ export const useDbxEntries = () => {
             .then((response) => {
                 console.log(response);
                 dispatch(pushAction('/'))
-                dispatch(selectFilePathAction(path, response.result.rev));
-                dispatch(replaceDocsAction(data.documents));
-                dispatch(replaceDrawingsAction(data.drawings));
+                dispatch(selectFilePathAction(path, response.result.rev, { documents: {}, drawings: {}}));
+                dispatch(replaceDocsAction({}));
+                dispatch(replaceDrawingsAction({}));
             })
             .then(() => {
                 setFilePendingState({ _type: 'ok' })
@@ -151,59 +122,38 @@ export const useDbxEntries = () => {
                 console.error(err)
                 setFilePendingState({ _type: 'error', message: 'an error occurred - check the console.' })
             });
-    }, [dbx, dispatch, setFilePendingState])
+    }, [dbx, setFilePendingState, dispatch])
 
-    const loadExistingFile = useCallback((path_lower: string) => {
-        const fileWeWant = path_lower;
-        if (fileWeWant && dbx) {
+    const loadExistingCollection = useCallback(async (path_lower: string) => {
+        const indexFilePath = path_lower;
+        if (indexFilePath && dbx) {
             setFilePendingState({ _type: 'pending' })
-            const setErr = () => setFilePendingState({ _type: 'error', message: 'error occurred loading file ' + fileWeWant });
-            dbx
-                .filesDownload({ path: fileWeWant })
-                .then(function (data) {
-                    const fileBlob = (data.result as any)?.fileBlob;
-                    if (fileBlob) {
-                        var fr = new FileReader();
-                        fr.onload = function (e) {
-                            // e.target.result should contain the text
-                            const res = e.target?.result as string;
-                            if (res) {
-                                const state: {
-                                    documents: SlateDocuments;
-                                    drawings: DrawingDocuments;
-                                } = JSON.parse(res);
-
-                                console.log(state);
-                                dispatch(
-                                    selectFilePathAction(
-                                        fileWeWant,
-                                        data.result.rev
-                                    )
-                                );
-                                dispatch(replaceDocsAction(state.documents));
-                                dispatch(replaceDrawingsAction(state.drawings));
-                                setFilePendingState({ _type: 'ok' })
-                                dispatch(pushAction('/graph'))
-                            }
-                        };
-                        fr.readAsText(fileBlob);
-                        fr.onerror = function (e) {
-                            console.error(e)
-                            setErr()
-                        }
-                    }
-                }).catch((e) => {
-                    setErr()
-                });
+            const setErr = () => setFilePendingState({ _type: 'error', message: 'error occurred loading file ' + indexFilePath });
+            try {
+                const { documents, drawings, rev, revisions } = await fetchDataFromCollectionAndCompose(dbx, indexFilePath);
+                dispatch(
+                    selectFilePathAction(
+                        indexFilePath,
+                        rev,
+                        revisions
+                    )
+                );
+                dispatch(replaceDocsAction(documents));
+                dispatch(replaceDrawingsAction(drawings));
+                setFilePendingState({ _type: 'ok' })
+                dispatch(pushAction('/graph'))
+            } catch (e) {
+                setErr();
+            }
         }
     }, [dbx, dispatch, setFilePendingState])
+
     return {
         collectionsState,
         createNewEmptyCollection,
         dbx,
-        createNewEmptyFile,
-        loadExistingFile,
+        loadExistingCollection,
         retry
     };
-    }
+}
 

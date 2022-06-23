@@ -13,7 +13,7 @@ const filter = createFilterOptions<DropboxFileOptionType>();
 
 export default function SelectedFileAutocomplete() {
     const currentFilePath = useSelector((state: RootState) => state.auth.state === 'authorized' ? state.auth.selectedFilePath : null)
-    const { collectionsState, loadExistingFile } = useDbxEntries();
+    const { collectionsState, loadExistingCollection } = useDbxEntries();
     const dbxEntries: DropboxFileOptionType[] = React.useMemo(() => {
         const entries = collectionsState._tag === 'success' ? collectionsState.data : collectionsState._tag === 'pending' ? collectionsState.prevData ?? null : null;
         return entries?.flatMap(entry =>
@@ -53,7 +53,7 @@ export default function SelectedFileAutocomplete() {
                         if (newValue.title?.startsWith('Add "')) {
                             promptCreate(newValue.inputValue)
                         } else {
-                            newValue.path_lower && loadExistingFile(newValue.path_lower)
+                            newValue.path_lower && loadExistingCollection(newValue.path_lower)
                         }
                         setValue(newValue);
                     } else {

@@ -3,6 +3,7 @@ import { useSelector } from "react-redux"
 import { DrawingDocuments } from "../../Excalidraw/store/reducer"
 import { SlateDocuments } from "../../SlateGraph/store/reducer"
 import { RootState } from "../../store/createRootReducer"
+import fetchDataFromCollectionAndCompose from "../util/fetchEntireCollection"
 import useDbx from "./useDbx"
 
 export type FetchCurrentDocState = {
@@ -27,7 +28,7 @@ const useFetchCurrentDoc = () => {
     const dbx = useDbx()
     const [state, setState] = useState<FetchCurrentDocState>(initial)
     const currentFile = useSelector((state: RootState) => state.auth.state === 'authorized' ? state.auth.selectedFilePath : null)
-    const fetchCurrentDoc = useCallback((rev?: string) => {
+    const fetchCurrentDoc = useCallback(async (rev?: string) => {
         if (!dbx) {
             throw new Error('no dbx instance');
         }
@@ -35,47 +36,24 @@ const useFetchCurrentDoc = () => {
             throw new Error('no current file in store');
         }
         setState(pending)
-        dbx
-        .filesDownload({ path: currentFile, rev })
-        .then(function (data) {
-            console.log({ data })
-            const rev = data.result.rev;
-          const fileBlob = (data.result as any)?.fileBlob;
-          if (fileBlob) {
-            var fr = new FileReader();
-            fr.onload = function (e) {
-              // e.target.result should contain the text
-              const res = e.target?.result as string;
-              if (res) {
-                const data: {
-                  documents: SlateDocuments;
-                  drawings: DrawingDocuments;
-                } = JSON.parse(res);
-                setState({
-                    type:'success',
-                    rev,
-                    data
-                })
-              }
-            };
-            fr.readAsText(fileBlob);
-            fr.onerror = function(e) {
-              console.error(e)
-              console.log('error 1')
-              setState({
-                  type: 'error',
-                  msg: 'an error has occurred'
-              })
-            }
-          }
-        }).catch((e) => {
+
+        try {
+            const data = await fetchDataFromCollectionAndCompose(dbx, currentFile, rev);
+            setState({
+                type: 'success',
+                rev: data.rev,
+                data: {
+                    documents: data.documents,
+                    drawings: data.drawings
+                }
+            })
+        } catch (e) {
             console.error(e)
-            console.log('error 2')
             setState({
                 type: 'error',
                 msg: 'an error has occurred'
             })
-        });
+        }
     }, [dbx, setState, currentFile])
     return {
         state,
