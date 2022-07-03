@@ -12,6 +12,8 @@ import { getCollections, getCollectionsFailure, getCollectionsSuccess } from '..
 import { Dropbox, DropboxResponseError, files } from 'dropbox';
 import { IndexFileStructure } from '../domain';
 import fetchDataFromCollectionAndCompose from '../util/fetchEntireCollection';
+import { II } from '../../Search/util/search';
+
 const folderPath = "";
 
 const fetchEntries = (() => {
@@ -107,6 +109,7 @@ export const useDbxEntries = () => {
                 // ...other dropbox args
             })
             .then((response) => {
+                II.clear();
                 dispatch(pushAction('/'))
                 dispatch(selectFilePathAction(path, response.result.rev, { documents: {}, drawings: {}}));
                 dispatch(replaceDocsAction({}));
@@ -127,6 +130,7 @@ export const useDbxEntries = () => {
             const setErr = () => setFilePendingState({ _type: 'error', message: 'error occurred loading file ' + indexFilePath });
             try {
                 const { documents, drawings, rev, revisions } = await fetchDataFromCollectionAndCompose(dbx, indexFilePath);
+                II.clear();
                 dispatch(
                     selectFilePathAction(
                         indexFilePath,

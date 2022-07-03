@@ -84,13 +84,18 @@ const buildInvertedIndex = (docs: SlateDocuments) => {
   traverseDocs(docs, updateIndex(invertedIndex))
   return invertedIndex;
 }
+
 export const II = (() => {
   const docHashes: {
     [docName: string]: string
   } = {}
-  let invertedIndex: InvertedIndex;
-  let textNodeCb: DocTextCb;
+  let invertedIndex: InvertedIndex | null = null;
+  let textNodeCb: DocTextCb | null = null;
   return {
+    clear() {
+      invertedIndex = null;
+      textNodeCb = null;
+    },
     buildInitialIndex(docs: SlateDocuments) {
       invertedIndex = buildInvertedIndex(docs);
       textNodeCb = updateIndex(invertedIndex)
@@ -109,13 +114,13 @@ export const II = (() => {
         .filter(doc => !docHashes || doc.documentHash !== docHashes[doc.name])
         .forEach(doc => {
           // delete all old entries for the document being updated
-          Object.values(invertedIndex).forEach(wordEntry => {
+          Object.values(invertedIndex ?? {}).forEach(wordEntry => {
             if (wordEntry[doc.name]) {
               delete wordEntry[doc.name]
             }
           })
           traverseSlateNodes((text, pathToText) => {
-            textNodeCb({
+            textNodeCb?.({
               text,
               pathToText,
               docName: doc.name

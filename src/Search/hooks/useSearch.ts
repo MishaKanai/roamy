@@ -71,7 +71,7 @@ const useInvertedIndex = (documents: SlateDocuments) => {
         } else {
             II.updateIndexWithDocuments(documents);
         }
-        return II.getIndex();
+        return II.getIndex() as InvertedIndex;
     }, [documents])
     return invertedIndex;
 }
