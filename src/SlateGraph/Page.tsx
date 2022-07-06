@@ -136,7 +136,7 @@ export const PageRoute = React.memo(() => {
   const title = (
     <div style={{ display: "flex", flexDirection: "row" }}>
       <b style={{
-        marginTop: '-2px',
+        marginTop: '-1px',
         fontSize: "x-large",
         marginBottom: 0,
         textTransform: 'capitalize'

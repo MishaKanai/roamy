@@ -147,6 +147,9 @@ const ResponsiveDrawer = React.memo((props: ResponsiveDrawerProps) => {
     const [mobileOpen, setMobileOpen] = React.useState(false);
     const pathname = useLocation().pathname
     const atHome = pathname === '/' || pathname === '';
+    const docsPage = pathname === '/docs' || pathname === '/docs/';
+    const specificDoc = pathname.startsWith('/docs/') && pathname.length > '/docs/'.length;
+    const graphPage = pathname === '/graph' || pathname === '/graph/';
 
     const handleDrawerToggle = () => {
         setMobileOpen(!mobileOpen);
@@ -239,7 +242,13 @@ const ResponsiveDrawer = React.memo((props: ResponsiveDrawerProps) => {
                 aria-label="open drawer"
                 edge="start"
                 onClick={handleDrawerToggle}
-                sx={{ mr: 2, display: { sm: 'none' }, position: 'fixed', left: '.6rem', top: '1px', zIndex: 5 }}
+                sx={{
+                    display: { sm: 'none' },
+                    position: 'fixed',
+                    left: '.6rem',
+                    top: graphPage || docsPage ? '14px' : specificDoc ? '0px' : '1px',
+                    zIndex: 5,
+                }}
             >
                 <MenuIcon />
             </IconButton>

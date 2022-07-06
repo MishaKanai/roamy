@@ -1,6 +1,6 @@
 import Graph from "react-graph-vis";
 import React, { useMemo } from "react";
-import { Theme, useTheme } from "@mui/material";
+import { Box, Theme, useTheme } from "@mui/material";
 import { useSelector } from "react-redux";
 import { RootState } from "../store/createRootReducer";
 import { createSelector } from "reselect";
@@ -113,9 +113,11 @@ const AppGraph = () => {
   */
   return (
     <div>
-      <div style={{ marginTop: '1em' }}>
-        <Search />       
-      </div>
+      <Box sx={{ ml: 2, mr: 1 }}>
+        <div style={{ marginTop: '1em' }}>
+          <Search />       
+        </div>
+      </Box>
       <Graph graph={graph} options={getOptions(theme)} events={events} style={{ height: "640px" }} />
     </div>
   );

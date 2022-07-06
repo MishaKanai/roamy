@@ -21,7 +21,7 @@ const Docs = React.memo(() => {
           <PageRoute />
         </Route>
         <Route path={match.path}>
-          <Box sx={{ m: 0 }}>
+          <Box sx={{ m: 0, mt: 1 }}>
             <MasonrySearch />
           </Box>
         </Route>
