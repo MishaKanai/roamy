@@ -29,7 +29,7 @@ const getTextOfCurrentParagraph = (document: Descendant[], path: string): string
         let pathToParent = path.slice(0, path.lastIndexOf('.children['));
         let parent = get(document, pathToParent)
         if (parent) {
-            if (parent.type === 'paragraph') {
+            if (parent.type === 'paragraph' || parent.type === 'list-item' || !parent.type) { // root has no type
                 return accumulateText(parent)
             }
             return getTextOfCurrentParagraph(document, parent);
@@ -108,13 +108,21 @@ export const usePhraseSearch = (inputText: string) => {
             return prev;
         }, {} as { [docName: string]: Set<string> })
 
-        return Object.fromEntries(Object.entries(subWordResults).flatMap(([docName, textSet]) => {
+        const searchResults = Object.fromEntries(Object.entries(subWordResults).flatMap(([docName, textSet]) => {
             const matchingText = Array.from(textSet.values()).filter(text => text.toLowerCase().includes(inputText.toLowerCase()));
             if (matchingText.length === 0) {
                 return []
             }
             return [[docName, new Set(matchingText)]] as [string, Set<string>][];
         }));
+        // now lets add in matches to the title alone
+        // when we support alt-titles, we will have to change this.
+        Object.keys(documents).filter(docKey => docKey.includes(inputText)).forEach(docKey => {
+            if (!searchResults[docKey]) {
+                searchResults[docKey] = new Set()
+            }
+        })
+        return searchResults;
     }, [inputText, documents, invertedIndex]);
     return results;
 }

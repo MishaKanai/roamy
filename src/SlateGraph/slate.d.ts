@@ -5,6 +5,12 @@ import { HistoryEditor } from 'slate-history'
 
 export type CustomEditor = BaseEditor & ReactEditor & HistoryEditor
 
+export type ListItemElement = {
+  id?: string;
+  type: 'paragraph'
+  children: CustomText[]
+}
+
 export type ParagraphElement = {
   id?: string;
   type: 'paragraph'
@@ -65,6 +71,7 @@ export type DrawingElement = {
 }
 
 export type CustomElement =
+    | ListItemElement
     | ParagraphElement
     | HeadingOneElement
     | HeadingTwoElement
