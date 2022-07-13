@@ -2,13 +2,14 @@ import React, { ReactElement, useMemo, useState } from 'react';
 import { TextField, useTheme } from '@mui/material';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import { usePhraseSearch } from '../hooks/useSearch';
+import getRx from '../util/getRx';
 
-type HighlightedSearchResults = {
+export type HighlightedSearchResults = {
     title: string;
     highlightedText: ReactElement[][];
 }[]
 
-type RenderHighlightedSearchResults = (results: HighlightedSearchResults, inputText: string) => JSX.Element | null;
+export type RenderHighlightedSearchResults = (results: HighlightedSearchResults, inputText: string) => JSX.Element | null;
 
 const defaultRender: RenderHighlightedSearchResults = (results, inputText) => {
     if (!inputText) {
@@ -38,7 +39,8 @@ const Search: React.FunctionComponent<SearchProps> = ({ render }) => {
             const highlightedText = Array.from(matches).map((text, i) => {
                 const matches = (() => {
                     let acc = []
-                    let results = text.matchAll(new RegExp(inputText, 'ig'))
+                    const rx = getRx(inputText, 'ig');
+                    let results = text.matchAll(rx)
                     while(true) {
                         let ni = results.next();
                         if (ni.done) {
@@ -48,7 +50,7 @@ const Search: React.FunctionComponent<SearchProps> = ({ render }) => {
                     }
                     return acc;
                 })();
-                return text.split(new RegExp(inputText, 'i')).reduce((prev, curr, i) => {
+                return text.split(getRx(inputText, 'i')).reduce((prev, curr, i) => {
                     const highlightColor = theme.palette.secondary.light;
                     prev.push(<span key={i}>{curr}</span>);
                     prev.push(<span key={i + ':match'} style={{ backgroundColor: highlightColor, color: theme.palette.getContrastText(highlightColor) }}>{matches[i]}</span>)

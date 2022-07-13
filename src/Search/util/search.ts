@@ -27,9 +27,18 @@ const traverseSlateNodes = (cb: (text: string, pathToText: string) => void) => {
           case 'bulleted-list':
           case 'numbered-list':
             node.children.forEach(({ children }, i) => {
-              const path = `${pathToNode}.children[${i}]`
+              const path = `${pathToNode}.children[${i}].children`
               innerTraverse(children, path)
             })
+            return;
+          case 'portal':
+            cb(node.portalReference, pathToNode)
+            return;
+          case 'reference':
+            cb(node.docReference, pathToNode)
+            return;
+          case 'drawing': 
+            cb(node.drawingReference, pathToNode);
             return;
           default:
             innerTraverse(node.children, pathToNode + '.children')
