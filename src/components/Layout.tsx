@@ -285,7 +285,15 @@ const ResponsiveDrawer = React.memo((props: ResponsiveDrawerProps) => {
             </Box>
             <Box
                 component="main"
-                sx={{ flexGrow: 1, pl: 3, width: { sm: `calc(100% - ${drawerWidth}px)` } }}
+                sx={{
+                    flexGrow: 1,
+                    pl: 3,
+                    width: { xs: '100%', sm: `calc(100% - ${drawerWidth}px)` },
+                    position: 'absolute',
+                    top: 0,
+                    bottom: 0,
+                    right: 0,
+                }}
             >
                 {props.children}
                 {fileLoaded && !atHome && <CreateFab />}

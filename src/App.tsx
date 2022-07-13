@@ -50,7 +50,7 @@ export const getApp = (history: History) => {
       <div style={{ height: '100%' }}>
         <ConnectedRouter history={history}>
           <AccessControlledPage>
-          <div>
+          <div style={{ height: '100%' }}>
             <Switch>
               <Route path="/docs">
                 <Docs />

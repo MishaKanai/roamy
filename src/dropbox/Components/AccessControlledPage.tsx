@@ -2,12 +2,13 @@ import React, { useContext } from "react";
 import { useSelector } from "react-redux";
 import { RootState } from "../../store/createRootReducer";
 import { DropboxAuth } from "dropbox";
-import { CircularProgress } from "@mui/material";
+import { CircularProgress, Typography } from "@mui/material";
 import MergeEditorWrap from "../resolveMerge/components/MergePopup";
 import Layout from '../../components/Layout';
 import LandingPage from "./LandingPage";
 import { fileSelectPendingContext, FileSelectPendingProvider } from "../contexts/fileSelectPending";
 import Home from "../../components/Home";
+import ErrorOutline from "@mui/icons-material/ErrorOutline";
 // aka app key
 const CLIENT_ID = "24bu717gh43au0o";
 // var REDIRECT_URI = 'http://localhost:8080/pkce-browser';
@@ -41,8 +42,22 @@ interface AccessControlledPageProps {
 
 const FileSelectPendingWrapper: React.FC<{}> = props => {
   const { state } = useContext(fileSelectPendingContext);
-  return <>{state._type === 'ok' ? props.children :
-    state._type === 'pending' ? <CircularProgress /> : <p>Error:{state.message}</p>}</>
+  return <>{
+    state._type === 'ok' ?
+      props.children :
+      <div style={{ display: 'grid', placeItems: 'center', height: '100%' }}>
+        <div style={{ textAlign: 'center' }}>
+          <div>
+            {state._type === 'pending' ? <CircularProgress size={48} /> : <ErrorOutline fontSize="large" color="error" />}
+          </div>
+          <p>
+            {state._type === 'pending' ? <Typography>Loading Collection...</Typography> :
+              <Typography>{state.message}</Typography>
+            }
+          </p>
+        </div>
+      </div>
+  }</>
 }
 
 const AccessControlledPage: React.FC<AccessControlledPageProps> = (props) => {
@@ -57,17 +72,14 @@ const AccessControlledPage: React.FC<AccessControlledPageProps> = (props) => {
     return <LandingPage dbxAuth={doAuth}>Authorize</LandingPage>
   }
   const content = <FileSelectPendingWrapper key={mergeResolvedKey + ''}>
-    <div>{fileSelected ? props.children :
-     // <PickDbxFile />
-      <div>
-          <Home />
-      </div>
-     }</div>
+    <div style={{ height: '100%' }}>{fileSelected ? props.children :
+        <Home />
+    }</div>
   </FileSelectPendingWrapper>
 
   return <FileSelectPendingProvider><div>
     <Layout>
-      <div>
+      <div style={{ height: '100%' }}>
         <MergeEditorWrap>
           {content}
         </MergeEditorWrap>

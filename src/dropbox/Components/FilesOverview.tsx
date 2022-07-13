@@ -3,7 +3,7 @@ import { useSelector } from "react-redux";
 import SettingsIcon from '@mui/icons-material/Settings';
 import Card from '@mui/material/Card';
 import Masonry from '@mui/lab/Masonry';
-import { Button, CardActions, CardContent, CardHeader, CircularProgress, IconButton, useTheme } from '@mui/material';
+import { Button, CardActions, CardContent, CardHeader, CircularProgress, IconButton, Typography, useTheme } from '@mui/material';
 import { useDbxEntries } from '../hooks/useDbxEntries';
 import moment from 'moment'
 import { RootState } from '../../store/createRootReducer';
@@ -11,6 +11,7 @@ import AddIcon from '@mui/icons-material/Add';
 import CreateCollectionDialog from './CreateCollectionDialog';
 import Popup from '../../components/Popup';
 import CollectionSettings from './CollectionSettings';
+import ErrorOutline from '@mui/icons-material/ErrorOutline';
 
 
 
@@ -18,14 +19,23 @@ const DbxFilesOverview: React.FC<{}> = (props) => {
     const { collectionsState, loadExistingCollection } = useDbxEntries();
     const currFile: string | null = useSelector((state: RootState) => state.dbx.collection.state === 'authorized' ? state.dbx.collection.selectedFilePath : null)
     const theme = useTheme()
-    if (collectionsState._tag === 'error') {
-        return <div>Failed to fetch</div>
+    if (collectionsState._tag === 'error' || (collectionsState._tag === 'pending'  && !collectionsState.prevData)) {
+        return <div style={{ display: 'grid', placeItems: 'center', height: '100%' }}>
+        <div style={{ textAlign: 'center' }}>
+          <div>
+            {collectionsState._tag === 'pending' ? <CircularProgress size={48} /> : <ErrorOutline fontSize="large" color="error" />}
+          </div>
+          <p>
+            {collectionsState._tag === 'pending' ? <Typography>Loading Collections...</Typography> :
+              <Typography>{typeof collectionsState.error.status === 'number' ? `${collectionsState.error.status} Error` : 'Failed to fetch collections data'}</Typography>
+            }
+          </p>
+        </div>
+      </div>
+        // return <div>Failed to fetch</div>
     }
     if (collectionsState._tag === 'initial') {
         return null;
-    }
-    if (collectionsState._tag === 'pending' && !collectionsState.prevData) {
-        return <CircularProgress />;
     }
     if (collectionsState._tag === 'success' && !collectionsState.data) {
         return null;
