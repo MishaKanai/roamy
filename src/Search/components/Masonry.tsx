@@ -8,15 +8,33 @@ import { RootState } from '../../store/createRootReducer';
 import sum from 'sum';
 import Link from '../../components/Link';
 import Search from '../../Search/components/Search';
+import ExcalidrawSvgImage from '../../Excalidraw/ExcalidrawSvgImage';
+import { DrawingDocument } from '../../Excalidraw/store/reducer';
+import { SlateDocument } from '../../SlateGraph/store/reducer';
+import { sortBy } from 'lodash';
 
 const serialize = (nodes: any[]) => {
-  return nodes.map(n => Node.string(n)).join('\n')
+    return nodes.map(n => Node.string(n)).join('\n')
+}
+
+function renderReferences(k: 'references', item: SlateDocument): JSX.Element;
+function renderReferences(k: 'backReferences',  item: DrawingDocument | SlateDocument): JSX.Element;
+function renderReferences(k: 'backReferences' | 'references', item: any): JSX.Element {
+    return <ul style={{ padding: 0 }}>
+        {item[k].map((r: string) => <li style={{ listStyle: 'none' }} key={r}><Link to={'/docs/' + r}>
+            {k === 'backReferences' ? <>&#8592;&nbsp;{r}</> : <>{r}&nbsp;&#8594;</>}
+        </Link></li>)}
+    </ul>
 }
 
 const MasonrySearch: React.FC<{}> = () => {
     const documents = useSelector((state: RootState) => {
         return state.documents
     });
+    const drawings = useSelector((state: RootState) => {
+        return state.drawings
+    });
+    
     return <div>
         <Box sx={{ ml: '15px', mr: 1, marginTop: '1em', mb: 1 }}>
             <Search render={(results, input) => {
@@ -25,43 +43,66 @@ const MasonrySearch: React.FC<{}> = () => {
                     return prev;
                 }, {} as { [docKey: string]: React.ReactElement[][] })
                 
-                const resultKeys = input ? Object.keys(resultsObj) : Object.keys(documents);
+                let drawingKeys = Object.keys(drawings)
+                if (input) {
+                    drawingKeys = drawingKeys.filter(d => d.includes(input));
+                }
+                const sorted = sortBy([
+                    ...(input ? Object.keys(resultsObj) : Object.keys(documents)).map(dk => ({
+                        key: dk,
+                        type: 'doc' as const,
+                        lastModified: documents[dk].lastUpdatedDate
+                    })),
+                    ...drawingKeys.map(drk => ({
+                        key: drk,
+                        type: 'draw' as const,
+                        lastModified: drawings[drk].lastUpdatedDate
+                    }))
+                ], 'lastModified');
+                
                 return <Box sx={{ mr: -1, mt: 2 }}>
                     <Masonry columns={{ xs: 1, sm: 2, md: 3 }} spacing={1}>
-                    {resultKeys.map((docKey, index) => {
-                        const item = documents[docKey];
-                        return <Card key={index}>
-                        <CardHeader title={<Link to={'/docs/' + item.name}>{item.name}</Link>} />
-                        <CardContent>
-                            {(() => {
-                                if (input) {
-                                    // search results
-                                    return resultsObj[docKey];
-                                }
-                                if (!item.document || item.document.length === 0) {
-                                    return null
-                                }
-                                const corpus = serialize(item.document ?? []);
-                                if (!corpus) {
-                                    return null;
-                                }
-                                return sum({ corpus }).summary
-                            })()}
-                            <div style={{ display: 'flex', justifyContent: 'space-between'}}>
-                                <div>
-                                    <ul style={{ padding: 0 }}>
-                                        {item.backReferences.map(r => <li  style={{ listStyle: 'none' }} key={r}><Link to={'/docs/' + r}>&#8592;&nbsp;{r}</Link></li>)}
-                                    </ul>
-                                </div>
-                                <div style={{ textAlign: 'right'}}>
-                                    <ul style={{ padding: 0 }}>
-                                        {item.references.map(r => <li style={{ listStyle: 'none' }} key={r}><Link to={'/docs/' + r}>{r}&nbsp;&#8594;</Link></li>)}
-                                    </ul>
-                                </div>
-                            </div>
-                        </CardContent>
-                    </Card>
-                    })}
+                        {sorted.map((sortedItem, index) => {
+                            if (sortedItem.type === 'doc') {
+                                const docKey = sortedItem.key;
+                                const item = documents[docKey];
+                                return <Card key={'drawing:' + docKey}>
+                                    <CardHeader title={<Link to={'/docs/' + item.name}>{item.name}</Link>} />
+                                    <CardContent>
+                                        {(() => {
+                                            if (input) {
+                                                // search results
+                                                return resultsObj[docKey];
+                                            }
+                                            if (!item.document || item.document.length === 0) {
+                                                return null
+                                            }
+                                            const corpus = serialize(item.document ?? []);
+                                            if (!corpus) {
+                                                return null;
+                                            }
+                                            return sum({ corpus }).summary
+                                        })()}
+                                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                            <div>{renderReferences('backReferences', item)}</div>
+                                            <div style={{ textAlign: 'right' }}>{renderReferences('references', item)}</div>
+                                        </div>
+                                    </CardContent>
+                                </Card>
+                            }
+                            const drawingKey = sortedItem.key;
+                            const item = drawings[drawingKey];
+                            return <Card key={'drawing:' + drawingKey}>
+                                <CardHeader title={<Link to={'/drawings/' + item.name}>{item.name}</Link>} />
+                                <CardContent>
+                                    <ExcalidrawSvgImage drawingName={item.name} />
+                                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                        <div>{renderReferences('backReferences', item)}</div>
+                                        <div />
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        })}
                     </Masonry>
                 </Box>
             }} />
