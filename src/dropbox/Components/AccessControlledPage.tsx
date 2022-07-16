@@ -50,11 +50,11 @@ const FileSelectPendingWrapper: React.FC<{}> = props => {
           <div>
             {state._type === 'pending' ? <CircularProgress size={48} /> : <ErrorOutline fontSize="large" color="error" />}
           </div>
-          <p>
+          <div style={{ margin: '1em' }}>
             {state._type === 'pending' ? <Typography>Loading Collection...</Typography> :
               <Typography>{state.message}</Typography>
             }
-          </p>
+          </div>
         </div>
       </div>
   }</>

@@ -36,7 +36,7 @@ const MasonrySearch: React.FC<{}> = () => {
     });
     
     return <div>
-        <Box sx={{ ml: '15px', mr: 1, marginTop: '1em', mb: 1 }}>
+        <Box sx={{ ml: '15px', mr: 1, paddingTop: '1em', pb: 1 }}>
             <Search render={(results, input) => {
                 const resultsObj = results.reduce((prev, curr) => {
                     prev[curr.title] = curr.highlightedText;

@@ -168,7 +168,7 @@ const ProvideFilterNode: React.FunctionComponent<{
 
 const SearchableAppGraph = () => {
   return <Box sx={{ ml: '15px', mr: 1 }}>
-    <div style={{ marginTop: '1em' }}>
+    <div style={{ paddingTop: '1em' }}>
       <Search
         render={(results, innerText) => {
           return <ProvideFilterNode results={results} searchText={innerText}>

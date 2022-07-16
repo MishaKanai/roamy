@@ -25,11 +25,11 @@ const DbxFilesOverview: React.FC<{}> = (props) => {
           <div>
             {collectionsState._tag === 'pending' ? <CircularProgress size={48} /> : <ErrorOutline fontSize="large" color="error" />}
           </div>
-          <p>
+          <div style={{ margin: '1em' }}>
             {collectionsState._tag === 'pending' ? <Typography>Loading Collections...</Typography> :
               <Typography>{typeof collectionsState.error.status === 'number' ? `${collectionsState.error.status} Error` : 'Failed to fetch collections data'}</Typography>
             }
-          </p>
+          </div>
         </div>
       </div>
         // return <div>Failed to fetch</div>
@@ -49,8 +49,10 @@ const DbxFilesOverview: React.FC<{}> = (props) => {
                         <CardHeader title={item.path_lower.slice(1 /* starting '/' */, '/index.json'.length * -1)} />
                         <CardContent>
                             <table>
-                                <tr><th>Last modified</th><td>{moment(item.server_modified).format('MM/DD/YYYY')}</td></tr>
-                                <tr><th>Size</th><td>{item.size / 1000.0}<em>kb</em></td></tr>
+                                <tbody>
+                                    <tr><th>Last modified</th><td style={{ paddingLeft: '1em' }}>{moment(item.server_modified).calendar()}</td></tr>
+                                    <tr><th>Size</th><td style={{ paddingLeft: '1em' }}>{item.size / 1000.0}<em>kb</em></td></tr>
+                                </tbody>
                             </table>
                         </CardContent>
                         <CardActions style={{ display: 'flex', justifyContent: 'space-between' }}>
@@ -80,8 +82,10 @@ const DbxFilesOverview: React.FC<{}> = (props) => {
                         <CardHeader title="spacer" />
                         <CardContent>
                             <table>
-                                <tr><th>Last modified</th><td>01/07/2022</td></tr>
-                                <tr><th>Size</th><td>2.000kb</td></tr>
+                                <tbody>
+                                    <tr><th>Last modified</th><td>01/07/2022</td></tr>
+                                    <tr><th>Size</th><td>2.000kb</td></tr>
+                                </tbody>
                             </table>
                         </CardContent>
                         <CardActions>
