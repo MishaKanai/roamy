@@ -1,12 +1,11 @@
 import { useMemo } from 'react';
 import get from 'lodash/get';
-import { useSelector } from 'react-redux';
-import { RootState } from '../../store/createRootReducer';
 import { II, InvertedIndex } from '../util/search';
 import words from 'lodash/words';
 import { SlateDocuments } from '../../SlateGraph/store/reducer';
 import { CustomText } from '../../SlateGraph/slate';
 import { Descendant } from 'slate';
+import { useAppSelector } from '../../store/hooks';
 
 const isTextNode = (node: Descendant): node is CustomText => !(node as any).type && typeof (node as any).text !== 'undefined'
 const accumulateText = (node: Descendant): string => {
@@ -77,7 +76,7 @@ const useInvertedIndex = (documents: SlateDocuments) => {
 }
 
 export const usePhraseSearch = (inputText: string) => {
-    const documents = useSelector((state: RootState) => state.documents);
+    const documents = useAppSelector(state => state.documents);
     const invertedIndex = useInvertedIndex(documents);
     let results = useMemo(() => {
         if (!invertedIndex) {
@@ -128,7 +127,7 @@ export const usePhraseSearch = (inputText: string) => {
 }
 
 const useSearch = (inputText: string) => {
-    const documents = useSelector((state: RootState) => state.documents);
+    const documents = useAppSelector(state => state.documents);
     const invertedIndex = useInvertedIndex(documents);
     const results = useMemo(() => {
         return getResultsForWord(invertedIndex, documents, 'startsWith')(inputText);

@@ -1,6 +1,6 @@
 import { createSelectorCreator, defaultMemoize } from "reselect";
-import { RootState } from "../../store/createRootReducer";
 import deepEqual from 'fast-deep-equal';
+import { RootState } from "../../store/configureStore";
 
 const createDeepEqualSelector = createSelectorCreator(
     defaultMemoize,

@@ -1,8 +1,7 @@
 import React, { useCallback, useEffect, useReducer, useRef, useState } from 'react';
 import LoadingOverlay from 'react-loading-overlay-ts';
 import { Dialog } from '@mui/material';
-import { useSelector, useStore } from 'react-redux';
-import { RootState } from '../../../store/createRootReducer';
+import { useStore } from 'react-redux';
 import useFetchCurrentDoc from '../../hooks/useFetchCurrentDoc';
 import { SlateDocuments } from '../../../SlateGraph/store/reducer';
 import { DrawingDocuments } from '../../../Excalidraw/store/reducer';
@@ -15,12 +14,14 @@ import { mergeTriggeredAction } from '../store/actions';
 import attemptMerge from '../util/attemptMerge';
 import { replaceDrawingsAction } from '../../../Excalidraw/store/actions';
 import upload from '../../util/upload';
+import { useAppSelector } from '../../../store/hooks';
+import { RootState } from '../../../store/configureStore';
 
 const useAutomerge = () => {
-    const _lastRev = useSelector((state: RootState) => state.dbx.collection.state === 'authorized' && state.dbx.collection.rev)
+    const _lastRev = useAppSelector(state => state.dbx.collection.state === 'authorized' && state.dbx.collection.rev);
     const lastRevRef = useRef(_lastRev);
-    const documents = useSelector((state: RootState) => state.documents);
-    const drawings = useSelector((state: RootState) => state.drawings);
+    const documents = useAppSelector(state => state.documents);
+    const drawings = useAppSelector(state => state.drawings);
     const { state, fetchCurrentDoc } = useFetchCurrentDoc()
     const { state: lastRevState, fetchCurrentDoc: fetchLastRevDoc } = useFetchCurrentDoc();
     useEffect(() => {
@@ -165,7 +166,7 @@ export const useSubmitMergedDoc = () => {
 
 
 export const MergeEditorWrap: React.FC<{}> = ({ children }) => {
-    const mergeState = useSelector((state: RootState) => state.merge)
+    const mergeState = useAppSelector(state => state.merge)
     const [key, refresh] = useReducer((state: number) => state + 1, 1);
     if (mergeState.state === 'conflict') {
         return <MergeWrapper key={key + ':' + mergeState.key} retry={refresh}>{children}</MergeWrapper>

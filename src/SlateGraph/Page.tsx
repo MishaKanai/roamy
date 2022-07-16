@@ -1,7 +1,5 @@
 import React, { useCallback, useContext, useEffect, useMemo, useRef } from "react";
-import { useDispatch, useSelector } from "react-redux";
 import { useParams } from "react-router-dom";
-import { RootState } from "../store/createRootReducer";
 import SlateGraphEditor, { defaultRenderEditableRegion } from "./Editor";
 import {
   createDocAction,
@@ -15,10 +13,12 @@ import mergeContext from "../dropbox/resolveMerge/mergeContext";
 import { RootAction } from "../store/action";
 import { RenderEditableRegion } from "../Autocomplete/Editor/Editor";
 import { Descendant } from "slate";
+import { useAppDispatch, useAppSelector } from "../store/hooks";
+import { RootState } from "../store/configureStore";
 
 export const useRoamyDispatch = (): (action: RootAction) => void => {
   const mergeCtxt = useContext(mergeContext);
-  const reduxDispatch = useDispatch();
+  const reduxDispatch = useAppDispatch();
   return mergeCtxt.inMergeContext ? mergeCtxt.dispatch : reduxDispatch;
 }
 
@@ -64,10 +64,10 @@ export const useCreateChildDoc = (docName: string) => {
 const Page: React.FC<PageProps> = React.memo(
   ({ docName, viewedFromParentDoc, title, currDoc: currDocProp }) => {
     const initialDoc: Descendant[] = useMemo(createInitialEmptyDoc, []);
-    const currDoc = useSelector(
-      (state: RootState) => currDocProp ?? state.documents[docName]?.document ?? initialDoc
+    const currDoc = useAppSelector(
+      state => currDocProp ?? state.documents[docName]?.document ?? initialDoc
     );
-    const hasBackReferences = useSelector((state: RootState) =>
+    const hasBackReferences = useAppSelector(state =>
       Boolean(state.documents[docName]?.backReferences?.length)
     );
     const hasBackReferencesRef = useRef(hasBackReferences);

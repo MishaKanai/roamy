@@ -4,15 +4,14 @@ import TextField from '@mui/material/TextField';
 import Autocomplete, { createFilterOptions } from '@mui/material/Autocomplete';
 import { files } from "dropbox";
 import { useDbxEntries } from '../hooks/useDbxEntries';
-import { useDispatch, useSelector } from 'react-redux';
-import { RootState } from '../../store/createRootReducer';
 import CreateCollectionDialog from './CreateCollectionDialog';
 import { push as pushAction } from 'connected-react-router';
+import { useAppDispatch, useAppSelector } from '../../store/hooks';
 
 const filter = createFilterOptions<DropboxFileOptionType>();
 
 export default function SelectedFileAutocomplete() {
-    const currentFilePath = useSelector((state: RootState) => state.dbx.collection.state === 'authorized' ? state.dbx.collection.selectedFilePath : null)
+    const currentFilePath = useAppSelector(state => state.dbx.collection.state === 'authorized' ? state.dbx.collection.selectedFilePath : null)
     const { collectionsState, loadExistingCollection } = useDbxEntries();
     const dbxEntries: DropboxFileOptionType[] = React.useMemo(() => {
         const entries = collectionsState._tag === 'success' ? collectionsState.data : collectionsState._tag === 'pending' ? collectionsState.prevData ?? null : null;
@@ -30,7 +29,7 @@ export default function SelectedFileAutocomplete() {
     useEffect(() => {
         setValue(initialValue);
     }, [initialValue])
-    const dispatch = useDispatch();
+    const dispatch = useAppDispatch();
     return (
         <CreateCollectionDialog onCreate={filename => {
             setValue({

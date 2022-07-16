@@ -1,20 +1,19 @@
 import React from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import { RootState } from '../../store/createRootReducer';
 import MUIDataTable from "mui-datatables";
 import moment from 'moment';
 import { push } from 'connected-react-router';
+import { useAppDispatch, useAppSelector } from '../../store/hooks';
 
 
 const DATETIME_FORMAT = 'MMMM Do YYYY, h:mm:ss a';
 
 const DataTable = () => {
-    const data = useSelector((state: RootState) => {
+    const data = useAppSelector(state => {
         return Object.entries(state.documents).map(([name, {
             createdDate, lastUpdatedDate
         }]) => [name, createdDate, lastUpdatedDate] as const)
     })
-    const dispatch = useDispatch()
+    const dispatch = useAppDispatch()
     return <MUIDataTable
         title={"Concepts"}
         data={data}

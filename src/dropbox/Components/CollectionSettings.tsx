@@ -4,14 +4,13 @@ import Tab from '@mui/material/Tab';
 import Typography from '@mui/material/Typography';
 import Box from '@mui/material/Box';
 import { Button, CardActions, CardContent, CardHeader, CircularProgress, List, ListItem } from '@mui/material';
-import { useDispatch, useSelector } from 'react-redux';
-import { RootState } from '../../store/createRootReducer';
 import useDeleteCollection from '../hooks/useDeleteCollection';
 import { push as pushAction } from 'connected-react-router';
 import { useFetchCollections } from '../hooks/useDbxEntries';
 import useDbx from '../hooks/useDbx';
 import { clearCurrentFileAction } from '../store/actions';
 import { useLocation } from 'react-router';
+import { useAppDispatch, useAppSelector } from '../../store/hooks';
 
 interface TabPanelProps {
     children?: React.ReactNode;
@@ -49,10 +48,10 @@ function a11yProps(index: number) {
 const DeleteButton: React.FC<{ filename: string; onDelete?: () => void }> = ({ filename, onDelete }) => {
     const dbx = useDbx();
     const pathname = useLocation().pathname
-    const currFile = useSelector((state: RootState) => state.dbx.collection.state === 'authorized' ? state.dbx.collection.selectedFilePath : null);
+    const currFile = useAppSelector(state => state.dbx.collection.state === 'authorized' ? state.dbx.collection.selectedFilePath : null);
     const fetchCollections = useFetchCollections(dbx);
     const [loading, setLoading] = React.useState(false);
-    const dispatch = useDispatch();
+    const dispatch = useAppDispatch();
     const deleteCollection = useDeleteCollection()
     return <Button onClick={() => {
         setLoading(true);
@@ -77,7 +76,7 @@ interface CollectionSettingsProps {
     onDelete?: () => void;
 }
 const CollectionSettings: React.FC<CollectionSettingsProps> = ({ collectionFile: _collectionFile, onDelete }) => {
-    const currFile = useSelector((state: RootState) => state.dbx.collection.state === 'authorized' ? state.dbx.collection.selectedFilePath : null)
+    const currFile = useAppSelector(state => state.dbx.collection.state === 'authorized' ? state.dbx.collection.selectedFilePath : null)
     const collectionFile = (_collectionFile || currFile);
     const [value, setValue] = React.useState(0);
 

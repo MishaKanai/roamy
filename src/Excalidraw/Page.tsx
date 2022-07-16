@@ -6,9 +6,7 @@ import React, {
   useRef,
   useState,
 } from "react";
-import { useSelector } from "react-redux";
 import { useParams } from "react-router-dom";
-import { RootState } from "../store/createRootReducer";
 import {
   createDrawingAction,
   deleteDrawingAction,
@@ -27,6 +25,8 @@ import { useRoamyDispatch } from "../SlateGraph/Page";
 import { useTheme } from "@mui/material";
 import * as excalidrawRegistry from "./registry";
 import uniqueId from 'lodash/uniqueId';
+import { useAppSelector } from "../store/hooks";
+import { RootState } from "../store/configureStore";
 
 interface DrawingPageProps {
   drawingName: string;
@@ -55,10 +55,10 @@ export const useDrawingPage = (
 ) => {
   const viewedFromParentDoc = options?.viewedFromParentDoc;
   const initialDrawing: DrawingData = useMemo(createInitialEmptyDrawing, []);
-  const currDrawing = useSelector(
-    (state: RootState) => state.drawings[drawingName]?.drawing ?? initialDrawing
+  const currDrawing = useAppSelector(
+    state => state.drawings[drawingName]?.drawing ?? initialDrawing
   );
-  const hasBackReferences = useSelector((state: RootState) =>
+  const hasBackReferences = useAppSelector(state =>
     Boolean(state.drawings[drawingName]?.backReferences?.length)
   );
   const hasBackReferencesRef = useRef(hasBackReferences);

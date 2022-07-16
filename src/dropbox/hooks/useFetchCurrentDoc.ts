@@ -1,8 +1,7 @@
 import { useCallback, useState } from "react"
-import { useSelector } from "react-redux"
 import { DrawingDocuments } from "../../Excalidraw/store/reducer"
 import { SlateDocuments } from "../../SlateGraph/store/reducer"
-import { RootState } from "../../store/createRootReducer"
+import { useAppSelector } from "../../store/hooks"
 import fetchDataFromCollectionAndCompose from "../util/fetchEntireCollection"
 import useDbx from "./useDbx"
 
@@ -27,7 +26,7 @@ const pending = { type: 'pending' } as const;
 const useFetchCurrentDoc = () => {
     const dbx = useDbx()
     const [state, setState] = useState<FetchCurrentDocState>(initial)
-    const currentFile = useSelector((state: RootState) => state.dbx.collection.state === 'authorized' ? state.dbx.collection.selectedFilePath : null)
+    const currentFile = useAppSelector(state => state.dbx.collection.state === 'authorized' ? state.dbx.collection.selectedFilePath : null)
     const fetchCurrentDoc = useCallback(async (rev?: string) => {
         if (!dbx) {
             throw new Error('no dbx instance');

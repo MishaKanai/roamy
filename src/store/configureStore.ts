@@ -1,11 +1,8 @@
-import { createStore, applyMiddleware, compose, Reducer, Store } from "redux";
-import { persistStore, persistReducer } from "redux-persist";
+import { configureStore } from '@reduxjs/toolkit'
 import storageSession from "redux-persist/lib/storage/session"; // defaults to localStorage for web
 import { routerMiddleware } from "connected-react-router";
-import createRootReducer, { RootState } from "./createRootReducer";
+import createRootReducer from "./createRootReducer";
 import { createBrowserHistory } from "history";
-import { PersistPartial } from "redux-persist/es/persistReducer";
-import { RootAction } from "./action";
 import { DropboxAuth, Dropbox, DropboxResponseError } from "dropbox";
 import parseQueryString from "../dropbox/util/parseQueryString";
 import {
@@ -22,6 +19,19 @@ import { mergeTriggeredAction } from "../dropbox/resolveMerge/store/actions";
 import upload from "../dropbox/util/upload";
 import { AuthorizedCollectionState, CollectionState } from "../dropbox/store/activeCollectionReducer";
 import getDropboxAuth from "../dropbox/singletons/getDropboxAuth";
+import {
+  persistStore,
+  persistReducer,
+  FLUSH,
+  REHYDRATE,
+  PAUSE,
+  PERSIST,
+  PURGE,
+  REGISTER,
+} from 'redux-persist';
+/**
+ * https://redux-toolkit.js.org/usage/usage-guide#use-with-redux-persist
+ */
 
 
 const REDIRECT_URI = window.location.protocol + "//" + window.location.host;
@@ -46,16 +56,19 @@ const persistConfig = {
   blacklist: ['dbx']
 };
 
-// had to make this type explicit for the export as lib:
-/*
- Exported variable 'configureStore' has or is using name '$CombinedState' from external module
- "/node_modules/redux/index" but cannot be named
-*/
-const persistedReducer: Reducer<RootState & PersistPartial, RootAction> =
-  persistReducer(persistConfig, createRootReducer(history));
+/**
+ * 
+ * previously, had to make this type explicit for the export as lib:
+ * by adding
+ * const persistedReducer: Reducer<RootState & PersistPartial, RootAction> =
+ * we got rid of
+ * 
+ * Exported variable 'configureStore' has or is using name '$CombinedState' from external module
+ * "/node_modules/redux/index" but cannot be named
+ */
 
-const composeEnhancers =
-  (window as any).__REDUX_DEVTOOLS_EXTENSION_COMPOSE__ || compose;
+const persistedReducer =
+  persistReducer(persistConfig, createRootReducer(history));
 
 /*
   TODO
@@ -69,7 +82,7 @@ const composeEnhancers =
 */
 const syncDropboxToStore = (
   auth: DropboxAuth,
-  store: Store<RootState & PersistPartial, RootAction>
+  store: ReturnType<typeof appConfigureStore>['store']
 ) => {
   const docsPendingUpload = new Set<string>();
   const drawingsPendingUpload = new Set<string>();
@@ -198,11 +211,17 @@ const syncDropboxToStore = (
   });
 };
 
-const configureStore = () => {
-  let store = createStore(
-    persistedReducer,
-    compose(composeEnhancers(applyMiddleware(routerMiddleware(history))))
-  );
+const appConfigureStore = () => {
+  let store = configureStore({
+    reducer: persistedReducer,
+    middleware: (getDefaultMiddleware) =>
+      getDefaultMiddleware({
+        serializableCheck: {
+          ignoredActions: [FLUSH, REHYDRATE, PAUSE, PERSIST, PURGE, REGISTER],
+        },
+      }).concat(routerMiddleware(history)),
+    
+  })
   let persistor = persistStore(store as any, undefined, () => {
     if (hasRedirectedFromAuth()) {
       // redirect to authed page OR set app to authorized.
@@ -240,4 +259,8 @@ const configureStore = () => {
   });
   return { store, persistor };
 };
-export default configureStore;
+export default appConfigureStore;
+
+type Store = ReturnType<typeof appConfigureStore>['store'];
+export type RootState = ReturnType<Store['getState']>
+export type AppDispatch = Store['dispatch']

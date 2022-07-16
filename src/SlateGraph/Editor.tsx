@@ -1,9 +1,9 @@
 import React from "react";
-import { useSelector } from "react-redux";
 import { Descendant } from "slate";
 import { ReactEditor } from "slate-react";
 import SlateAutocompleteEditor, { RenderEditableRegion } from "../Autocomplete/Editor/Editor";
 import { drawingNamesSelector } from "../Excalidraw/globalSelectors";
+import { useAppSelector } from "../store/hooks";
 import { docNamesSelector } from "./globalSelectors";
 
 const triggers = ["<<", "[[", "{{"] as ["<<", "[[", "{{"];
@@ -24,8 +24,8 @@ const SlateGraphEditor: React.FunctionComponent<{
   createDoc: (newDocName: string) => void;
   renderEditableRegion?: RenderEditableRegion;
 }> = React.memo(({ value, setValue, createDoc, docName, title, ...props }) => {
-  const docNames = useSelector(docNamesSelector);
-  const drawingNames = useSelector(drawingNamesSelector);
+  const docNames = useAppSelector(docNamesSelector);
+  const drawingNames = useAppSelector(drawingNamesSelector);
   const getSearchResults = React.useCallback(
     (search, trigger, precedingText = "") => {
       // search results

@@ -1,23 +1,22 @@
 import React from 'react';
-import { useSelector } from "react-redux";
 import SettingsIcon from '@mui/icons-material/Settings';
 import Card from '@mui/material/Card';
 import Masonry from '@mui/lab/Masonry';
 import { Button, CardActions, CardContent, CardHeader, CircularProgress, IconButton, Typography, useTheme } from '@mui/material';
 import { useDbxEntries } from '../hooks/useDbxEntries';
 import moment from 'moment'
-import { RootState } from '../../store/createRootReducer';
 import AddIcon from '@mui/icons-material/Add';
 import CreateCollectionDialog from './CreateCollectionDialog';
 import Popup from '../../components/Popup';
 import CollectionSettings from './CollectionSettings';
 import ErrorOutline from '@mui/icons-material/ErrorOutline';
+import { useAppSelector } from '../../store/hooks';
 
 
 
 const DbxFilesOverview: React.FC<{}> = (props) => {
     const { collectionsState, loadExistingCollection } = useDbxEntries();
-    const currFile: string | null = useSelector((state: RootState) => state.dbx.collection.state === 'authorized' ? state.dbx.collection.selectedFilePath : null)
+    const currFile: string | null = useAppSelector(state => state.dbx.collection.state === 'authorized' ? state.dbx.collection.selectedFilePath : null)
     const theme = useTheme()
     if (collectionsState._tag === 'error' || (collectionsState._tag === 'pending'  && !collectionsState.prevData)) {
         return <div style={{ display: 'grid', placeItems: 'center', height: '100%' }}>

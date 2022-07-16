@@ -1,10 +1,10 @@
 import Graph from "react-vis-graph-wrapper";
 import React, { useMemo } from "react";
 import { Box, Theme, useTheme } from "@mui/material";
-import { useSelector } from "react-redux";
-import { RootState } from "../store/createRootReducer";
 import { createSelector } from "reselect";
 import Search, { HighlightedSearchResults } from "../Search/components/Search";
+import { useAppSelector } from "../store/hooks";
+import { RootState } from "../store/configureStore";
 
 const getOptions = (theme: Theme) => {
   const contrastTextColor = theme.palette.getContrastText(theme.palette.background.default);
@@ -103,7 +103,7 @@ interface AppGraphProps {
 const AppGraph = ({ filterNode }: AppGraphProps) => {
   const theme = useTheme()
   const edgesSelector = useMemo(() => createGraphSelector(), []);
-  const { nodes, edges } = useSelector(edgesSelector)
+  const { nodes, edges } = useAppSelector(edgesSelector)
 
   const { graph, events } = useMemo(() => {
     return {

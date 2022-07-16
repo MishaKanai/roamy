@@ -2,7 +2,6 @@ import * as React from 'react';
 import { Tooltip, Typography, useTheme, Zoom } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { Button, Dialog, DialogContent, DialogTitle, TextField, DialogActions, Fab } from '@mui/material';
-import { useDispatch } from 'react-redux';
 import { push } from 'connected-react-router';
 import capitalize from 'lodash/capitalize';
 import { useLocation, } from 'react-router';
@@ -15,6 +14,7 @@ import FormControlLabel from '@mui/material/FormControlLabel';
 import FormControl from '@mui/material/FormControl';
 import FormLabel from '@mui/material/FormLabel';
 import hash_sum from 'hash-sum';
+import { useAppDispatch } from '../store/hooks';
 
 function DocTypeRadioGroup(props: { onChange: (value: 'doc' | 'drawing') => void; value: 'doc' | 'drawing' }) {
     const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -41,7 +41,7 @@ const CreateDialog: React.FC<{ open: boolean, handleClose: () => void }> = ({ op
     const [docType, setDocType] = React.useState<'doc' | 'drawing'>('doc');
     const [name, setName] = React.useState('');
     const typeDisplayText = docType === 'doc' ? 'concept' : 'drawing';
-    const dispatch = useDispatch();
+    const dispatch = useAppDispatch();
     const placeholderShortId = React.useMemo(() => {
         return hash_sum(Date.now());
     }, [])
@@ -85,7 +85,7 @@ const CreateDialog: React.FC<{ open: boolean, handleClose: () => void }> = ({ op
 
 const DeleteDialog: React.FC<{ open: boolean, handleClose: () => void, name: string; docType: 'doc' | 'drawing' }> = ({ open, handleClose, docType, name }) => {
     const typeDisplayText = docType === 'doc' ? 'concept' : 'drawing';
-    const dispatch = useDispatch();
+    const dispatch = useAppDispatch();
     const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
         dispatch(push('/'))

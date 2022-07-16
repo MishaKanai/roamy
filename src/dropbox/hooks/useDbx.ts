@@ -1,11 +1,10 @@
 import { Dropbox } from "dropbox";
-import { useSelector } from "react-redux";
-import { RootState } from "../../store/createRootReducer";
+import { useAppSelector } from "../../store/hooks";
 import getDbx from "../singletons/getDbx";
 
 const useDbx = (): Dropbox | null => {
-  const refreshToken = useSelector(
-    (state: RootState) =>
+  const refreshToken = useAppSelector(
+    state =>
       state.dbx.auth.state === "authorized" && state.dbx.auth.refreshToken
   );
   if (!refreshToken) {

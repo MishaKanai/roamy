@@ -19,22 +19,21 @@ import HomeIcon from '@mui/icons-material/Home';
 import SettingsIcon from '@mui/icons-material/Settings';
 import { ListSubheader } from '@mui/material';
 import { useLocation } from 'react-router';
-import { useSelector } from 'react-redux';
 import useFileSelected from '../dropbox/hooks/useFileSelected';
 import NetworkIcon from '../icons/NetworkIcon';
 import TableIcon from '../icons/TableIcon';
 import PenTipIcon from '../icons/PenTip';
 import DocumentIcon from '../icons/DocumentIcon';
-import { RootState } from '../store/createRootReducer';
 import { parsePath } from '../RecentlyOpened/store/reducer';
 import { useDebounce } from 'use-debounce/lib';
 import CreateFab from './FabArea';
+import { useAppSelector } from '../store/hooks';
 
 const drawerWidth = 240;
 
 const useRecentlyUpdated = () => {
-    const _documents = useSelector((state: RootState) => state.documents);
-    const _drawings = useSelector((state: RootState) => state.drawings);
+    const _documents = useAppSelector(state => state.documents);
+    const _drawings = useAppSelector(state => state.drawings);
     const [drawings] = useDebounce(_drawings, 1000)
     const [documents] = useDebounce(_documents, 1000)
     return React.useMemo(() => {
@@ -49,7 +48,7 @@ const useRecentlyUpdated = () => {
 }
 const useRecentlyOpened = () => {
     const { pathname } = useLocation();
-    const { documents, drawings } = useSelector((state: RootState) => state.recentlyOpened);
+    const { documents, drawings } = useAppSelector(state => state.recentlyOpened);
     return React.useMemo(() => {
         const current = parsePath(pathname);
         return [...Object.entries(documents).map(([name, date]) => ({ name, date, type: 'document' } as const)),

@@ -4,9 +4,8 @@ import React, {
     useRef,
 } from "react";
 import { useTheme } from "@mui/material";
-import { useSelector } from "react-redux";
-import { RootState } from "../store/createRootReducer";
 import { exportToSvg } from "@excalidraw/excalidraw";
+import { useAppSelector } from "../store/hooks";
 
 interface DrawingPageProps {
     drawingName: string;
@@ -16,8 +15,8 @@ const ExcalidrawSvgImage: React.FC<DrawingPageProps> = React.memo(
     ({
         drawingName,
     }) => {
-        const currDrawing = useSelector(
-            (state: RootState) => state.drawings[drawingName]?.drawing
+        const currDrawing = useAppSelector(
+            state => state.drawings[drawingName]?.drawing
         );
         const initialData = useMemo(() => {
             return {

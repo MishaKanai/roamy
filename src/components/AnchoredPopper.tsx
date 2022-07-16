@@ -7,8 +7,8 @@ import { Theme } from "@mui/material/styles";
 import makeStyles from '@mui/styles/makeStyles';
 import createStyles from '@mui/styles/createStyles';
 import Link from "../components/Link";
-import { RootState } from "../store/createRootReducer";
-import { useSelector } from "react-redux";
+import { useAppSelector } from "../store/hooks";
+import { RootState } from "../store/configureStore";
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -29,7 +29,7 @@ export default function HoverBacklinks({
   dontInclude?: string[];
 }) {
   const classes = useStyles();
-  const allBackReferences = useSelector(selectBacklinks);
+  const allBackReferences = useAppSelector(selectBacklinks);
   const backReferences = useMemo(() => {
     if (dontInclude) {
       return allBackReferences?.filter((r) => !dontInclude.includes(r));

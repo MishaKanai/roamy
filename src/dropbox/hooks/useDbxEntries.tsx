@@ -1,18 +1,17 @@
 import { useContext, useReducer } from 'react';
 import { useCallback, useEffect } from "react";
-import { useDispatch, useSelector } from "react-redux";
 import { replaceDrawingsAction } from "../../Excalidraw/store/actions";
 import { replaceDocsAction } from "../../SlateGraph/store/actions";
 import { selectFilePathAction } from "../store/actions";
 import { push as pushAction } from 'connected-react-router';
 import useDbx from '../hooks/useDbx';
 import { fileSelectPendingContext } from '../contexts/fileSelectPending';
-import { RootState } from '../../store/createRootReducer';
 import { getCollections, getCollectionsFailure, getCollectionsSuccess } from '../collections/actions';
 import { Dropbox, DropboxResponseError, files } from 'dropbox';
 import { IndexFileStructure } from '../domain';
 import fetchDataFromCollectionAndCompose from '../util/fetchEntireCollection';
 import { II } from '../../Search/util/search';
+import { useAppDispatch, useAppSelector } from '../../store/hooks';
 
 const folderPath = "";
 
@@ -50,7 +49,7 @@ const fetchEntries = (() => {
 })();
 
 export const useFetchCollections = (dbx?: Dropbox | null) => {
-    const dispatch = useDispatch();
+    const dispatch = useAppDispatch();
     const fetchCollections = useCallback(() => {
         if (!dbx) {
             return;
@@ -66,7 +65,7 @@ export const useFetchCollections = (dbx?: Dropbox | null) => {
 }
 
 const useFetchCollectionsOnMount = (dbx?: Dropbox | null) => {
-    const collectionsState = useSelector((state: RootState) => state.collections);
+    const collectionsState = useAppSelector(state => state.collections);
     const [retryKey, retry] = useReducer(state => state + 1, 1);
     const fetchCollections = useFetchCollections(dbx);
     useEffect(() => {
@@ -79,7 +78,7 @@ const useFetchCollectionsOnMount = (dbx?: Dropbox | null) => {
 }
 
 export const useDbxEntries = () => {
-    const dispatch = useDispatch();
+    const dispatch = useAppDispatch();
     const dbx = useDbx()
     const { retry, collectionsState } = useFetchCollectionsOnMount(dbx);
     const { setState: setFilePendingState } = useContext(fileSelectPendingContext);

@@ -1,10 +1,8 @@
 import React from 'react';
-import { useSelector } from 'react-redux';
 import Card from '@mui/material/Card';
 import Masonry from '@mui/lab/Masonry';
 import { Node } from 'slate';
 import { Box, CardContent, CardHeader } from '@mui/material';
-import { RootState } from '../../store/createRootReducer';
 import sum from 'sum';
 import Link from '../../components/Link';
 import Search from '../../Search/components/Search';
@@ -12,6 +10,7 @@ import ExcalidrawSvgImage from '../../Excalidraw/ExcalidrawSvgImage';
 import { DrawingDocument } from '../../Excalidraw/store/reducer';
 import { SlateDocument } from '../../SlateGraph/store/reducer';
 import { sortBy } from 'lodash';
+import { useAppSelector } from '../../store/hooks';
 
 const serialize = (nodes: any[]) => {
     return nodes.map(n => Node.string(n)).join('\n')
@@ -28,12 +27,8 @@ function renderReferences(k: 'backReferences' | 'references', item: any): JSX.El
 }
 
 const MasonrySearch: React.FC<{}> = () => {
-    const documents = useSelector((state: RootState) => {
-        return state.documents
-    });
-    const drawings = useSelector((state: RootState) => {
-        return state.drawings
-    });
+    const documents = useAppSelector(state => state.documents);
+    const drawings = useAppSelector(state => state.drawings);
     
     return <div>
         <Box sx={{ ml: '15px', mr: 1, paddingTop: '1em', pb: 1 }}>

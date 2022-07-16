@@ -37,7 +37,6 @@ import { DrawingElement, CustomElement, CustomEditor, PortalElement, ReferenceEl
 import Link from "../../components/Link";
 import deepEqual from "fast-deep-equal";
 import HoverBacklinks from "../../components/AnchoredPopper";
-import { RootState } from "../../store/createRootReducer";
 import DrawingPage from "../../Excalidraw/Page";
 import EditIcon from "@mui/icons-material/Edit";
 import { drawingOptionsContext } from "../../extension/drawingOptionsContext";
@@ -709,7 +708,7 @@ export const Element: React.FC<RenderElementProps & { parentDoc: string }> = (
                               {"}}"}
                             </Link>
                             <HoverBacklinks
-                              selectBacklinks={(state: RootState) =>
+                              selectBacklinks={state =>
                                 state.drawings[drawingName]?.backReferences
                               }
                               dontInclude={[props.parentDoc]}
@@ -767,7 +766,7 @@ export const Element: React.FC<RenderElementProps & { parentDoc: string }> = (
                       {">>"}
                     </Link>
                     <HoverBacklinks
-                      selectBacklinks={(state: RootState) =>
+                      selectBacklinks={state =>
                         state.documents[docName]?.backReferences
                       }
                       dontInclude={[props.parentDoc]}

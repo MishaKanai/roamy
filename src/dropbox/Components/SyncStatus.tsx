@@ -1,10 +1,9 @@
 import { CircularProgress } from "@mui/material";
 import { DropboxResponseError } from "dropbox";
 import React from "react";
-import { useSelector } from "react-redux";
-import { RootState } from "../../store/createRootReducer";
 import WarnIcon from "@mui/icons-material/Warning";
 import "./TypingIndicator.css";
+import { useAppSelector } from "../../store/hooks";
 
 export const TypingIndicator: React.FC<{}> = () => (
   <div className="typing">
@@ -16,7 +15,7 @@ export const TypingIndicator: React.FC<{}> = () => (
 
 interface SyncStatusProps {}
 const SyncStatus: React.FC<SyncStatusProps> = (props) => {
-  const collection = useSelector((state: RootState) => state.dbx.collection);
+  const collection = useAppSelector(state => state.dbx.collection);
   const renderLogin = () => null;
   const renderDebouncePending = () => <TypingIndicator />;
   const renderRequestPending = () => (

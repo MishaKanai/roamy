@@ -1,6 +1,4 @@
 import React, { useContext } from "react";
-import { useSelector } from "react-redux";
-import { RootState } from "../../store/createRootReducer";
 import { DropboxAuth } from "dropbox";
 import { CircularProgress, Typography } from "@mui/material";
 import MergeEditorWrap from "../resolveMerge/components/MergePopup";
@@ -9,6 +7,7 @@ import LandingPage from "./LandingPage";
 import { fileSelectPendingContext, FileSelectPendingProvider } from "../contexts/fileSelectPending";
 import Home from "../../components/Home";
 import ErrorOutline from "@mui/icons-material/ErrorOutline";
+import { useAppSelector } from "../../store/hooks";
 // aka app key
 const CLIENT_ID = "24bu717gh43au0o";
 // var REDIRECT_URI = 'http://localhost:8080/pkce-browser';
@@ -61,13 +60,13 @@ const FileSelectPendingWrapper: React.FC<{}> = props => {
 }
 
 const AccessControlledPage: React.FC<AccessControlledPageProps> = (props) => {
-  const collection = useSelector((state: RootState) => state.dbx.collection);
-  const auth = useSelector((state: RootState) => state.dbx.auth);
+  const collection = useAppSelector(state => state.dbx.collection);
+  const auth = useAppSelector(state => state.dbx.auth);
   const isAuthorized = auth.state === "authorized";
   const fileSelected =
     collection.state === "authorized" && Boolean(collection.selectedFilePath);
 
-  const mergeResolvedKey = useSelector((state: RootState) => Boolean(state.merge.state === 'resolved'))
+  const mergeResolvedKey = useAppSelector(state => state.merge.state === 'resolved')
   if (!isAuthorized) {
     return <LandingPage dbxAuth={doAuth}>Authorize</LandingPage>
   }
