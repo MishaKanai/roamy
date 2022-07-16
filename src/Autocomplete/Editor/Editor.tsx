@@ -41,13 +41,13 @@ import { RootState } from "../../store/createRootReducer";
 import DrawingPage from "../../Excalidraw/Page";
 import EditIcon from "@mui/icons-material/Edit";
 import { drawingOptionsContext } from "../../extension/drawingOptionsContext";
-import PlainTextExample from "./PT";
 import { withNodeId } from "@udecode/plate-node-id";
 import { v4 as uuidv4 } from 'uuid';
 import mergeContext from "../../dropbox/resolveMerge/mergeContext";
 import nestedEditorContext from "../nestedEditorContext";
 import useBackgroundColor from "./hooks/useBackgroundColor";
 import UniversalSticky from "./utils/UniversalSticky3";
+import scrollIntoView from 'scroll-into-view-if-needed'
 
 
 const isIos = /(iPad|iPhone|iPod)/g.test(navigator.userAgent);
@@ -463,6 +463,33 @@ const SlateAutocompleteEditorComponent = <Triggers extends string[]>(
     editor,
     EditableElement: (
       <Editable
+        scrollSelectionIntoView={(editor, domRange) => {
+          /**
+           * default implementation,
+           * except short circuit on clicking data-slate-zero-width
+           * because clicking on the edge of a  non-text element would cause jump to weird positions.
+           */
+          if (
+            !editor.selection ||
+            (editor.selection && Range.isCollapsed(editor.selection))
+          ) {
+            const leafEl = domRange.startContainer.parentElement!
+            if (leafEl.hasAttribute('data-slate-zero-width')) {
+              return;
+            }
+            leafEl.getBoundingClientRect = domRange.getBoundingClientRect.bind(domRange)
+            scrollIntoView(leafEl, {
+              /**
+               * TODO
+               * Would be nice to scroll to/near start, but just under the sticky scrollbar
+               */
+              scrollMode: 'if-needed',
+              // block: 'center', // block = start | center | end | nearest
+            })
+            // @ts-expect-error an unorthodox delete D:
+            delete leafEl.getBoundingClientRect
+          }
+        }}
         onFocus={handleFocus}
         onBlur={handleBlur}
         renderElement={renderElement}
@@ -727,17 +754,6 @@ export const Element: React.FC<RenderElementProps & { parentDoc: string }> = (
               // overflow: "hidden",
             }}
           >
-            {/*
-              After Slate version 0.63, the first (and only first) Slate editor rendered below this point has a bad issue:
-              When typing with the cursor at the END of the editor's contents, the character is placed at the end but then focus instantly jumps to the beginning of the document.
-              Any Slate editors rendered below that editor is apparently free of any issues.
-
-              I have NO idea why this happens.
-
-            */}
-            <div style={{ display: "none" }}>
-              <PlainTextExample />
-            </div>
             <mergeContext.Consumer>{({ inMergeContext }) => (inMergeContext ? (
               // TODO: mergeContext can contain list of docs to merge, and we can make a #link to that doc if present
               <b>{'<<'}{(element as any).portalReference}{'>>'}</b>
