@@ -8,7 +8,7 @@ import storageSession from 'redux-persist/lib/storage/session';
 const authPersistConfig = {
   key: 'auth',
   storage,
-  whitelist: ['state', 'accessToken']
+  whitelist: ['state', 'accessToken', 'refreshToken']
 }
 const collectionPersistConfig = {
     key: 'collection',

@@ -4,7 +4,8 @@ import { authSuccessAction } from './actions';
 
 export type AuthorizedAuthState = {
     state: 'authorized',
-    accessToken: string
+    accessToken: string,
+    refreshToken: string,
 }
 export type DropboxAuthState = {
     state: 'not_authorized',
@@ -15,6 +16,7 @@ const dropboxAuthReducer = (state: DropboxAuthState = { state: 'not_authorized'}
             return {
                 state: 'authorized',
                 accessToken: action.payload.accessToken,
+                refreshToken: action.payload.refreshToken,
             }
         }
     }

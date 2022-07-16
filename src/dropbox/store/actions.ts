@@ -4,11 +4,11 @@ import { AUTH_SUCCESS, SELECT_FILEPATH, SYNC_START, SYNC_SUCCESS, SYNC_FAILURE, 
 import { AuthorizedCollectionState } from './activeCollectionReducer';
 
 export const authSuccessAction = createCustomAction(AUTH_SUCCESS, type => {
-    return (accessToken: string) => {
+    return (accessToken: string, refreshToken: string) => {
         return {
             type,
             payload: {
-                accessToken
+                accessToken, refreshToken
             },
         }
     }

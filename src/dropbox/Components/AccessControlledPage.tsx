@@ -25,7 +25,7 @@ function doAuth() {
       "code",
       "offline",
       undefined,
-      undefined,
+      'none',
       true
     )
     .then((authUrl) => {

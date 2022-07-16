@@ -21,12 +21,11 @@ import { SlateDocuments } from "../SlateGraph/store/reducer";
 import { mergeTriggeredAction } from "../dropbox/resolveMerge/store/actions";
 import upload from "../dropbox/util/upload";
 import { AuthorizedCollectionState, CollectionState } from "../dropbox/store/activeCollectionReducer";
-// aka app key
-const CLIENT_ID = "24bu717gh43au0o";
+import getDropboxAuth from "../dropbox/singletons/getDropboxAuth";
+
+
 const REDIRECT_URI = window.location.protocol + "//" + window.location.host;
-const dbxAuth = new DropboxAuth({
-  clientId: CLIENT_ID,
-});
+const dbxAuth = getDropboxAuth();
 
 // Parses the url and gets the access token if it is in the urls hash
 function getCodeFromUrl() {
@@ -69,13 +68,13 @@ const composeEnhancers =
 
 */
 const syncDropboxToStore = (
-  accessToken: string,
+  auth: DropboxAuth,
   store: Store<RootState & PersistPartial, RootAction>
 ) => {
   const docsPendingUpload = new Set<string>();
   const drawingsPendingUpload = new Set<string>();
 
-  const dbx = new Dropbox({ accessToken });
+  const dbx = new Dropbox({ auth });
 
   let prevDocuments: SlateDocuments = store.getState().documents;
   let prevDrawings: DrawingDocuments = store.getState().drawings;
@@ -212,20 +211,31 @@ const configureStore = () => {
         .getAccessTokenFromCode(REDIRECT_URI, getCodeFromUrl())
         .then((response) => {
           const accessToken = (response.result as any).access_token;
-          store.dispatch(authSuccessAction(accessToken));
-          syncDropboxToStore(accessToken, store);
+          
+          const refreshToken = (response.result as any).refresh_token;
+          dbxAuth.setAccessToken(accessToken);
+          dbxAuth.setRefreshToken(refreshToken);
+
+          store.dispatch(authSuccessAction(accessToken, refreshToken));
+          
+          syncDropboxToStore(dbxAuth, store);
         })
         .catch((error) => {
           console.error(error);
         });
     } else {
       const initialState = store.getState();
-      const accessToken =
-        initialState.dbx.auth.state === "authorized" &&
-        initialState.dbx.auth.accessToken;
-      if (accessToken) {
-        syncDropboxToStore(accessToken, store);
+      if (initialState.dbx.auth.state !== "authorized") {
+        console.log('not authorized')
+        return;
       }
+      const accessToken = initialState.dbx.auth.accessToken;
+      const refreshToken = initialState.dbx.auth.refreshToken;
+      const dbxAuth = getDropboxAuth();
+      dbxAuth.setRefreshToken(refreshToken);
+      dbxAuth.setAccessToken(accessToken);
+
+      syncDropboxToStore(dbxAuth, store);      
     }
   });
   return { store, persistor };
