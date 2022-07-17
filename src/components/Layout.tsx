@@ -24,7 +24,7 @@ import NetworkIcon from '../icons/NetworkIcon';
 import TableIcon from '../icons/TableIcon';
 import PenTipIcon from '../icons/PenTip';
 import DocumentIcon from '../icons/DocumentIcon';
-import { parsePath } from '../RecentlyOpened/store/reducer';
+import { parsePath } from '../RecentlyOpened/store/recentlyOpenedSlice';
 import { useDebounce } from 'use-debounce/lib';
 import CreateFab from './FabArea';
 import { useAppSelector } from '../store/hooks';

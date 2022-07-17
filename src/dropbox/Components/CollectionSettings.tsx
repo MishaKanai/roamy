@@ -8,9 +8,9 @@ import useDeleteCollection from '../hooks/useDeleteCollection';
 import { push as pushAction } from 'connected-react-router';
 import { useFetchCollections } from '../hooks/useDbxEntries';
 import useDbx from '../hooks/useDbx';
-import { clearCurrentFileAction } from '../store/actions';
 import { useLocation } from 'react-router';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
+import { clearCurrentFile } from '../store/activeCollectionSlice';
 
 interface TabPanelProps {
     children?: React.ReactNode;
@@ -57,7 +57,7 @@ const DeleteButton: React.FC<{ filename: string; onDelete?: () => void }> = ({ f
         setLoading(true);
         deleteCollection(filename, () => {
             if (currFile === filename) {
-                dispatch(clearCurrentFileAction());
+                dispatch(clearCurrentFile());
             }
             setLoading(false);
             onDelete?.()

@@ -1,6 +1,6 @@
 import { combineReducers } from "redux";
-import collectionReducer from "./activeCollectionReducer";
-import dropboxAuthReducer from "./dropboxAuthReducer";
+import collectionReducer from "./activeCollectionSlice";
+import dropboxAuthReducer from "./authSlice";
 import { persistReducer } from 'redux-persist';
 import storage from 'redux-persist/lib/storage';
 import storageSession from 'redux-persist/lib/storage/session';

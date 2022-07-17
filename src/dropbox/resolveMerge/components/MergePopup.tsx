@@ -6,7 +6,6 @@ import useFetchCurrentDoc from '../../hooks/useFetchCurrentDoc';
 import { SlateDocuments } from '../../../SlateGraph/store/reducer';
 import { DrawingDocuments } from '../../../Excalidraw/store/reducer';
 import { replaceDocsAction } from '../../../SlateGraph/store/actions';
-import { syncSuccessAction } from '../../store/actions';
 import { DropboxResponseError } from 'dropbox';
 import useDbx from '../../hooks/useDbx';
 import ResolveConflicts from './ResolveConflicts';
@@ -16,6 +15,7 @@ import { replaceDrawingsAction } from '../../../Excalidraw/store/actions';
 import upload from '../../util/upload';
 import { useAppSelector } from '../../../store/hooks';
 import { RootState } from '../../../store/configureStore';
+import { syncSuccess } from '../../store/activeCollectionSlice';
 
 const useAutomerge = () => {
     const _lastRev = useAppSelector(state => state.dbx.collection.state === 'authorized' && state.dbx.collection.rev);
@@ -154,7 +154,7 @@ export const useSubmitMergedDoc = () => {
             docsPendingUpload,
             drawingsPendingUpload
         ).then(({ response, revisions }) => {
-            store.dispatch(syncSuccessAction(response.result.rev, revisions));
+            store.dispatch(syncSuccess(response.result.rev, revisions));
         }).catch((error: DropboxResponseError<unknown>) => {
             if (error.status === 409) {
                 store.dispatch(mergeTriggeredAction({ documents, drawings }))

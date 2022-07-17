@@ -5,19 +5,12 @@ import createRootReducer from "./createRootReducer";
 import { createBrowserHistory } from "history";
 import { DropboxAuth, Dropbox, DropboxResponseError } from "dropbox";
 import parseQueryString from "../dropbox/util/parseQueryString";
-import {
-  authSuccessAction,
-  syncDebounceStartAction,
-  syncFailureAction,
-  syncStartAction,
-  syncSuccessAction,
-} from "../dropbox/store/actions";
 import debounce from "lodash/debounce";
 import { DrawingDocuments } from "../Excalidraw/store/reducer";
 import { SlateDocuments } from "../SlateGraph/store/reducer";
 import { mergeTriggeredAction } from "../dropbox/resolveMerge/store/actions";
 import upload from "../dropbox/util/upload";
-import { AuthorizedCollectionState, CollectionState } from "../dropbox/store/activeCollectionReducer";
+import { AuthorizedCollectionState, CollectionState, syncDebounceStart, syncFailure, syncStart, syncSuccess } from "../dropbox/store/activeCollectionSlice";
 import getDropboxAuth from "../dropbox/singletons/getDropboxAuth";
 import {
   persistStore,
@@ -29,6 +22,7 @@ import {
   PURGE,
   REGISTER,
 } from 'redux-persist';
+import { authSuccess } from '../dropbox/store/globalActions';
 /**
  * https://redux-toolkit.js.org/usage/usage-guide#use-with-redux-persist
  */
@@ -118,7 +112,7 @@ const syncDropboxToStore = (
     const filePath = collection.selectedFilePath;
     const { documents, drawings } = state;
 
-    store.dispatch(syncStartAction());
+    store.dispatch(syncStart());
 
     upload(dbx,
       filePath,
@@ -129,7 +123,7 @@ const syncDropboxToStore = (
       docsPendingUpload,
       drawingsPendingUpload)
       .then(async ({response, revisions }) => {
-        store.dispatch(syncSuccessAction(response.result.rev, revisions));
+        store.dispatch(syncSuccess(response.result.rev, revisions));
       })
       .catch((error: DropboxResponseError<unknown>) => {
         const collection = store.getState().dbx.collection;
@@ -137,7 +131,7 @@ const syncDropboxToStore = (
           throw new Error('This shouldn\'t happen if we prevent debouncedSync calls while a request is currently pending' +
             ' and simply mark a flag to do an extra sync after success.');
         } else {
-          store.dispatch(syncFailureAction(error));
+          store.dispatch(syncFailure(error));
           if (error.status === 409) {
             store.dispatch(mergeTriggeredAction({ documents, drawings }))
           }
@@ -157,6 +151,13 @@ const syncDropboxToStore = (
       // leading to auth.rev !== rev in the sync function.
       return;
     }
+    
+    /**
+     * We need to prevent upload when we select a new (different) collection.
+     * Maybe track collection selectedfilePath and clear out prevDocuments when it changes,
+     * and then only upload when prevDocuments is populated.
+     * (And of course, do a initialization pass where we set it on collection)
+     */
     if (
       isAuthorized(collection) &&
       collection.selectedFilePath &&
@@ -193,7 +194,7 @@ const syncDropboxToStore = (
         collection.syncing?._type !== "debounced_pending" &&
         collection.syncing?._type !== "request_pending"
       ) {
-        store.dispatch(syncDebounceStartAction());
+        store.dispatch(syncDebounceStart());
       }
       // debouncedSync(auth.rev, auth.selectedFilePath, documents, drawings);
       if (collection.syncing?._type === 'request_pending') {
@@ -216,6 +217,16 @@ const appConfigureStore = () => {
     reducer: persistedReducer,
     middleware: (getDefaultMiddleware) =>
       getDefaultMiddleware({
+        immutableCheck: {
+          /**
+           * TODO
+           * Is there some kind of wildcard, so we can drill down past
+           * dynamic keys, and into those entries?
+           * would like to do drawings.*.drawing.elements
+           * */ 
+          
+          ignoredPaths: ['drawings']
+        },
         serializableCheck: {
           ignoredActions: [FLUSH, REHYDRATE, PAUSE, PERSIST, PURGE, REGISTER],
         },
@@ -235,7 +246,7 @@ const appConfigureStore = () => {
           dbxAuth.setAccessToken(accessToken);
           dbxAuth.setRefreshToken(refreshToken);
 
-          store.dispatch(authSuccessAction(accessToken, refreshToken));
+          store.dispatch(authSuccess(accessToken, refreshToken));
           
           syncDropboxToStore(dbxAuth, store);
         })

@@ -2,7 +2,7 @@ import { getType } from "typesafe-actions";
 import { DrawingDocuments } from "../../../Excalidraw/store/reducer";
 import { SlateDocuments } from "../../../SlateGraph/store/reducer";
 import { RootAction } from "../../../store/action";
-import { syncSuccessAction } from "../../store/actions";
+import { syncSuccess } from "../../store/activeCollectionSlice";
 import { attemptResolveMergeAction, mergeSuccessAction, mergeTriggeredAction } from "./actions";
 
 export type MergeState = {
@@ -45,7 +45,7 @@ const mergeReducer = (state: MergeState = resolved, action: RootAction): MergeSt
                 }
             }
         }
-        case getType(syncSuccessAction):
+        case syncSuccess('foo', { documents: {}, drawings: {}}).type:
         case getType(mergeSuccessAction): {
             return {
                 state: 'resolved'

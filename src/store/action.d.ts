@@ -3,7 +3,6 @@ import * as slateGraphActions from '../SlateGraph/store/actions';
 import * as drawingActions from '../Excalidraw/store/actions';
 import * as dbxAuthActions from '../dropbox/store/actions';
 import * as mergeActions from '../dropbox/resolveMerge/store/actions';
-import * as fetchCollectionsActions from '../dropbox/collections/actions';
 import { LocationChangeAction } from 'connected-react-router';
 
 type SlateGraphAction = ActionType<typeof slateGraphActions>;

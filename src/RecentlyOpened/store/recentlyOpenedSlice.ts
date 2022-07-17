@@ -1,9 +1,7 @@
-import { RootAction } from '../../store/action';
+import { createReducer, AnyAction, PayloadAction } from "@reduxjs/toolkit";
 import produce from 'immer'
-import { deleteDocAction } from '../../SlateGraph/store/actions';
-import { deleteDrawingAction } from '../../Excalidraw/store/actions';
-import { getType } from 'typesafe-actions';
-import { selectFilePathAction } from '../../dropbox/store/actions';
+import { selectFilePath } from "../../dropbox/store/globalActions";
+import { RouterLocation } from "connected-react-router";
 
 export interface RecentlyOpenedState {
     documents: {
@@ -47,16 +45,27 @@ const createInitialState = (): RecentlyOpenedState => {
     return mergeState(initialState, path);
 }
 
-const recentlyOpenedReducer = (state: RecentlyOpenedState = createInitialState(), action: RootAction): RecentlyOpenedState => {
-    switch (action.type) {
-        case getType(selectFilePathAction):
-            return {
-                drawings: {},
-                documents: {}
-            }
-        case '@@router/LOCATION_CHANGE': {
-            return mergeState(state, action.payload.location.pathname)
-        }
+function isPushAction(
+    action: AnyAction
+  ): action is PayloadAction<{ location: RouterLocation<unknown> }> {
+    return action.type === '@@router/LOCATION_CHANGE';
+  }
+
+const authReducer = createReducer(
+    createInitialState(),
+    (builder) => {
+        builder
+        .addCase(selectFilePath, () => ({
+            drawings: {},
+            documents: {}
+        }))
+        .addMatcher(isPushAction, (state, action) => {
+            return mergeState(state, action.payload.location.pathname);
+        })
+        /**
+         * TODO
+         */
+        /*
         case getType(deleteDocAction): {
             return {
                 ...state,
@@ -69,8 +78,7 @@ const recentlyOpenedReducer = (state: RecentlyOpenedState = createInitialState()
                 drawings: Object.fromEntries(Object.entries(state.drawings).filter(([name]) => name !== action.payload.drawingName))
             }
         }
-        default:
-            return state;
+        */
     }
-}
-export default recentlyOpenedReducer;
+)
+export default authReducer;

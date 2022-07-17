@@ -5,7 +5,7 @@ import { History } from "history";
 import drawingsReducer from "../Excalidraw/store/reducer";
 import dbxReducer from '../dropbox/store/reducer';
 import mergeReducer from "../dropbox/resolveMerge/store/reducer";
-import recentlyOpenedReducer from "../RecentlyOpened/store/reducer";
+import recentlyOpenedReducer from "../RecentlyOpened/store/recentlyOpenedSlice";
 import collectionsReducer from "../dropbox/collections/reducer";
 
 const createRootReducer = (history: History) =>

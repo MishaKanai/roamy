@@ -2,7 +2,7 @@ import { useContext, useReducer } from 'react';
 import { useCallback, useEffect } from "react";
 import { replaceDrawingsAction } from "../../Excalidraw/store/actions";
 import { replaceDocsAction } from "../../SlateGraph/store/actions";
-import { selectFilePathAction } from "../store/actions";
+import { selectFilePath as selectFilePathAction } from "../store/globalActions";
 import { push as pushAction } from 'connected-react-router';
 import useDbx from '../hooks/useDbx';
 import { fileSelectPendingContext } from '../contexts/fileSelectPending';
