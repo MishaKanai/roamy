@@ -1,5 +1,5 @@
 import hashSum from 'hash-sum';
-import { SlateDocument, SlateDocuments } from '../reducer';
+import { SlateDocument, SlateDocuments } from '../slateDocumentsSlice';
 
 export const addHashesToDoc = (document: Omit<SlateDocument, 'documentHash' | 'referencesHash' | 'backReferencesHash'>): SlateDocument => {
     return {

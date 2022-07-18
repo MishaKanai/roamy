@@ -5,8 +5,8 @@ import Page from '../../../SlateGraph/Page';
 import EditIcon from '@mui/icons-material/Edit';
 import ToggleButton from '@mui/material/ToggleButton';
 import mergeContext from '../mergeContext';
-import { updateDocAction } from '../../../SlateGraph/store/actions';
 import { Descendant } from 'slate';
+import { updateDoc } from '../../../SlateGraph/store/globalActions';
 
 interface MergeDocsProps {
     docName: string
@@ -25,7 +25,7 @@ const MergeDocs: React.FC<MergeDocsProps> = ({ left, right, docName, curr }) => 
     const [edit, setEdit] = useState(false);
     const handleLeftCheck = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
             if (e.target.checked) {
-                mrgDispatch(updateDocAction(docName, left, curr));
+                mrgDispatch(updateDoc(docName, left, curr));
                 if (leftOrRight === 'right' && edit) {
                     setEdit(false)
                 }
@@ -35,7 +35,7 @@ const MergeDocs: React.FC<MergeDocsProps> = ({ left, right, docName, curr }) => 
     }, [mrgDispatch, setLeftOrRight, leftOrRight, docName, left, curr, edit])
     const handleRightCheck = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.checked) {
-            mrgDispatch(updateDocAction(docName, right, curr));
+            mrgDispatch(updateDoc(docName, right, curr));
             if (leftOrRight === 'left' && edit) {
                 setEdit(false)
             }
@@ -75,7 +75,7 @@ const MergeDocs: React.FC<MergeDocsProps> = ({ left, right, docName, curr }) => 
                             onChange={() => {
                                 setEdit(value => !value)
                                 if (edit) {
-                                    mrgDispatch(updateDocAction(docName, left, curr))
+                                    mrgDispatch(updateDoc(docName, left, curr))
                                 }
                             }}
                         >
@@ -108,7 +108,7 @@ const MergeDocs: React.FC<MergeDocsProps> = ({ left, right, docName, curr }) => 
                             onChange={() => {
                                 setEdit(value => !value)
                                 if (edit) {
-                                    mrgDispatch(updateDocAction(docName, right, curr))
+                                    mrgDispatch(updateDoc(docName, right, curr))
                                 }
                             }}
                         >

@@ -3,9 +3,8 @@ import LoadingOverlay from 'react-loading-overlay-ts';
 import { Dialog } from '@mui/material';
 import { useStore } from 'react-redux';
 import useFetchCurrentDoc from '../../hooks/useFetchCurrentDoc';
-import { SlateDocuments } from '../../../SlateGraph/store/reducer';
+import { SlateDocuments } from '../../../SlateGraph/store/slateDocumentsSlice';
 import { DrawingDocuments } from '../../../Excalidraw/store/reducer';
-import { replaceDocsAction } from '../../../SlateGraph/store/actions';
 import { DropboxResponseError } from 'dropbox';
 import useDbx from '../../hooks/useDbx';
 import ResolveConflicts from './ResolveConflicts';
@@ -16,6 +15,7 @@ import upload from '../../util/upload';
 import { useAppSelector } from '../../../store/hooks';
 import { RootState } from '../../../store/configureStore';
 import { syncSuccess } from '../../store/activeCollectionSlice';
+import { replaceDocs } from '../../../SlateGraph/store/slateDocumentsSlice';
 
 const useAutomerge = () => {
     const _lastRev = useAppSelector(state => state.dbx.collection.state === 'authorized' && state.dbx.collection.rev);
@@ -142,7 +142,7 @@ export const useSubmitMergedDoc = () => {
                 drawingsPendingUpload.add(drawing.name);
             }
         })
-        store.dispatch(replaceDocsAction(documents));
+        store.dispatch(replaceDocs(documents));
         store.dispatch(replaceDrawingsAction(drawings));
 
         upload(dbx,

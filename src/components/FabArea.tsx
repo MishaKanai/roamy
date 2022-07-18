@@ -6,7 +6,6 @@ import { push } from 'connected-react-router';
 import capitalize from 'lodash/capitalize';
 import { useLocation, } from 'react-router';
 import { deleteDrawingAction } from '../Excalidraw/store/actions';
-import { deleteDocAction } from '../SlateGraph/store/actions';
 import { Add } from '@mui/icons-material';
 import Radio from '@mui/material/Radio';
 import RadioGroup from '@mui/material/RadioGroup';
@@ -15,6 +14,7 @@ import FormControl from '@mui/material/FormControl';
 import FormLabel from '@mui/material/FormLabel';
 import hash_sum from 'hash-sum';
 import { useAppDispatch } from '../store/hooks';
+import { deleteDoc } from '../SlateGraph/store/globalActions';
 
 function DocTypeRadioGroup(props: { onChange: (value: 'doc' | 'drawing') => void; value: 'doc' | 'drawing' }) {
     const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -92,7 +92,7 @@ const DeleteDialog: React.FC<{ open: boolean, handleClose: () => void, name: str
         if (docType === 'drawing') {
             dispatch(deleteDrawingAction(name))
         } else {
-            dispatch(deleteDocAction(name))
+            dispatch(deleteDoc(name))
         }
         handleClose()
     };

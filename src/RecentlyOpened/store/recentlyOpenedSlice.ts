@@ -2,6 +2,7 @@ import { createReducer, AnyAction, PayloadAction } from "@reduxjs/toolkit";
 import produce from 'immer'
 import { selectFilePath } from "../../dropbox/store/globalActions";
 import { RouterLocation } from "connected-react-router";
+import { deleteDoc } from "../../SlateGraph/store/globalActions";
 
 export interface RecentlyOpenedState {
     documents: {
@@ -59,6 +60,9 @@ const authReducer = createReducer(
             drawings: {},
             documents: {}
         }))
+        .addCase(deleteDoc, (state, action) => {
+            delete state.documents[action.payload.docName];
+        })
         .addMatcher(isPushAction, (state, action) => {
             return mergeState(state, action.payload.location.pathname);
         })
@@ -66,12 +70,6 @@ const authReducer = createReducer(
          * TODO
          */
         /*
-        case getType(deleteDocAction): {
-            return {
-                ...state,
-                documents: Object.fromEntries(Object.entries(state.documents).filter(([name]) => name !== action.payload.docName))
-            }
-        }
         case getType(deleteDrawingAction): {
             return {
                 ...state,

@@ -1,7 +1,6 @@
 import { useContext, useReducer } from 'react';
 import { useCallback, useEffect } from "react";
 import { replaceDrawingsAction } from "../../Excalidraw/store/actions";
-import { replaceDocsAction } from "../../SlateGraph/store/actions";
 import { selectFilePath as selectFilePathAction } from "../store/globalActions";
 import { push as pushAction } from 'connected-react-router';
 import useDbx from '../hooks/useDbx';
@@ -12,6 +11,7 @@ import { IndexFileStructure } from '../domain';
 import fetchDataFromCollectionAndCompose from '../util/fetchEntireCollection';
 import { II } from '../../Search/util/search';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
+import { replaceDocs } from '../../SlateGraph/store/slateDocumentsSlice';
 
 const folderPath = "";
 
@@ -111,7 +111,7 @@ export const useDbxEntries = () => {
                 II.clear();
                 dispatch(pushAction('/'))
                 dispatch(selectFilePathAction(path, response.result.rev, { documents: {}, drawings: {}}));
-                dispatch(replaceDocsAction({}));
+                dispatch(replaceDocs({}));
                 dispatch(replaceDrawingsAction({}));
             })
             .then(() => {
@@ -137,7 +137,7 @@ export const useDbxEntries = () => {
                         revisions
                     )
                 );
-                dispatch(replaceDocsAction(documents));
+                dispatch(replaceDocs(documents));
                 dispatch(replaceDrawingsAction(drawings));
                 setFilePendingState({ _type: 'ok' })
                 dispatch(pushAction('/graph'))

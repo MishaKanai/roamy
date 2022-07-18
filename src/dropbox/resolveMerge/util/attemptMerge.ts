@@ -1,9 +1,9 @@
-import slateDocumentsReducer, { SlateDocuments } from '../../../SlateGraph/store/reducer';
+import slateDocumentsReducer, { SlateDocuments } from '../../../SlateGraph/store/slateDocumentsSlice';
 import drawingsReducer, { DrawingDocuments } from '../../../Excalidraw/store/reducer';
-import { DrawingAction, SlateGraphAction } from '../../../store/action';
+import { DrawingAction } from '../../../store/action';
 import trimerge from '../trimerge/trimerge';
-import * as slateActions from '../../../SlateGraph/store/actions';
 import * as drawingActions from '../../../Excalidraw/store/actions';
+import { createDoc, deleteDoc, updateDoc } from '../../../SlateGraph/store/globalActions';
 
 const attemptMerge = (args: {
     documents: {
@@ -36,13 +36,13 @@ const attemptMerge = (args: {
     };
     let docsNeedingMerge: string[] = [];
 
-    const applyAction = (action: SlateGraphAction | DrawingAction) => {
+    const applyAction = (action: ReturnType<typeof deleteDoc> | ReturnType<typeof createDoc> | ReturnType<typeof updateDoc> | DrawingAction) => {
         mergedState.documents = slateDocumentsReducer(mergedState.documents, action)
         mergedState.drawings = drawingsReducer(mergedState.drawings, action);
     }
     // add documents from the right that are missing from left and initial
     Object.keys(right).filter(docKey => !mergedState.documents[docKey] && !initial[docKey]).forEach((docKey) => {
-        applyAction(slateActions.createDocAction(docKey, right[docKey].document))
+        applyAction(createDoc(docKey, right[docKey].document))
     })
     // if missing from just left, and not initial, it was deleted, so we can ignore.
     // if missing from initial, and not left, we both added the same doc, and so we should merge it.
@@ -65,7 +65,7 @@ const attemptMerge = (args: {
             // right side deleted it...
             if (initialDoc.documentHash === leftDoc.documentHash) {
                 // we can delete it since we made no local changes.
-                applyAction(slateActions.deleteDocAction(docKey));
+                applyAction(deleteDoc(docKey));
                 return;
             } else {
                 // need to pick keep with changes, or delete;
@@ -79,7 +79,7 @@ const attemptMerge = (args: {
             try {
                 const mergedDoc = trimerge(initialDoc.document, leftDoc.document, rightDoc.document)
                 if (mergedDoc) {
-                    applyAction(slateActions.updateDocAction(docKey, mergedDoc, leftDoc.document));
+                    applyAction(updateDoc(docKey, mergedDoc, leftDoc.document));
                     return;
                 }
             } catch (e) {

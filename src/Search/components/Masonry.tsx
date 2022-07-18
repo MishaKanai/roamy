@@ -8,7 +8,7 @@ import Link from '../../components/Link';
 import Search from '../../Search/components/Search';
 import ExcalidrawSvgImage from '../../Excalidraw/ExcalidrawSvgImage';
 import { DrawingDocument } from '../../Excalidraw/store/reducer';
-import { SlateDocument } from '../../SlateGraph/store/reducer';
+import { SlateDocument } from '../../SlateGraph/store/slateDocumentsSlice';
 import { sortBy } from 'lodash';
 import { useAppSelector } from '../../store/hooks';
 

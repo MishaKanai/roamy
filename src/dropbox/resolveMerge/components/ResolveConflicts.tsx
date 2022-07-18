@@ -1,5 +1,5 @@
 import React, { useReducer, useMemo } from 'react';
-import slateDocumentsReducer, { SlateDocuments } from '../../../SlateGraph/store/reducer';
+import slateDocumentsReducer, { SlateDocuments } from '../../../SlateGraph/store/slateDocumentsSlice';
 import { Button, CardActions, CardContent } from '@mui/material';
 import MergeDocs from './MergeDocs';
 import { useSubmitMergedDoc } from './MergePopup';

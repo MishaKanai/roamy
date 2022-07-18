@@ -1,7 +1,7 @@
 import { Dropbox } from "dropbox";
 import hash_sum from "hash-sum";
 import { DrawingDocuments } from "../../Excalidraw/store/reducer";
-import { SlateDocuments } from "../../SlateGraph/store/reducer";
+import { SlateDocuments } from "../../SlateGraph/store/slateDocumentsSlice";
 import { IndexFileStructure } from "../domain";
 import { Revisions } from "../store/activeCollectionSlice";
 

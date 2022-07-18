@@ -1,6 +1,6 @@
 import { Dropbox } from "dropbox";
 import { DrawingDocument, DrawingDocuments } from "../../Excalidraw/store/reducer";
-import { SlateDocument, SlateDocuments } from "../../SlateGraph/store/reducer";
+import { SlateDocument, SlateDocuments } from "../../SlateGraph/store/slateDocumentsSlice";
 import { IndexFileStructure } from "../domain";
 import { Revisions } from "../store/activeCollectionSlice";
 import loadFileJSON from "./loadFileJSON";

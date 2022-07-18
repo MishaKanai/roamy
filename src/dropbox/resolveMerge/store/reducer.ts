@@ -1,6 +1,6 @@
 import { getType } from "typesafe-actions";
 import { DrawingDocuments } from "../../../Excalidraw/store/reducer";
-import { SlateDocuments } from "../../../SlateGraph/store/reducer";
+import { SlateDocuments } from "../../../SlateGraph/store/slateDocumentsSlice";
 import { RootAction } from "../../../store/action";
 import { syncSuccess } from "../../store/activeCollectionSlice";
 import { attemptResolveMergeAction, mergeSuccessAction, mergeTriggeredAction } from "./actions";

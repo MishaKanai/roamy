@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import get from 'lodash/get';
 import { II, InvertedIndex } from '../util/search';
 import words from 'lodash/words';
-import { SlateDocuments } from '../../SlateGraph/store/reducer';
+import { SlateDocuments } from '../../SlateGraph/store/slateDocumentsSlice';
 import { CustomText } from '../../SlateGraph/slate';
 import { Descendant } from 'slate';
 import { useAppSelector } from '../../store/hooks';

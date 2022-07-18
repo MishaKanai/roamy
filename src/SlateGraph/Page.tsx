@@ -1,11 +1,6 @@
 import React, { useCallback, useContext, useEffect, useMemo, useRef } from "react";
 import { useParams } from "react-router-dom";
 import SlateGraphEditor, { defaultRenderEditableRegion } from "./Editor";
-import {
-  createDocAction,
-  deleteDocAction,
-  updateDocAction,
-} from "./store/actions";
 import deepEqual from "fast-deep-equal";
 import HoverBacklinks from "../components/AnchoredPopper";
 import { v4 as uuidv4 } from 'uuid';
@@ -15,6 +10,7 @@ import { RenderEditableRegion } from "../Autocomplete/Editor/Editor";
 import { Descendant } from "slate";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
 import { RootState } from "../store/configureStore";
+import { createDoc, deleteDoc, updateDoc } from "./store/globalActions";
 
 export const useRoamyDispatch = (): (action: RootAction) => void => {
   const mergeCtxt = useContext(mergeContext);
@@ -51,7 +47,7 @@ export const useCreateChildDoc = (docName: string) => {
     // sets backref to current.
     (newDocName: string) => {
       dispatch(
-        createDocAction(newDocName, createInitialEmptyDoc(), {
+        createDoc(newDocName, createInitialEmptyDoc(), {
           withBackref: docName,
         })
       );
@@ -83,7 +79,7 @@ const Page: React.FC<PageProps> = React.memo(
     useEffect(() => {
       if (currDoc === initialDoc) {
         dispatch(
-          createDocAction(
+          createDoc(
             docName,
             currDoc,
             viewedFromParentDoc
@@ -99,13 +95,13 @@ const Page: React.FC<PageProps> = React.memo(
             createInitialEmptyDoc() && !hasBackReferencesRef.current
           )
         ) {
-          dispatch(deleteDocAction(docName));
+          dispatch(deleteDoc(docName));
         }
       };
     }, []); // eslint-disable-line
     const setDoc = useCallback(
       (newDoc: Descendant[]) => {
-        dispatch(updateDocAction(docName, newDoc, currDocRef.current));
+        dispatch(updateDoc(docName, newDoc, currDocRef.current));
       },
       [docName, dispatch]
     );

@@ -1,10 +1,10 @@
 import { getType } from 'typesafe-actions'
 import { RootAction } from '../../store/action'
 import * as actions from './actions';
-import * as docActions from '../../SlateGraph/store/actions';
 import { DrawingData } from './domain'
 import hashSum from 'hash-sum';
 import getDrawingsFromNodes from './util/getDrawingReferencesFromDocNodes';
+import { createDoc, deleteDoc, updateDoc } from '../../SlateGraph/store/globalActions';
 
 export interface DrawingDocument {
     name: string;
@@ -25,7 +25,7 @@ const drawingsReducer = (state: DrawingDocuments = {}, action: RootAction): Draw
             return action.payload.drawings
         }
         // UPDATE BACKREFS WHEN DOCUMENTS CHANGE
-        case getType(docActions.createDocAction): {
+        case createDoc('', []).type: {
             const { payload: { docName, doc }} = action;
             const referencesSet = getDrawingsFromNodes(doc)
                 // below is code identical to that in documents reducer. TODO extract logic to function like 'get stateWithUpdatedBackrefsFromCreateAction'
@@ -40,7 +40,7 @@ const drawingsReducer = (state: DrawingDocuments = {}, action: RootAction): Draw
             }))
             return stateWithUpdatedBackrefsToCurrentDoc
         }
-        case getType(docActions.updateDocAction): {
+        case updateDoc('', [], []).type: {
             const { payload: { docName, newDoc, prevDoc }} = action;
             const referencesSet = getDrawingsFromNodes(newDoc);
             const prevReferencesSet = getDrawingsFromNodes(prevDoc);
@@ -64,7 +64,7 @@ const drawingsReducer = (state: DrawingDocuments = {}, action: RootAction): Draw
             // end identical
             return stateWithUpdatedBackrefsToCurrentDoc;
         }
-        case getType(docActions.deleteDocAction): {
+        case deleteDoc('').type: {
             const { docName } = action.payload
            return Object.fromEntries(Object.entries(state).map(([k, drawingEntry]) => {
                if (drawingEntry.backReferences.includes(docName)) {

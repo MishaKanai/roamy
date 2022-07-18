@@ -1,7 +1,7 @@
 import words from 'lodash/words';
 import uniq from 'lodash/uniq';
 import { CustomElement, CustomText } from "../../SlateGraph/slate.d";
-import { SlateDocuments } from "../../SlateGraph/store/reducer";
+import { SlateDocuments } from "../../SlateGraph/store/slateDocumentsSlice";
 
 /*
   To implement search,

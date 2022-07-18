@@ -7,7 +7,7 @@ import { DropboxAuth, Dropbox, DropboxResponseError } from "dropbox";
 import parseQueryString from "../dropbox/util/parseQueryString";
 import debounce from "lodash/debounce";
 import { DrawingDocuments } from "../Excalidraw/store/reducer";
-import { SlateDocuments } from "../SlateGraph/store/reducer";
+import { SlateDocuments } from "../SlateGraph/store/slateDocumentsSlice";
 import { mergeTriggeredAction } from "../dropbox/resolveMerge/store/actions";
 import upload from "../dropbox/util/upload";
 import { AuthorizedCollectionState, CollectionState, syncDebounceStart, syncFailure, syncStart, syncSuccess } from "../dropbox/store/activeCollectionSlice";

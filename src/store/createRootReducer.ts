@@ -1,6 +1,6 @@
 import { combineReducers } from "redux";
 import { connectRouter } from "connected-react-router";
-import slateDocumentsReducer from "../SlateGraph/store/reducer";
+import slateDocumentsReducer from "../SlateGraph/store/slateDocumentsSlice";
 import { History } from "history";
 import drawingsReducer from "../Excalidraw/store/reducer";
 import dbxReducer from '../dropbox/store/reducer';
