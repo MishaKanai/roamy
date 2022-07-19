@@ -592,7 +592,7 @@ const insertDrawing = (editor: CustomEditor, drawingReference: string) => {
   const drawing: DrawingElement = {
     type: "drawing",
     drawingReference,
-    children: [{ text: "{{" + drawingReference + "}}" }],
+    children: [{ text: "" }],
   };
   Transforms.insertNodes(editor, [
     drawing,
@@ -604,7 +604,7 @@ const insertPortal = (editor: CustomEditor, portalReference: string) => {
   const portal: PortalElement = {
     type: "portal",
     portalReference,
-    children: [{ text: "<<" + portalReference + ">>" }],
+    children: [{ text: "" }],
   };
   Transforms.insertNodes(editor, [
     portal,

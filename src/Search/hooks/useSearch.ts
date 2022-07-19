@@ -12,6 +12,12 @@ const accumulateText = (node: Descendant): string => {
     if (isTextNode(node)) {
         return node.text;
     }
+    if (node.type === 'portal') {
+        return node.portalReference;
+    }
+    if (node.type === 'drawing') {
+        return node.drawingReference;
+    }
     if (node.type === 'bulleted-list' || node.type === 'numbered-list') {
         // ignore these.
         return ''
