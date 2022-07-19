@@ -734,8 +734,8 @@ export const Element: React.FC<RenderElementProps & { parentDoc: string }> = (
                 )}
               </drawingOptionsContext.Consumer>
             )}</mergeContext.Consumer>
-            {children}
           </div>
+          {children}
         </div>
       );
     case "portal":
