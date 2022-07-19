@@ -17,7 +17,7 @@ const useExcalidrawInstance = () => {
         excalidrawInstance.readyPromise.then(instance => {
             to = setTimeout(() => {
                 instance.refresh();
-            }, 350)
+            }, 750)
         })
         return () => {
             if (to) {
