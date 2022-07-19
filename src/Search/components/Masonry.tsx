@@ -7,7 +7,7 @@ import sum from 'sum';
 import Link from '../../components/Link';
 import Search from '../../Search/components/Search';
 import ExcalidrawSvgImage from '../../Excalidraw/ExcalidrawSvgImage';
-import { DrawingDocument } from '../../Excalidraw/store/reducer';
+import { DrawingDocument } from '../../Excalidraw/store/drawingsSlice';
 import { SlateDocument } from '../../SlateGraph/store/slateDocumentsSlice';
 import { sortBy } from 'lodash';
 import { useAppSelector } from '../../store/hooks';

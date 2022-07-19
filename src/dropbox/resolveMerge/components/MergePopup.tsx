@@ -4,13 +4,12 @@ import { Dialog } from '@mui/material';
 import { useStore } from 'react-redux';
 import useFetchCurrentDoc from '../../hooks/useFetchCurrentDoc';
 import { SlateDocuments } from '../../../SlateGraph/store/slateDocumentsSlice';
-import { DrawingDocuments } from '../../../Excalidraw/store/reducer';
+import { DrawingDocuments, replaceDrawings } from '../../../Excalidraw/store/drawingsSlice';
 import { DropboxResponseError } from 'dropbox';
 import useDbx from '../../hooks/useDbx';
 import ResolveConflicts from './ResolveConflicts';
 import { mergeTriggeredAction } from '../store/actions';
 import attemptMerge from '../util/attemptMerge';
-import { replaceDrawingsAction } from '../../../Excalidraw/store/actions';
 import upload from '../../util/upload';
 import { useAppSelector } from '../../../store/hooks';
 import { RootState } from '../../../store/configureStore';
@@ -143,7 +142,7 @@ export const useSubmitMergedDoc = () => {
             }
         })
         store.dispatch(replaceDocs(documents));
-        store.dispatch(replaceDrawingsAction(drawings));
+        store.dispatch(replaceDrawings(drawings));
 
         upload(dbx,
             filePath,

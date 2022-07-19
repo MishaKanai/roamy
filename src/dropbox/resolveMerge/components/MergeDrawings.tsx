@@ -4,12 +4,14 @@ import EditIcon from '@mui/icons-material/Edit';
 import ToggleButton from '@mui/material/ToggleButton';
 import mergeContext from '../mergeContext';
 import { DrawingData } from '../../../Excalidraw/store/domain';
-import { updateDrawingAction } from '../../../Excalidraw/store/actions';
+import { updateDrawing as updateDrawingAction } from '../../../Excalidraw/store/drawingsSlice';
 import DrawingPage from '../../../Excalidraw/Page';
 import { ExcalidrawElement } from '@excalidraw/excalidraw/types/element/types';
-import Draw from '@excalidraw/excalidraw';
+import { Excalidraw } from '@excalidraw/excalidraw';
+import useExcalidrawInstance from '../../../Excalidraw/hooks/useExcalidrawInstance';
 
 const ViewOnlyDrawing: React.FC<{ elements: ExcalidrawElement[], height: any, width: any }> = ({ elements, height, width }) => {
+    const { excalidrawRef } = useExcalidrawInstance();
     const initialData = useMemo(() => {
         return {
             elements: elements,
@@ -18,6 +20,7 @@ const ViewOnlyDrawing: React.FC<{ elements: ExcalidrawElement[], height: any, wi
             },
         };
     }, [elements]);
+    
     return (
         <div
             style={{
@@ -25,7 +28,8 @@ const ViewOnlyDrawing: React.FC<{ elements: ExcalidrawElement[], height: any, wi
                 width,
             }}
         >
-            <Draw
+            <Excalidraw
+                ref={excalidrawRef}
                 zenModeEnabled
                 viewModeEnabled
                 gridModeEnabled

@@ -1,8 +1,6 @@
 import slateDocumentsReducer, { SlateDocuments } from '../../../SlateGraph/store/slateDocumentsSlice';
-import drawingsReducer, { DrawingDocuments } from '../../../Excalidraw/store/reducer';
-import { DrawingAction } from '../../../store/action';
+import drawingsReducer, { DrawingDocuments, updateDrawing } from '../../../Excalidraw/store/drawingsSlice';
 import trimerge from '../trimerge/trimerge';
-import * as drawingActions from '../../../Excalidraw/store/actions';
 import { createDoc, deleteDoc, updateDoc } from '../../../SlateGraph/store/globalActions';
 
 const attemptMerge = (args: {
@@ -36,7 +34,7 @@ const attemptMerge = (args: {
     };
     let docsNeedingMerge: string[] = [];
 
-    const applyAction = (action: ReturnType<typeof deleteDoc> | ReturnType<typeof createDoc> | ReturnType<typeof updateDoc> | DrawingAction) => {
+    const applyAction = (action: ReturnType<typeof deleteDoc> | ReturnType<typeof createDoc> | ReturnType<typeof updateDoc> | ReturnType<typeof updateDrawing>) => {
         mergedState.documents = slateDocumentsReducer(mergedState.documents, action)
         mergedState.drawings = drawingsReducer(mergedState.drawings, action);
     }
@@ -111,9 +109,9 @@ const attemptMerge = (args: {
             // if only one was changed, apply update. otherwise flag for merge
             if (leftDrawing.drawingHash === initialDrawing.drawingHash) {
                 // right was updated
-                applyAction(drawingActions.updateDrawingAction(drawingKey, rightDrawing.drawing))
+                applyAction(updateDrawing(drawingKey, rightDrawing.drawing))
             } else if (rightDrawing.drawingHash === initialDrawing.drawingHash) {
-                applyAction(drawingActions.updateDrawingAction(drawingKey, leftDrawing.drawing))
+                applyAction(updateDrawing(drawingKey, leftDrawing.drawing))
             } else {
                 drawingsNeedingMerge.push(drawingKey)
             }

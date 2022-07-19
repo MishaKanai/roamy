@@ -1,7 +1,7 @@
 import { createCustomAction } from 'typesafe-actions';
 import { ATTEMPT_RESOLVE_MERGE, MERGE_SUCCESS, MERGE_TRIGGERED } from './constants';
 import { SlateDocuments } from '../../../SlateGraph/store/slateDocumentsSlice';
-import { DrawingDocuments } from '../../../Excalidraw/store/reducer';
+import { DrawingDocuments } from '../../../Excalidraw/store/drawingsSlice';
 
 export const mergeTriggeredAction = createCustomAction(MERGE_TRIGGERED, type => {
     return ({ documents, drawings }: {

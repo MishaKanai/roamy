@@ -1,4 +1,5 @@
-import { configureStore } from '@reduxjs/toolkit'
+import { configureStore, isPlain } from '@reduxjs/toolkit'
+import { $CombinedState } from '@reduxjs/toolkit';
 import storageSession from "redux-persist/lib/storage/session"; // defaults to localStorage for web
 import { routerMiddleware } from "connected-react-router";
 import createRootReducer from "./createRootReducer";
@@ -6,7 +7,7 @@ import { createBrowserHistory } from "history";
 import { DropboxAuth, Dropbox, DropboxResponseError } from "dropbox";
 import parseQueryString from "../dropbox/util/parseQueryString";
 import debounce from "lodash/debounce";
-import { DrawingDocuments } from "../Excalidraw/store/reducer";
+import { DrawingDocuments } from "../Excalidraw/store/drawingsSlice";
 import { SlateDocuments } from "../SlateGraph/store/slateDocumentsSlice";
 import { mergeTriggeredAction } from "../dropbox/resolveMerge/store/actions";
 import upload from "../dropbox/util/upload";
@@ -23,6 +24,7 @@ import {
   REGISTER,
 } from 'redux-persist';
 import { authSuccess } from '../dropbox/store/globalActions';
+import { PersistPartial } from 'redux-persist/lib/persistReducer';
 /**
  * https://redux-toolkit.js.org/usage/usage-guide#use-with-redux-persist
  */
@@ -217,17 +219,8 @@ const appConfigureStore = () => {
     reducer: persistedReducer,
     middleware: (getDefaultMiddleware) =>
       getDefaultMiddleware({
-        immutableCheck: {
-          /**
-           * TODO
-           * Is there some kind of wildcard, so we can drill down past
-           * dynamic keys, and into those entries?
-           * would like to do drawings.*.drawing.elements
-           * */ 
-          
-          ignoredPaths: ['drawings']
-        },
         serializableCheck: {
+          isSerializable: (value: unknown) => isPlain(value) || value instanceof Date || value instanceof DropboxResponseError || value instanceof Error,
           ignoredActions: [FLUSH, REHYDRATE, PAUSE, PERSIST, PURGE, REGISTER],
         },
       }).concat(routerMiddleware(history)),
@@ -273,5 +266,11 @@ const appConfigureStore = () => {
 export default appConfigureStore;
 
 type Store = ReturnType<typeof appConfigureStore>['store'];
-export type RootState = ReturnType<Store['getState']>
+/**
+ * https://stackoverflow.com/a/72030202
+ */
+export type RootState = ReturnType<Store['getState']> & {
+  readonly [$CombinedState]?: undefined;
+};
+
 export type AppDispatch = Store['dispatch']

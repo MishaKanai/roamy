@@ -4,7 +4,7 @@ import { Button, CardActions, CardContent } from '@mui/material';
 import MergeDocs from './MergeDocs';
 import { useSubmitMergedDoc } from './MergePopup';
 import { combineReducers } from 'redux';
-import drawingsReducer, { DrawingDocuments } from '../../../Excalidraw/store/reducer';
+import drawingsReducer, { DrawingDocuments } from '../../../Excalidraw/store/drawingsSlice';
 import mergeContext from '../mergeContext';
 import attemptMerge from '../util/attemptMerge';
 import MergeDrawings from './MergeDrawings';

@@ -1,4 +1,5 @@
 import { ExcalidrawImperativeAPI } from "@excalidraw/excalidraw/types/types";
+import rfdc from "rfdc";
 /*
     When we mount Drawings, we register our excalidraw instances here.
     This way if we have Drawings updated from external sources
@@ -35,8 +36,11 @@ export const triggerSync = (drawingName: string, triggeredFromId: string, newSce
     if (excalidrawRegistry[drawingName]) {
         Object.entries(excalidrawRegistry[drawingName]).forEach(([id, { instance }]) => {
             if (id !== triggeredFromId) {
-                instance.updateScene(newScene)
+                instance.updateScene(rfdc()(newScene))
             }
         })
     }
 }
+console.log({
+    excalidrawRegistry
+})

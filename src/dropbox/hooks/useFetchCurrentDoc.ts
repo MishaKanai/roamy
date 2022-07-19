@@ -1,5 +1,5 @@
 import { useCallback, useState } from "react"
-import { DrawingDocuments } from "../../Excalidraw/store/reducer"
+import { DrawingDocuments } from "../../Excalidraw/store/drawingsSlice"
 import { SlateDocuments } from "../../SlateGraph/store/slateDocumentsSlice"
 import { useAppSelector } from "../../store/hooks"
 import fetchDataFromCollectionAndCompose from "../util/fetchEntireCollection"

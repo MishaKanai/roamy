@@ -64,12 +64,13 @@ const collectionSlice = createSlice({
             })
         },
         syncFailure: {
-            reducer(state, { payload: { date, error }}: PayloadAction<{ error: DropboxResponseError<unknown>, date: Date }>) {
+            reducer(state, { payload: { date, error }}: PayloadAction<{ error: Pick<DropboxResponseError<unknown>, 'error' | 'status'>, date: Date }>) {
                 if (state.state !== 'authorized') { return; }
                 state.syncing = { _type: 'failure', date, error }
             },
             prepare(error: DropboxResponseError<unknown>) {
-                return { payload: { error, date: new Date() } }
+                const { error: dbxError, status } = error
+                return { payload: { error: { error: dbxError, status}, date: new Date() } }
             }
         }
     },

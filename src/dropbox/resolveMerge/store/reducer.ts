@@ -1,5 +1,5 @@
 import { getType } from "typesafe-actions";
-import { DrawingDocuments } from "../../../Excalidraw/store/reducer";
+import { DrawingDocuments } from "../../../Excalidraw/store/drawingsSlice";
 import { SlateDocuments } from "../../../SlateGraph/store/slateDocumentsSlice";
 import { RootAction } from "../../../store/action";
 import { syncSuccess } from "../../store/activeCollectionSlice";

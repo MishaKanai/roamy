@@ -20,6 +20,7 @@ const ExcalidrawSvgImage: React.FC<DrawingPageProps> = React.memo(
         );
         const initialData = useMemo(() => {
             return {
+                files: null,
                 elements: currDrawing?.elements ?? [],
                 appState: {
                     viewBackgroundColor: "transparent",
