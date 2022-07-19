@@ -9,7 +9,7 @@ import Home from "../../components/Home";
 import ErrorOutline from "@mui/icons-material/ErrorOutline";
 import { useAppSelector } from "../../store/hooks";
 // aka app key
-const CLIENT_ID = "24bu717gh43au0o";
+const CLIENT_ID = "9r1uwr2l55chuy7";
 // var REDIRECT_URI = 'http://localhost:8080/pkce-browser';
 const REDIRECT_URI = window.location.protocol + "//" + window.location.host;
 var dbxAuth = new DropboxAuth({
