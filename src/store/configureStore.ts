@@ -24,7 +24,6 @@ import {
   REGISTER,
 } from 'redux-persist';
 import { authSuccess } from '../dropbox/store/globalActions';
-import { PersistPartial } from 'redux-persist/lib/persistReducer';
 /**
  * https://redux-toolkit.js.org/usage/usage-guide#use-with-redux-persist
  */

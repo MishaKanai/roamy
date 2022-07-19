@@ -3,7 +3,6 @@ import React, {
   useContext,
   useEffect,
   useMemo,
-  useState,
 } from "react";
 import { useParams } from "react-router-dom";
 import {
@@ -13,7 +12,7 @@ import { DrawingData } from "./store/domain";
 import HoverBacklinks from "../components/AnchoredPopper";
 import { Excalidraw } from "@excalidraw/excalidraw";
 import { Resizable, ResizeCallback } from "re-resizable";
-import { ExcalidrawImperativeAPI, ExcalidrawProps } from "@excalidraw/excalidraw/types/types";
+import { ExcalidrawProps } from "@excalidraw/excalidraw/types/types";
 import { drawingOptionsContext } from "../extension/drawingOptionsContext";
 import { useRoamyDispatch } from "../SlateGraph/Page";
 import { useTheme } from "@mui/material";
