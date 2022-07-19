@@ -130,9 +130,7 @@ const DrawingPage: React.FC<DrawingPageProps> = React.memo(
         </div>
         <div style={Object.assign(
           { marginTop: '1.25em', paddingTop: '1em', paddingBottom: '1em' },
-          isDark ? { filter: 'invert(100%) hue-rotate(180deg)' } : {}, viewedFromParentDoc ? {
-          overflowX: 'auto',
-        } as const : {})}>
+          isDark ? { filter: 'invert(100%) hue-rotate(180deg)' } : {})}>
           <div style={{ position: "relative" }}>
             {preventScrollAndResize && (
               // a perfect overlay of the drawing area
