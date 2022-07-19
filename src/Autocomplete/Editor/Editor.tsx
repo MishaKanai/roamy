@@ -715,6 +715,7 @@ export const Element: React.FC<RenderElementProps & { parentDoc: string }> = (
                             />
                             <IconButton
                               size="small"
+                              style={{ paddingTop: 0 }}
                               onClick={() => setEditable(!editable)}
                             >
                               <EditIcon

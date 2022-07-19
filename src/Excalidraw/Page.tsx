@@ -105,6 +105,11 @@ const DrawingPage: React.FC<DrawingPageProps> = React.memo(
 
     const currHeight = currDrawing.size.height;
     const currWidth = currDrawing.size.width;
+    useEffect(() => {
+      setImmediate(() => {
+        excalidrawInstance?.refresh();
+      })
+    }, [currHeight, currWidth, excalidrawInstance])
     const handleResizeStop: ResizeCallback = useCallback((e, direction, ref, d) => {
       dispatch(
         updateDrawingAction(drawingName, {
@@ -123,7 +128,9 @@ const DrawingPage: React.FC<DrawingPageProps> = React.memo(
             {title}
           </div>
         </div>
-        <div style={Object.assign({ marginTop: '1.25em', paddingTop: '1em', paddingBottom: '1em' }, isDark ? { filter: 'invert(100%) hue-rotate(180deg)' } : {}, viewedFromParentDoc ? {
+        <div style={Object.assign(
+          { marginTop: '1.25em', paddingTop: '1em', paddingBottom: '1em' },
+          isDark ? { filter: 'invert(100%) hue-rotate(180deg)' } : {}, viewedFromParentDoc ? {
           overflowX: 'auto',
         } as const : {})}>
           <div style={{ position: "relative" }}>
@@ -143,6 +150,7 @@ const DrawingPage: React.FC<DrawingPageProps> = React.memo(
           </div>
           {preventScrollAndResize ? (
             <div
+              className="roamy-view-excal"
               style={{
                 height: currDrawing.size.height,
                 width: currDrawing.size.width,

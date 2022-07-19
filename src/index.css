@@ -35,6 +35,11 @@ code {
   text-decoration: underline;
 }
 
-.excalidraw .App-bottom-bar > .Island {
-  display: none !important;
+.roamy-view-excal > .excalidraw .App-bottom-bar > .Island {
+  background-color: transparent;
+}
+
+
+.excalidraw .App-bottom-bar > .Island .App-toolbar-content > :first-child {
+  visibility: hidden !important;
 }

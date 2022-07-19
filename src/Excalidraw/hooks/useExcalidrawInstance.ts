@@ -13,15 +13,28 @@ const useExcalidrawInstance = () => {
         if (!excalidrawInstance) {
             return;
         }
-        let to: NodeJS.Timeout | null = null;
+        let to1: NodeJS.Timeout | null = null;
+        let to2: NodeJS.Timeout | null = null;
         excalidrawInstance.readyPromise.then(instance => {
-            to = setTimeout(() => {
+            /**
+             * for some reason, with multiple exalidraw instances of the same image, they frequently don't appear until we force refresh, and the timing needed for that is very inconsistent
+             */
+            setImmediate(() => {
+                instance.refresh();
+            })
+            to1 = setTimeout(() => {
                 instance.refresh();
             }, 750)
+            to2 = setTimeout(() => {
+                instance.refresh();
+            }, 1500)
         })
         return () => {
-            if (to) {
-                clearTimeout(to);
+            if (to1) {
+                clearTimeout(to1);
+            }
+            if (to2) {
+                clearTimeout(to2);
             }
         }
     }, [excalidrawInstance])
