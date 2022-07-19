@@ -36,7 +36,7 @@ code {
 }
 
 .roamy-view-excal > .excalidraw .App-bottom-bar > .Island {
-  background-color: transparent;
+  display: none !important;
 }
 
 
