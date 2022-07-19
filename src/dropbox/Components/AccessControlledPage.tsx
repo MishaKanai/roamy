@@ -8,8 +8,7 @@ import { fileSelectPendingContext, FileSelectPendingProvider } from "../contexts
 import Home from "../../components/Home";
 import ErrorOutline from "@mui/icons-material/ErrorOutline";
 import { useAppSelector } from "../../store/hooks";
-// aka app key
-const CLIENT_ID = "9r1uwr2l55chuy7";
+import { CLIENT_ID } from "../config";
 // var REDIRECT_URI = 'http://localhost:8080/pkce-browser';
 const REDIRECT_URI = window.location.protocol + "//" + window.location.host;
 var dbxAuth = new DropboxAuth({

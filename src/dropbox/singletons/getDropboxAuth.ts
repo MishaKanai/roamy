@@ -1,6 +1,5 @@
 import { DropboxAuth } from "dropbox"
-
-const CLIENT_ID = "24bu717gh43au0o";
+import { CLIENT_ID } from "../config";
 
 let dropboxAuth: DropboxAuth;
 const getDropboxAuth = () => {
