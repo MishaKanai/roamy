@@ -207,6 +207,12 @@ export const MergeWrapper: React.FC<{ children: React.ReactNode; retry: () => vo
                 )}
             </Dialog>
         ) : null}
+        {/*
+            TODO:
+            LoadingOverlay calls findDOMNode internally:
+            need to figure out how to short-cirucit that through its API,
+            or use a different library.
+        */}
         <LoadingOverlay
             active={displayOverlay}
             spinner
