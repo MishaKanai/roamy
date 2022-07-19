@@ -13,7 +13,7 @@ import {
 import { DrawingData } from "../store/domain";
 import deepEqual from "fast-deep-equal";
 import { ExcalidrawElement } from "@excalidraw/excalidraw/types/element/types";
-import { AppState } from "@excalidraw/excalidraw/types/types";
+import { AppState, BinaryFiles } from "@excalidraw/excalidraw/types/types";
 import { useRoamyDispatch } from "../../SlateGraph/Page";
 import { useAppSelector } from "../../store/hooks";
 import rfdc from 'rfdc';
@@ -92,7 +92,15 @@ export const useDrawingPage = (
 
     const someRealChangeToDrawing_Ref = useRef(false);
     const setDrawing = useCallback(
-        (newDrawingElements: readonly ExcalidrawElement[], appState: AppState) => {
+        (newDrawingElements: readonly ExcalidrawElement[], appState: AppState, files: BinaryFiles) => {
+            /**
+             * TODO
+             * dispatch files to a 'files' reducer
+             * all files should be unique, and probably don't need to be merged
+             * 
+             * we will probably have to run files deletion on index.json save success
+             * files might need revisions though, so they are accessible from merges, even if we have already 'deleted' them.
+             */
             if (
                 // prevent updateDrawing on initial load.
                 !someRealChangeToDrawing_Ref.current &&
