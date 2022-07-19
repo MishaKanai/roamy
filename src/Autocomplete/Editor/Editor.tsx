@@ -736,7 +736,10 @@ export const Element: React.FC<RenderElementProps & { parentDoc: string }> = (
               </drawingOptionsContext.Consumer>
             )}</mergeContext.Consumer>
           </div>
-          {/* children */}
+          <div style={{ display: 'none' }}>
+            {/* https://github.com/ianstormtaylor/slate/issues/3930 */}
+            {children}
+          </div>
         </div>
       );
     case "portal":
@@ -779,7 +782,10 @@ export const Element: React.FC<RenderElementProps & { parentDoc: string }> = (
               />
             ))}</mergeContext.Consumer>
           </div>
-          {/* children */}
+          <div style={{ display: 'none' }}>
+            {/* https://github.com/ianstormtaylor/slate/issues/3930 */}
+            {children}
+          </div>
         </div>
       );
     case "bulleted-list":
