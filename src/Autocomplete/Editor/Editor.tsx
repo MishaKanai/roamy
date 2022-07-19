@@ -534,8 +534,7 @@ const SlateAutocompleteEditorComponent = <Triggers extends string[]>(
               position: "sticky",
               paddingTop: "0px",
               top: 0,
-              // so it doesn't go over the menu icon on the left in mobile
-              left: 'calc(.75em + 24px)',
+              left: 0,
               right: 0
             }}
           >
