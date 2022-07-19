@@ -66,6 +66,9 @@ const UniversalSticky: React.FC<{
             display: 'none',
             backgroundColor: theme.palette.background.default,
             paddingTop: TOP_PADDING_TO_BLOCK_UNDERLYING_WHEN_SCROLLING + 'px',
+            // added below
+            left: 36,
+            right: 0,
         });
         const getDomInfo = useCallback(() => {
             if (_isMountedRef.current) {
@@ -103,15 +106,13 @@ const UniversalSticky: React.FC<{
                     })
                 } else {
                     const left = windowOffsetLeftRef.current;
-                    const SIDE_PADDING_TO_COVER_WHEN_SCROLLING = 40;
                     writeStyles(setStyle, tabListRef, {
                         top: newTop,
                         position: 'absolute',
                         zIndex: 2004,
-                        left: left - SIDE_PADDING_TO_COVER_WHEN_SCROLLING,
-                        paddingLeft: SIDE_PADDING_TO_COVER_WHEN_SCROLLING + 'px',
-                        width: `calc(100vw + ${SIDE_PADDING_TO_COVER_WHEN_SCROLLING * 2}px)`,
-                        display: undefined,
+                        left: Math.max(left, 36),
+                        width: `calc(100vw - ${Math.max(36 - left, 0)}px)`,
+                        display: undefined
                     })
                 }
             } else {
@@ -158,6 +159,7 @@ const UniversalSticky: React.FC<{
         useEffect(() => {
             handleScroll()
         }, [isFocused, handleScroll])
+
         return <div>
             <div
                 ref={divRef}
