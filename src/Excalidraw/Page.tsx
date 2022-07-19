@@ -130,12 +130,7 @@ const DrawingPage: React.FC<DrawingPageProps> = React.memo(
             {preventScrollAndResize && (
               // a perfect overlay of the drawing area
               <div
-                onTouchMove={e => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                }}
                 style={{
-                  touchAction: 'none',
                   zIndex: 500,
                   position: "absolute",
                   top: 0,
