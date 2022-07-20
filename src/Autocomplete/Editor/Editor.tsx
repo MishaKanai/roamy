@@ -27,7 +27,7 @@ import {
 import ReactDOM from "react-dom";
 import { handleChange } from "./utils/autocompleteUtils";
 import isHotkey from "is-hotkey";
-import { Card, IconButton, useTheme, List, ListItem } from "@mui/material";
+import { Card, IconButton, useTheme, List, ListItem, useMediaQuery } from "@mui/material";
 import FormatBoldIcon from "@mui/icons-material/FormatBold";
 import FormatUnderlinedIcon from "@mui/icons-material/FormatUnderlined";
 import FormatItalicIcon from "@mui/icons-material/FormatItalic";
@@ -473,6 +473,7 @@ const SlateAutocompleteEditorComponent = <Triggers extends string[]>(
             (editor.selection && Range.isCollapsed(editor.selection))
           ) {
             const leafEl = domRange.startContainer.parentElement!
+
             if (leafEl.hasAttribute('data-slate-zero-width')) {
               return;
             }
@@ -668,6 +669,7 @@ export const Element: React.FC<RenderElementProps & { parentDoc: string }> = (
   const { attributes, children, element } = props;
   const colorOfPortal = useBackgroundColor(1);
   const theme = useTheme();
+  const isSmall = useMediaQuery("(max-width:599px)");
   switch ((element as any).type) {
     case "reference":
       return <Reference {...props} />;
@@ -703,26 +705,25 @@ export const Element: React.FC<RenderElementProps & { parentDoc: string }> = (
                               to={`/drawings/${(element as any).drawingReference
                                 }`}
                             >
-                              {"{{"}
                               {(element as any).drawingReference}
-                              {"}}"}
                             </Link>
-                            <HoverBacklinks
-                              selectBacklinks={state =>
-                                state.drawings[drawingName]?.backReferences
-                              }
-                              dontInclude={[props.parentDoc]}
-                            />
-                            <IconButton
+                            <span style={{ marginLeft: '.25em' }}>
+                              <HoverBacklinks
+                                selectBacklinks={state =>
+                                  state.drawings[drawingName]?.backReferences
+                                }
+                                dontInclude={[props.parentDoc]}
+                              />
+                            </span>
+                            {isSmall && props.parentDoc && !editable ? null : <span style={{ marginLeft: '.25em', marginTop: -4 }}><IconButton
                               size="small"
-                              style={{ paddingTop: 0 }}
                               onClick={() => setEditable(!editable)}
                             >
                               <EditIcon
                                 fontSize="small"
                                 color={editable ? "primary" : undefined}
                               />
-                            </IconButton>
+                            </IconButton></span>}
                             {editable &&
                               renderDrawingOptions?.({ drawingId: drawingName })}
                           </div>
@@ -765,16 +766,16 @@ export const Element: React.FC<RenderElementProps & { parentDoc: string }> = (
                 title={
                   <div style={{ display: "flex", flexDirection: "row" }}>
                     <Link to={`/docs/${(element as any).portalReference}`}>
-                      {"<<"}
                       {(element as any).portalReference}
-                      {">>"}
                     </Link>
-                    <HoverBacklinks
-                      selectBacklinks={state =>
-                        state.documents[docName]?.backReferences
-                      }
-                      dontInclude={[props.parentDoc]}
-                    />
+                    <span style={{ marginLeft: '.25em' }}>
+                      <HoverBacklinks
+                        selectBacklinks={state =>
+                          state.documents[docName]?.backReferences
+                        }
+                        dontInclude={[props.parentDoc]}
+                      />
+                    </span>
                   </div>
                 }
                 viewedFromParentDoc={props.parentDoc}
