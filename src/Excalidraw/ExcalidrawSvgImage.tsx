@@ -9,11 +9,15 @@ import { useAppSelector } from "../store/hooks";
 
 interface DrawingPageProps {
     drawingName: string;
+    height?: string;
+    width?: string;
 }
 
 const ExcalidrawSvgImage: React.FC<DrawingPageProps> = React.memo(
     ({
         drawingName,
+        height,
+        width
     }) => {
         const currDrawing = useAppSelector(
             state => state.drawings[drawingName]?.drawing
@@ -26,7 +30,7 @@ const ExcalidrawSvgImage: React.FC<DrawingPageProps> = React.memo(
                     viewBackgroundColor: "transparent",
                 },
             };
-        }, [currDrawing.elements]);
+        }, [currDrawing?.elements]);
         const isDark = useTheme().palette.mode === 'dark';
         const el = useRef<HTMLDivElement>(null);
         useEffect(() => {
@@ -34,8 +38,8 @@ const ExcalidrawSvgImage: React.FC<DrawingPageProps> = React.memo(
             let svgEl: SVGSVGElement | undefined;
             const getSvg = async () => {
                 const svg = await exportToSvg(initialData)
-                svg.style.height = 'auto';
-                svg.style.width = '100%';
+                svg.style.height = height ?? 'auto';
+                svg.style.width = width ?? '100%';
                 svgEl = svg;
                 divEl?.appendChild?.(svg);
             }
@@ -45,7 +49,7 @@ const ExcalidrawSvgImage: React.FC<DrawingPageProps> = React.memo(
                     divEl?.removeChild(svgEl);
                 }
             }
-        }, [initialData])
+        }, [initialData, height, width])
 
         const styles = useMemo(() => {
             return isDark ? { filter: 'invert(100%) hue-rotate(180deg)' } : undefined
