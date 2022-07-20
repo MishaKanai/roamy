@@ -23,6 +23,7 @@ const ViewOnlyDrawing: React.FC<{ elements: ExcalidrawElement[], height: any, wi
     
     return (
         <div
+            className="roamy-view-excal"
             style={{
                 height,
                 width,
