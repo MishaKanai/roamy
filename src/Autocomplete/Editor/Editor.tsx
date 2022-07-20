@@ -686,6 +686,7 @@ export const Element: React.FC<RenderElementProps & { parentDoc: string }> = (
                   <TogglableEditableDrawing>
                     {({ editable, setEditable }) => (
                       <DrawingPage
+                        asSvg={!editable}
                         preventScrollAndResize={!editable}
                         excalidrawProps={
                           editable

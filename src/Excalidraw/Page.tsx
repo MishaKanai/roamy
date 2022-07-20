@@ -21,6 +21,7 @@ import uniqueId from 'lodash/uniqueId';
 import { RootState } from "../store/configureStore";
 import { useDrawingPage } from "./hooks/useDrawingPage";
 import useExcalidrawInstance from "./hooks/useExcalidrawInstance";
+import ExcalidrawSvgImage from "./ExcalidrawSvgImage";
 
 interface DrawingPageProps {
   drawingName: string;
@@ -29,6 +30,7 @@ interface DrawingPageProps {
   excalidrawProps?: Partial<ExcalidrawProps>;
   preventScrollAndResize?: boolean;
   overrideDrawing?: DrawingData;
+  asSvg?: boolean;
 }
 
 const resizableStyle: React.CSSProperties = {
@@ -44,7 +46,8 @@ const DrawingPage: React.FC<DrawingPageProps> = React.memo(
     title,
     excalidrawProps,
     preventScrollAndResize = false,
-    overrideDrawing
+    overrideDrawing,
+    asSvg = false
   }) => {
     const { excalidrawInstance, excalidrawRef } = useExcalidrawInstance();
     const dispatch = useRoamyDispatch();
@@ -52,6 +55,7 @@ const DrawingPage: React.FC<DrawingPageProps> = React.memo(
       viewedFromParentDoc,
     });
     const currDrawing = overrideDrawing ?? _currDrawing;
+
     const initialData = useMemo(() => {
       return {
         elements: currDrawing.elements,
@@ -72,7 +76,7 @@ const DrawingPage: React.FC<DrawingPageProps> = React.memo(
     }, [drawingName, registryId, excalidrawInstance])
 
     const isDark = useTheme().palette.mode === 'dark';
-    
+
     const drawing = (
       <Excalidraw
         ref={excalidrawRef}
@@ -80,10 +84,10 @@ const DrawingPage: React.FC<DrawingPageProps> = React.memo(
         onChange={setDrawing}
         initialData={initialData}
       />
-  );
+    );
 
     const handleMouseUp = useCallback(() => {
-      
+
       const appState = excalidrawInstance?.getAppState();
       // only trigger sync for mouse up from drawing
       // i.e. don't sync if there's no selected selements when we mouse up.
@@ -120,53 +124,58 @@ const DrawingPage: React.FC<DrawingPageProps> = React.memo(
         })
       );
     }, [dispatch, currHeight, currWidth, drawingName])
-    
     return (
-      <span onKeyUp={handleKeyUp} onMouseUp={handleMouseUp} onBlur={handleKeyUp}>
-        <div style={{ position: "relative" }}>
-          <div style={{ position: "absolute", top: viewedFromParentDoc ? -24 : -34, left: 0 }}>
-            {title}
-          </div>
-        </div>
-        <div style={Object.assign(
-          { marginTop: '1.25em', paddingTop: '1em', paddingBottom: '1em' },
-          isDark ? { filter: 'invert(100%) hue-rotate(180deg)' } : {})}>
+      <>
+        {asSvg ? <div>
+          <div>{title}</div>
+          <ExcalidrawSvgImage width={"min(" + currDrawing.size.width + 'px, calc(100% - 2em))'} drawingName={drawingName} />
+        </div> : null}
+        <span style={asSvg ? { display: 'none' } : undefined} onKeyUp={handleKeyUp} onMouseUp={handleMouseUp} onBlur={handleKeyUp}>
           <div style={{ position: "relative" }}>
-            {preventScrollAndResize && (
-              // a perfect overlay of the drawing area
+            <div style={{ position: "absolute", top: viewedFromParentDoc ? -24 : -34, left: 0 }}>
+              {title}
+            </div>
+          </div>
+          <div style={Object.assign(
+            { marginTop: '1.25em', paddingTop: '1em', paddingBottom: '1em' },
+            isDark ? { filter: 'invert(100%) hue-rotate(180deg)' } : {})}>
+            <div style={{ position: "relative" }}>
+              {preventScrollAndResize && (
+                // a perfect overlay of the drawing area
+                <div
+                  style={{
+                    zIndex: 500,
+                    position: "absolute",
+                    top: 0,
+                    left: 0,
+                    height: currDrawing.size.height,
+                    width: currDrawing.size.width,
+                  }}
+                />
+              )}
+            </div>
+            {preventScrollAndResize ? (
               <div
+                className="roamy-view-excal"
                 style={{
-                  zIndex: 500,
-                  position: "absolute",
-                  top: 0,
-                  left: 0,
                   height: currDrawing.size.height,
                   width: currDrawing.size.width,
                 }}
-              />
+              >
+                {drawing}
+              </div>
+            ) : (
+              <Resizable
+                style={resizableStyle}
+                size={currDrawing.size}
+                onResizeStop={handleResizeStop}
+              >
+                {drawing}
+              </Resizable>
             )}
           </div>
-          {preventScrollAndResize ? (
-            <div
-              className="roamy-view-excal"
-              style={{
-                height: currDrawing.size.height,
-                width: currDrawing.size.width,
-              }}
-            >
-              {drawing}
-            </div>
-          ) : (
-            <Resizable
-              style={resizableStyle}
-              size={currDrawing.size}
-              onResizeStop={handleResizeStop}
-            >
-              {drawing}
-            </Resizable>
-          )}
-        </div>
-      </span>
+        </span>
+      </>
     );
   }
 );
