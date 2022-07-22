@@ -22,6 +22,7 @@ import { RootState } from "../store/configureStore";
 import { useDrawingPage } from "./hooks/useDrawingPage";
 import useExcalidrawInstance from "./hooks/useExcalidrawInstance";
 import ExcalidrawSvgImage from "./ExcalidrawSvgImage";
+import useFiles from "./hooks/useFiles";
 
 interface DrawingPageProps {
   drawingName: string;
@@ -55,15 +56,17 @@ const DrawingPage: React.FC<DrawingPageProps> = React.memo(
       viewedFromParentDoc,
     });
     const currDrawing = overrideDrawing ?? _currDrawing;
+    const files = useFiles(drawingName);
 
     const initialData = useMemo(() => {
       return {
         elements: currDrawing.elements,
+        files,
         appState: {
           viewBackgroundColor: "transparent",
         },
       };
-    }, [currDrawing.elements]);
+    }, [currDrawing.elements, files]);
 
     const registryId = useMemo(() => uniqueId(drawingName), [drawingName]);
     useEffect(() => {
