@@ -1,5 +1,6 @@
 import slateDocumentsReducer, { SlateDocuments } from '../../../SlateGraph/store/slateDocumentsSlice';
-import drawingsReducer, { DrawingDocuments, updateDrawing } from '../../../Excalidraw/store/drawingsSlice';
+import { updateDrawing } from '../../../Excalidraw/store/globalActions';
+import drawingsReducer, { DrawingDocuments } from '../../../Excalidraw/store/drawingsSlice';
 import trimerge from '../trimerge/trimerge';
 import { createDoc, deleteDoc, updateDoc } from '../../../SlateGraph/store/globalActions';
 

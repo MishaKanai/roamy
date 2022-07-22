@@ -4,7 +4,7 @@ import EditIcon from '@mui/icons-material/Edit';
 import ToggleButton from '@mui/material/ToggleButton';
 import mergeContext from '../mergeContext';
 import { DrawingData } from '../../../Excalidraw/store/domain';
-import { updateDrawing as updateDrawingAction } from '../../../Excalidraw/store/drawingsSlice';
+import { updateDrawing as updateDrawingAction } from '../../../Excalidraw/store/globalActions';
 import DrawingPage from '../../../Excalidraw/Page';
 import { ExcalidrawElement } from '@excalidraw/excalidraw/types/element/types';
 import { Excalidraw } from '@excalidraw/excalidraw';

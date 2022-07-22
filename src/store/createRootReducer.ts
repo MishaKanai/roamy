@@ -7,6 +7,7 @@ import dbxReducer from '../dropbox/store/reducer';
 import mergeReducer from "../dropbox/resolveMerge/store/reducer";
 import recentlyOpenedReducer from "../RecentlyOpened/store/recentlyOpenedSlice";
 import collectionsReducer from "../dropbox/collections/reducer";
+import uploadedFilesReducer from '../UploadedFiles/uploadedFilesSlice';
 
 const createRootReducer = (history: History) =>
   combineReducers({
@@ -16,7 +17,8 @@ const createRootReducer = (history: History) =>
     dbx: dbxReducer,
     merge: mergeReducer,
     recentlyOpened: recentlyOpenedReducer,
-    collections: collectionsReducer
+    collections: collectionsReducer,
+    uploadedFiles: uploadedFilesReducer
   });
 
 export default createRootReducer;

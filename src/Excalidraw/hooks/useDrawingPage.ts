@@ -8,8 +8,10 @@ import {
 import {
     createDrawing as createDrawingAction,
     deleteDrawing as deleteDrawingAction,
-    updateDrawing as updateDrawingAction,
 } from "../store/drawingsSlice";
+import {
+    updateDrawing as updateDrawingAction,
+} from '../store/globalActions';
 import { DrawingData } from "../store/domain";
 import deepEqual from "fast-deep-equal";
 import { ExcalidrawElement } from "@excalidraw/excalidraw/types/element/types";
@@ -91,8 +93,10 @@ export const useDrawingPage = (
     }, []); // eslint-disable-line
 
     const someRealChangeToDrawing_Ref = useRef(false);
+    const filesRef = useRef({} as BinaryFiles);
     const setDrawing = useCallback(
         (newDrawingElements: readonly ExcalidrawElement[], appState: AppState, files: BinaryFiles) => {
+            filesRef.current = files;
             /**
              * TODO
              * dispatch files to a 'files' reducer
@@ -112,7 +116,7 @@ export const useDrawingPage = (
             }
             someRealChangeToDrawing_Ref.current = true;
             dispatchLocalDrawing({
-                elements: newDrawingElements as ExcalidrawElement[]
+                elements: newDrawingElements as ExcalidrawElement[],
             })
         },
         [dispatchLocalDrawing]
@@ -123,7 +127,8 @@ export const useDrawingPage = (
     const submitBufferedStateToStore = useCallback(() => {
         dispatch(
             updateDrawingAction(drawingName, {
-                elements: rfdc()(localDrawingRef.current.elements)
+                elements: rfdc()(localDrawingRef.current.elements),
+                files: filesRef.current
             })
         )
     }, [dispatch, drawingName])

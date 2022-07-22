@@ -6,6 +6,7 @@ import React, {
 import { useTheme } from "@mui/material";
 import { exportToSvg } from "@excalidraw/excalidraw";
 import { useAppSelector } from "../store/hooks";
+import createFilesForDrawingSelector from "../UploadedFiles/filesForDrawingSelector";
 
 interface DrawingPageProps {
     drawingName: string;
@@ -22,15 +23,17 @@ const ExcalidrawSvgImage: React.FC<DrawingPageProps> = React.memo(
         const currDrawing = useAppSelector(
             state => state.drawings[drawingName]?.drawing
         );
+        const filesSelector = useMemo(createFilesForDrawingSelector, []);
+        const files = useAppSelector(state => filesSelector(state, drawingName));
         const initialData = useMemo(() => {
             return {
-                files: null,
+                files,
                 elements: currDrawing?.elements ?? [],
                 appState: {
                     viewBackgroundColor: "transparent",
                 },
             };
-        }, [currDrawing?.elements]);
+        }, [currDrawing?.elements, files]);
         const isDark = useTheme().palette.mode === 'dark';
         const el = useRef<HTMLDivElement>(null);
         useEffect(() => {

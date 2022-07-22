@@ -1,12 +1,13 @@
-import { DrawingData } from './domain'
+import { DrawingData, DrawingDataInStore } from './domain'
 import hashSum from 'hash-sum';
 import getDrawingsFromNodes from './util/getDrawingReferencesFromDocNodes';
 import { createDoc, deleteDoc, updateDoc } from '../../SlateGraph/store/globalActions';
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { updateDrawing } from './globalActions';
 
 export interface DrawingDocument {
     name: string;
-    drawing: DrawingData;
+    drawing: DrawingDataInStore;
     drawingHash: string;
     backReferences: string[]
     backReferencesHash: string;
@@ -42,11 +43,16 @@ const drawingsSlice = createSlice({
                 createdDate: Date;
             }>) {
                 const backReferences = withBackref ? [withBackref] : [];
+                const { size, elements, files } = drawing;
                 return {
                     ...state,
                     [drawingName]: {
                         name: drawingName,
-                        drawing,
+                        drawing: {
+                            size,
+                            elements,
+                            filesIds: Object.keys(files ?? {})
+                        },
                         drawingHash: hashSum(drawing),
                         backReferences,
                         backReferencesHash: hashSum(backReferences),
@@ -66,34 +72,6 @@ const drawingsSlice = createSlice({
                 },
             })
         },
-        updateDrawing: {
-            reducer(state, { payload: { newDrawing: _newDrawing, drawingName, updatedDate } }: PayloadAction<{ drawingName: string; newDrawing: Partial<DrawingData>, updatedDate: Date; }>) {
-                const { backReferences, backReferencesHash, drawing: prevDrawing, drawingHash: prevDrawingHash, createdDate } = state[drawingName];
-                const newDrawing = Object.assign({}, prevDrawing, _newDrawing);
-                const newDrawingHash = hashSum(newDrawing);
-                if (newDrawingHash === prevDrawingHash) {
-                    return;
-                }
-                state[drawingName] = {
-                    name: drawingName,
-                    drawing: newDrawing,
-                    drawingHash: newDrawingHash,
-                    backReferences,
-                    backReferencesHash,
-                    createdDate: createdDate ?? updatedDate,
-                    lastUpdatedDate: updatedDate
-                };
-            },
-            prepare(drawingName: string, newDrawing: Partial<DrawingData>) {
-                return {
-                    payload: {
-                        drawingName,
-                        newDrawing,
-                        updatedDate: new Date()
-                    },
-                }
-            }
-        },
         deleteDrawing: {
             reducer(state, { payload }: PayloadAction<{ drawingName: string }>) {
                 delete state[payload.drawingName]
@@ -105,6 +83,24 @@ const drawingsSlice = createSlice({
     },
     extraReducers(builder) {
         builder
+        .addCase(updateDrawing, (state, { payload: { newDrawing: { files, ..._newDrawing }, drawingName, updatedDate } }: PayloadAction<{ drawingName: string; newDrawing: Partial<DrawingData>, updatedDate: Date; }>) => {
+            const { backReferences, backReferencesHash, drawing: prevDrawing, drawingHash: prevDrawingHash, createdDate } = state[drawingName];
+            const newDrawing = Object.assign({}, prevDrawing, _newDrawing);
+            newDrawing.filesIds = Object.keys(files ?? {});
+            const newDrawingHash = hashSum(newDrawing);
+            if (newDrawingHash === prevDrawingHash) {
+                return;
+            }
+            state[drawingName] = {
+                name: drawingName,
+                drawing: newDrawing,
+                drawingHash: newDrawingHash,
+                backReferences,
+                backReferencesHash,
+                createdDate: createdDate ?? updatedDate,
+                lastUpdatedDate: updatedDate
+            };
+        })
         .addCase(createDoc, (state, { payload: { docName, doc }}) => {
             const referencesSet = getDrawingsFromNodes(doc)
             Object.keys(state).forEach(drawingKey => {
@@ -142,6 +138,6 @@ const drawingsSlice = createSlice({
     },
 });
 
-export const { replaceDrawings, createDrawing, updateDrawing, deleteDrawing } = drawingsSlice.actions;
+export const { replaceDrawings, createDrawing, deleteDrawing } = drawingsSlice.actions;
 
 export default drawingsSlice.reducer;

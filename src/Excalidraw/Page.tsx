@@ -7,7 +7,7 @@ import React, {
 import { useParams } from "react-router-dom";
 import {
   updateDrawing as updateDrawingAction,
-} from "./store/drawingsSlice";
+} from "./store/globalActions";
 import { DrawingData } from "./store/domain";
 import HoverBacklinks from "../components/AnchoredPopper";
 import { Excalidraw } from "@excalidraw/excalidraw";
