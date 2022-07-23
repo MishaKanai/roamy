@@ -8,6 +8,7 @@ import drawingsReducer, { DrawingDocuments } from '../../../Excalidraw/store/dra
 import mergeContext from '../mergeContext';
 import attemptMerge from '../util/attemptMerge';
 import MergeDrawings from './MergeDrawings';
+import { UploadedFiles } from '../../../UploadedFiles/uploadedFilesSlice';
 
 const mergeReducer = combineReducers({
     documents: slateDocumentsReducer,
@@ -23,7 +24,8 @@ const ResolveConflicts: React.FC<{
     initialDrawings: DrawingDocuments;
     leftDrawings: DrawingDocuments;
     rightDrawings: DrawingDocuments;
-}> = ({ left, right, remoteRev, initial, initialDrawings, leftDrawings, rightDrawings }) => {
+    combinedFiles: UploadedFiles;
+}> = ({ left, right, remoteRev, initial, initialDrawings, leftDrawings, rightDrawings, combinedFiles, }) => {
     const submitMerge = useSubmitMergedDoc();
     const [initialState, docsNeedingMerge, drawingsNeedingMerge] = useMemo((): [ReturnType<typeof mergeReducer>, string[], string[]] => {
         return attemptMerge({
@@ -61,6 +63,7 @@ const ResolveConflicts: React.FC<{
                 return <div key={drawingKey}>
                     <MergeDrawings
                         drawingName={drawingKey}
+                        allFiles={combinedFiles}
                         curr={mergedState.drawings[drawingKey].drawing}
                         left={drawingLeft}
                         right={drawingRight}
@@ -70,7 +73,7 @@ const ResolveConflicts: React.FC<{
         </CardContent>
         <CardActions>
             <Button color="primary" variant="contained" onClick={() => {
-                    submitMerge(mergedState.documents, mergedState.drawings, remoteRev)
+                    submitMerge(mergedState.documents, mergedState.drawings, combinedFiles,  remoteRev)
                 }}>
                 Submit
             </Button>

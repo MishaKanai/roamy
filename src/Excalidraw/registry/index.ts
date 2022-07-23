@@ -41,6 +41,3 @@ export const triggerSync = (drawingName: string, triggeredFromId: string, newSce
         })
     }
 }
-console.log({
-    excalidrawRegistry
-})

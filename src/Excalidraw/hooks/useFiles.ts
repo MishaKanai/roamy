@@ -1,10 +1,23 @@
-import { useMemo } from "react";
+import { useCallback, useMemo } from "react";
 import { useAppSelector } from "../../store/hooks";
 import createFilesForDrawingSelector from "../../UploadedFiles/filesForDrawingSelector";
+import { UploadedFiles } from "../../UploadedFiles/uploadedFilesSlice";
+import { DrawingDataInStore } from "../store/domain";
 
-const useFiles = (drawingName: string) => {
+export const useFilesSelector = (drawingName: string) => {
     const filesSelector = useMemo(createFilesForDrawingSelector, []);
-    const files = useAppSelector(state => filesSelector(state, drawingName));
+    return useCallback((state: {
+        uploadedFiles: UploadedFiles;
+        drawings: {
+            [drawingName: string]: {
+                drawing: DrawingDataInStore
+            }
+        };
+    }) => filesSelector(state, drawingName), [drawingName, filesSelector]);
+}
+const useFiles = (drawingName: string) => {
+    const filesSelector = useFilesSelector(drawingName);
+    const files = useAppSelector(filesSelector);
     return files;
 }
 export default useFiles;

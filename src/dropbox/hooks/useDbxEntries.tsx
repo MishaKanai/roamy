@@ -12,6 +12,7 @@ import { II } from '../../Search/util/search';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import { replaceDocs } from '../../SlateGraph/store/slateDocumentsSlice';
 import { replaceDrawings } from '../../Excalidraw/store/drawingsSlice';
+import { replaceFiles } from '../../UploadedFiles/uploadedFilesSlice';
 
 const folderPath = "";
 
@@ -64,6 +65,9 @@ export const useFetchCollections = (dbx?: Dropbox | null) => {
     return fetchCollections;
 }
 
+/**
+ * below is being called multiple times from different components...
+ */
 const useFetchCollectionsOnMount = (dbx?: Dropbox | null) => {
     const collectionsState = useAppSelector(state => state.collections);
     const [retryKey, retry] = useReducer(state => state + 1, 1);
@@ -97,6 +101,7 @@ export const useDbxEntries = () => {
         const data: IndexFileStructure = {
             documents: {},
             drawings: {},
+            uploadedFiles: []
         };
         setFilePendingState({ _type: 'pending' })
         return dbx
@@ -111,6 +116,7 @@ export const useDbxEntries = () => {
                 II.clear();
                 dispatch(pushAction('/'))
                 dispatch(selectFilePathAction(path, response.result.rev, { documents: {}, drawings: {}}));
+                dispatch(replaceFiles({}))
                 dispatch(replaceDocs({}));
                 dispatch(replaceDrawings({}));
             })
@@ -128,7 +134,7 @@ export const useDbxEntries = () => {
             setFilePendingState({ _type: 'pending' })
             const setErr = () => setFilePendingState({ _type: 'error', message: 'error occurred loading file ' + indexFilePath });
             try {
-                const { documents, drawings, rev, revisions } = await fetchDataFromCollectionAndCompose(dbx, indexFilePath);
+                const { documents, drawings, uploadedFiles, rev, revisions } = await fetchDataFromCollectionAndCompose(dbx, indexFilePath);
                 II.clear();
                 dispatch(
                     selectFilePathAction(
@@ -137,6 +143,7 @@ export const useDbxEntries = () => {
                         revisions
                     )
                 );
+                dispatch(replaceFiles(uploadedFiles))
                 dispatch(replaceDocs(documents));
                 dispatch(replaceDrawings(drawings));
                 setFilePendingState({ _type: 'ok' })

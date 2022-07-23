@@ -3,6 +3,7 @@ import { updateDrawing } from '../../../Excalidraw/store/globalActions';
 import drawingsReducer, { DrawingDocuments } from '../../../Excalidraw/store/drawingsSlice';
 import trimerge from '../trimerge/trimerge';
 import { createDoc, deleteDoc, updateDoc } from '../../../SlateGraph/store/globalActions';
+import convertDrawingInStoreToDispatchedDrawing from './convertDrawingFromStoreRepToDispatchedRep';
 
 const attemptMerge = (args: {
     documents: {
@@ -110,24 +111,15 @@ const attemptMerge = (args: {
             // if only one was changed, apply update. otherwise flag for merge
             if (leftDrawing.drawingHash === initialDrawing.drawingHash) {
                 // right was updated
-                applyAction(updateDrawing(drawingKey, rightDrawing.drawing))
+                applyAction(updateDrawing(drawingKey, convertDrawingInStoreToDispatchedDrawing(rightDrawing.drawing)))
             } else if (rightDrawing.drawingHash === initialDrawing.drawingHash) {
-                applyAction(updateDrawing(drawingKey, leftDrawing.drawing))
+                applyAction(updateDrawing(drawingKey, convertDrawingInStoreToDispatchedDrawing(leftDrawing.drawing)))
             } else {
                 drawingsNeedingMerge.push(drawingKey)
             }
         }
     });
     // delete any 'right' drawings that we deleted on the left side.
-    console.log({
-        mergedState,
-        left,
-        right,
-        initial,
-        leftDrawings,
-        rightDrawings,
-        initialDrawings
-    })
 
     return [mergedState, docsNeedingMerge, drawingsNeedingMerge] as [typeof mergedState, string[], string[]];
 }

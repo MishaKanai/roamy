@@ -15,12 +15,15 @@ import { useAppSelector } from '../../../store/hooks';
 import { RootState } from '../../../store/configureStore';
 import { syncSuccess } from '../../store/activeCollectionSlice';
 import { replaceDocs } from '../../../SlateGraph/store/slateDocumentsSlice';
+import { replaceFiles, UploadedFiles } from '../../../UploadedFiles/uploadedFilesSlice';
+import getFilesToDrawings from '../../util/getFilesToDrawings';
 
 const useAutomerge = () => {
     const _lastRev = useAppSelector(state => state.dbx.collection.state === 'authorized' && state.dbx.collection.rev);
     const lastRevRef = useRef(_lastRev);
     const documents = useAppSelector(state => state.documents);
     const drawings = useAppSelector(state => state.drawings);
+    const uploadedFiles = useAppSelector(state => state.uploadedFiles);
     const { state, fetchCurrentDoc } = useFetchCurrentDoc()
     const { state: lastRevState, fetchCurrentDoc: fetchLastRevDoc } = useFetchCurrentDoc();
     useEffect(() => {
@@ -49,11 +52,13 @@ const useAutomerge = () => {
         initialDrawings: DrawingDocuments;
         leftDrawings: DrawingDocuments;
         rightDrawings: DrawingDocuments;
+        combinedFiles: UploadedFiles;
     })) | {
         type: 'succeeded',
         mergedDocs: SlateDocuments;
         mergedDrawings: DrawingDocuments;
         remoteRev: string;
+        combinedFiles: UploadedFiles;
     }
     const [autoMergeState, setAutomergeState] = useState<AutomergeState>({ type: 'waiting_for_data' })
     const lastStateTypeRef = useRef(state.type)
@@ -82,6 +87,7 @@ const useAutomerge = () => {
                     initial: initialDrawings,
                 }
             })
+            
             if (docsNeedingMerge.length > 0 || drawingsNeedingMerge.length > 0) {
                 setAutomergeState({
                     type: 'failed',
@@ -92,7 +98,13 @@ const useAutomerge = () => {
                     right,
                     leftDrawings,
                     rightDrawings,
-                    initialDrawings
+                    initialDrawings,
+                    combinedFiles: {
+                        // I need to use 'uploadedFiles' here because our latest files haven't been uploaded yet.
+                        ...uploadedFiles,
+                        ...lastRevState.data.uploadedFiles,
+                        ...state.data.uploadedFiles,
+                    }
                 })
             } else {
                 setAutomergeState({
@@ -100,12 +112,17 @@ const useAutomerge = () => {
                     mergedDocs: mergedState.documents,
                     mergedDrawings: mergedState.drawings,
                     remoteRev: state.rev,
+                    combinedFiles: {
+                        ...uploadedFiles,
+                        ...lastRevState.data.uploadedFiles,
+                        ...state.data.uploadedFiles,
+                    }
                 })
             }
         }
         lastStateTypeRef.current = state.type;
         lastRevStateTypeRef.current = lastRevState.type;
-    }, [state, lastRevState, setAutomergeState, documents, drawings])
+    }, [state, lastRevState, setAutomergeState, documents, drawings, uploadedFiles])
 
     const someFetchError = Boolean(state.type === 'error' || lastRevState.type === 'error');
 
@@ -114,13 +131,19 @@ const useAutomerge = () => {
             setAutomergeState({ type: 'failed', reason: 'failed_fetch' })
         }
     }, [someFetchError, setAutomergeState])
+    
     return autoMergeState
 }
 
 export const useSubmitMergedDoc = () => {
     const dbx = useDbx()
     const store = useStore<RootState>();
-    const submitMergedDoc = useCallback((documents: SlateDocuments, drawings: DrawingDocuments, remoteRev: string) => {
+    const submitMergedDoc = useCallback((
+            documents: SlateDocuments,
+            drawings: DrawingDocuments,
+            uploadedFiles: UploadedFiles,
+            remoteRev: string
+        ) => {
         const state = store.getState();
         const collection = state.dbx.collection;
         const filePath = collection.state === 'authorized' && collection.selectedFilePath
@@ -134,24 +157,40 @@ export const useSubmitMergedDoc = () => {
             }
         })
         const drawingsPendingUpload = new Set<string>();
+        const filesPendingUpload = new Set<string>();
         Object.values(drawings).forEach(drawing => {
             const existingDrawing = state.drawings[drawing.name];
             if (!existingDrawing || drawing.drawingHash !== existingDrawing.drawingHash ||
                 drawing.backReferencesHash !== existingDrawing.backReferencesHash) {
                 drawingsPendingUpload.add(drawing.name);
+                drawing.drawing.filesIds.forEach(fileId => {
+                    if (!existingDrawing || !existingDrawing.drawing.filesIds.includes(fileId)) {
+                        filesPendingUpload.add(fileId);
+                    }
+                })
             }
         })
+        const filesToDrawings = getFilesToDrawings(drawings);
+        const newUploadedFiles = Object.keys(filesToDrawings).reduce((prev, fileId) => {
+            prev[fileId] = uploadedFiles[fileId]
+            return prev;
+        }, {} as UploadedFiles)
+        
+        store.dispatch(replaceFiles(newUploadedFiles));
         store.dispatch(replaceDocs(documents));
         store.dispatch(replaceDrawings(drawings));
+
 
         upload(dbx,
             filePath,
             remoteRev,
             documents,
             drawings,
+            uploadedFiles,
             collection.revisions,
             docsPendingUpload,
-            drawingsPendingUpload
+            drawingsPendingUpload,
+            filesPendingUpload
         ).then(({ response, revisions }) => {
             store.dispatch(syncSuccess(response.result.rev, revisions));
         }).catch((error: DropboxResponseError<unknown>) => {
@@ -180,7 +219,7 @@ export const MergeWrapper: React.FC<{ children: React.ReactNode; retry: () => vo
     const lastAutoMergeStateType = useRef(autoMergeState.type);
     useEffect(() => {
         if (lastAutoMergeStateType.current !== 'succeeded' && autoMergeState.type === 'succeeded') {
-            submitMerge(autoMergeState.mergedDocs, autoMergeState.mergedDrawings, autoMergeState.remoteRev);
+            submitMerge(autoMergeState.mergedDocs, autoMergeState.mergedDrawings, autoMergeState.combinedFiles, autoMergeState.remoteRev);
         }
         lastAutoMergeStateType.current = autoMergeState.type;
     }, [autoMergeState, submitMerge])
@@ -193,7 +232,10 @@ export const MergeWrapper: React.FC<{ children: React.ReactNode; retry: () => vo
                 open={true}
             >
                 {autoMergeState.reason === 'merge_conflict' ? (
+                    // pass 'all files' in here as a set-
+                    // we can remove unused ones on the actual submission.
                     <ResolveConflicts
+                        combinedFiles={autoMergeState.combinedFiles}
                         remoteRev={autoMergeState.remoteRev}
                         left={autoMergeState.left}
                         right={autoMergeState.right}

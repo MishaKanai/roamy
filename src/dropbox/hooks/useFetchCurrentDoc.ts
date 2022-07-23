@@ -2,6 +2,7 @@ import { useCallback, useState } from "react"
 import { DrawingDocuments } from "../../Excalidraw/store/drawingsSlice"
 import { SlateDocuments } from "../../SlateGraph/store/slateDocumentsSlice"
 import { useAppSelector } from "../../store/hooks"
+import { UploadedFiles } from "../../UploadedFiles/uploadedFilesSlice"
 import fetchDataFromCollectionAndCompose from "../util/fetchEntireCollection"
 import useDbx from "./useDbx"
 
@@ -17,7 +18,8 @@ export type FetchCurrentDocState = {
     rev: string;
     data: {
         documents: SlateDocuments,
-        drawings: DrawingDocuments
+        drawings: DrawingDocuments,
+        uploadedFiles: UploadedFiles,
     }
 }
 const initial = { type: 'initial' } as const;
@@ -43,7 +45,8 @@ const useFetchCurrentDoc = () => {
                 rev: data.rev,
                 data: {
                     documents: data.documents,
-                    drawings: data.drawings
+                    drawings: data.drawings,
+                    uploadedFiles: data.uploadedFiles
                 }
             })
         } catch (e) {

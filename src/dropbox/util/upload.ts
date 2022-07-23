@@ -2,8 +2,10 @@ import { Dropbox } from "dropbox";
 import hash_sum from "hash-sum";
 import { DrawingDocuments } from "../../Excalidraw/store/drawingsSlice";
 import { SlateDocuments } from "../../SlateGraph/store/slateDocumentsSlice";
+import { UploadedFiles } from "../../UploadedFiles/uploadedFilesSlice";
 import { IndexFileStructure } from "../domain";
 import { Revisions } from "../store/activeCollectionSlice";
+import getFilesToDrawings from "./getFilesToDrawings";
 
 const upload = async (
     dbx: Dropbox,
@@ -11,20 +13,51 @@ const upload = async (
     indexFileRev: string,
     documents: SlateDocuments,
     drawings: DrawingDocuments,
+    uploadedFiles: UploadedFiles,
     existingRevisions: Revisions | undefined,
     docsPendingUpload: Set<string>,
     drawingsPendingUpload: Set<string>,
+    filesPendingUpload: Set<string>,
 ) => {
+  const folderPath = indexFilePath.slice(0, indexFilePath.lastIndexOf('/')) + '/';
+  /**
+   * TODO: handle deletion! If present in pending upload and not in documents/drawings/uploadedFiles
+   * delete it?
+   */
     const results = await Promise.allSettled([
-      ...Array.from(docsPendingUpload).map(docKey => dbx.filesUpload({
+      ...Array.from(filesPendingUpload)
+      // do 'adds' and not 'deletes' here.
+      .filter(fileId => uploadedFiles[fileId])
+      .map(fileId => dbx.filesUpload({
         mode: {
           ".tag": "overwrite"
         },
-        path: indexFilePath.slice(0, indexFilePath.lastIndexOf('/')) + '/' + docKey + '.json',
+        path: folderPath + 'file_' + fileId + '.json',
+        contents: new File([
+          // save JUST the fileData, so we don't change on every backRef added/removed.
+          JSON.stringify(uploadedFiles[fileId].fileData, null, 2)
+        ],
+          'file_' + fileId + '.json',
+          {
+            type: 'application/json'
+          })
+      })
+      .then(result => {
+        filesPendingUpload.delete(fileId)
+        return ({ type: 'file' as const, key: fileId, result })
+      })),
+      ...Array.from(docsPendingUpload)
+      // only adds
+      .filter(docKey => documents[docKey])
+      .map(docKey => dbx.filesUpload({
+        mode: {
+          ".tag": "overwrite"
+        },
+        path: folderPath + docKey + '.json',
         contents: new File([
           JSON.stringify(documents[docKey], null, 2)
         ],
-          docKey + '.json',
+          'doc_' + docKey + '.json',
           {
             type: 'application/json'
           })
@@ -33,15 +66,17 @@ const upload = async (
           docsPendingUpload.delete(docKey);
           return ({ type: 'doc' as const, key: docKey, result })
         })),
-      ...Array.from(drawingsPendingUpload).map(drawingKey => dbx.filesUpload({
+      ...Array.from(drawingsPendingUpload)
+      .filter(drawingKey => drawings[drawingKey])
+      .map(drawingKey => dbx.filesUpload({
         mode: {
           ".tag": "overwrite"
         },
-        path: indexFilePath.slice(0, indexFilePath.lastIndexOf('/')) + '/' + drawingKey + '.json',
+        path: folderPath + drawingKey + '.json',
         contents: new File([
           JSON.stringify(drawings[drawingKey], null, 2)
         ],
-          drawingKey + '.json',
+          'drawing_' + drawingKey + '.json',
           {
             type: 'application/json'
           })
@@ -54,6 +89,10 @@ const upload = async (
     const newIndexFileEntries = results.reduce((prev, curr) => {
       if (curr.status === 'rejected') {
         return prev;
+      }
+      if (curr.value.type === 'file') {
+        const fileId = curr.value.key;
+        prev.uploadedFiles?.push(fileId);
       }
       if (curr.value.type === 'doc') {
         const documentKey = curr.value.key;
@@ -70,7 +109,7 @@ const upload = async (
         }
       }
       return prev;
-    }, { documents: {}, drawings: {} } as IndexFileStructure)
+    }, { documents: {}, drawings: {}, uploadedFiles: [] } as IndexFileStructure)
 
     const indexFile: IndexFileStructure = {
       documents: Object.fromEntries(Object.entries(documents).map(([docName, doc]) => {
@@ -78,7 +117,8 @@ const upload = async (
       })),
       drawings: Object.fromEntries(Object.entries(drawings).map(([drawingName, drawing]) => {
         return [drawingName, newIndexFileEntries.drawings[drawingName] ?? ({ hash: hash_sum(drawing), rev: existingRevisions?.drawings[drawingName] })];
-      }))
+      })),
+      uploadedFiles: Object.keys(getFilesToDrawings(drawings))
     }
     
     const revisions = {

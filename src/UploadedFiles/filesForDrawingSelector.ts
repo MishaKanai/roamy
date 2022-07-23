@@ -1,10 +1,15 @@
 import { BinaryFiles } from "@excalidraw/excalidraw/types/types";
 import { createSelector } from "@reduxjs/toolkit";
-import { RootState } from "../store/configureStore";
+import { DrawingDataInStore } from "../Excalidraw/store/domain";
+import { UploadedFiles } from "./uploadedFilesSlice";
 
-const createFilesForDrawingSelector = () => createSelector(
-    (state: RootState, drawingName: string) => state.drawings[drawingName]?.drawing?.filesIds,
-    (state: RootState) => state.uploadedFiles,
+const createFilesForDrawingSelector = <T extends { drawings: {
+    [drawingName: string]: {
+        drawing: DrawingDataInStore
+    }
+}; uploadedFiles: UploadedFiles }>() => createSelector(
+    (state: T, drawingName: string) => state.drawings[drawingName]?.drawing?.filesIds,
+    (state: T) => state.uploadedFiles,
     (filesIds, uploadedFiles) => {
         return filesIds?.reduce((prev, currId) => {
             prev[currId] = uploadedFiles[currId].fileData;

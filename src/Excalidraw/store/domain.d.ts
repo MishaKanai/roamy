@@ -7,7 +7,7 @@ export type DrawingData = {
         width: number,
     },
     elements: ExcalidrawElement[]
-    files?: BinaryFiles;
+    files: BinaryFiles;
 }
 
 export type DrawingDataInStore = {

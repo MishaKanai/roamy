@@ -3,14 +3,18 @@ import React, { useMemo, useCallback, useContext, useState } from 'react';
 import EditIcon from '@mui/icons-material/Edit';
 import ToggleButton from '@mui/material/ToggleButton';
 import mergeContext from '../mergeContext';
-import { DrawingData } from '../../../Excalidraw/store/domain';
+import { DrawingDataInStore } from '../../../Excalidraw/store/domain';
 import { updateDrawing as updateDrawingAction } from '../../../Excalidraw/store/globalActions';
 import DrawingPage from '../../../Excalidraw/Page';
 import { ExcalidrawElement } from '@excalidraw/excalidraw/types/element/types';
 import { Excalidraw } from '@excalidraw/excalidraw';
 import useExcalidrawInstance from '../../../Excalidraw/hooks/useExcalidrawInstance';
+import { UploadedFiles } from '../../../UploadedFiles/uploadedFilesSlice';
+import { useFilesSelector } from '../../../Excalidraw/hooks/useFiles';
+import convertDrawingInStoreToDispatchedDrawing from '../util/convertDrawingFromStoreRepToDispatchedRep';
+import { BinaryFiles } from '@excalidraw/excalidraw/types/types';
 
-const ViewOnlyDrawing: React.FC<{ elements: ExcalidrawElement[], height: any, width: any }> = ({ elements, height, width }) => {
+const ViewOnlyDrawing: React.FC<{ elements: ExcalidrawElement[], height: any, width: any, files: BinaryFiles }> = ({ elements, height, width, files }) => {
     const { excalidrawRef } = useExcalidrawInstance();
     const initialData = useMemo(() => {
         return {
@@ -18,8 +22,9 @@ const ViewOnlyDrawing: React.FC<{ elements: ExcalidrawElement[], height: any, wi
             appState: {
                 viewBackgroundColor: "transparent",
             },
+            files
         };
-    }, [elements]);
+    }, [elements, files]);
     
     return (
         <div
@@ -42,11 +47,13 @@ const ViewOnlyDrawing: React.FC<{ elements: ExcalidrawElement[], height: any, wi
 
 interface MergeDrawingsProps {
     drawingName: string
-    left: DrawingData;
-    right: DrawingData;
-    curr: DrawingData;
+    left: DrawingDataInStore;
+    right: DrawingDataInStore;
+    curr: DrawingDataInStore;
+    allFiles: UploadedFiles;
+
 }
-const MergeDrawings: React.FC<MergeDrawingsProps> = ({ left, right, drawingName, curr }) => {
+const MergeDrawings: React.FC<MergeDrawingsProps> = ({ left, right, drawingName, curr, allFiles }) => {
     const mergeCtxt = useContext(mergeContext);
     if (!mergeCtxt.inMergeContext) {
         throw new Error('MergeDrawings outside of ')
@@ -55,25 +62,28 @@ const MergeDrawings: React.FC<MergeDrawingsProps> = ({ left, right, drawingName,
     const [leftOrRight, setLeftOrRight] = useState<'left' | 'right'>(curr === left ? 'left' : 'right');
 
     const [edit, setEdit] = useState(false);
+    const dispatchUpdate = useCallback((drawingData: DrawingDataInStore) => {
+        mrgDispatch(updateDrawingAction(drawingName, convertDrawingInStoreToDispatchedDrawing(drawingData)));
+    }, [drawingName, mrgDispatch]);
     const handleLeftCheck = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.checked) {
-            mrgDispatch(updateDrawingAction(drawingName, left));
+            dispatchUpdate(left);
             if (leftOrRight === 'right' && edit) {
                 setEdit(false)
             }
 
             setLeftOrRight('left');
         }
-    }, [mrgDispatch, setLeftOrRight, leftOrRight, drawingName, left, edit])
+    }, [setLeftOrRight, leftOrRight, left, edit, dispatchUpdate])
     const handleRightCheck = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.checked) {
-            mrgDispatch(updateDrawingAction(drawingName, right));
+            dispatchUpdate(right);
             if (leftOrRight === 'left' && edit) {
                 setEdit(false)
             }
             setLeftOrRight('right');
         }
-    }, [mrgDispatch, setLeftOrRight, leftOrRight, drawingName, right, edit])
+    }, [setLeftOrRight, leftOrRight, right, edit, dispatchUpdate])
 
     // const createChildDoc = useCreateChildDoc(docName);
     const leftSelected = leftOrRight === 'left';
@@ -87,6 +97,17 @@ const MergeDrawings: React.FC<MergeDrawingsProps> = ({ left, right, drawingName,
         borderColor: selColor,
         boxShadow: '0 0 10px ' + selColor
     };
+    const filesSelector = useFilesSelector(drawingName);
+    const files = filesSelector({
+        drawings: {
+            [drawingName]: {
+                drawing: curr
+            }
+        },
+        uploadedFiles: allFiles
+    });
+    const currOverrideDrawing = useMemo(() => convertDrawingInStoreToDispatchedDrawing(curr), [curr]);
+    
     return <div>
         <div style={{ display: 'flex' }}>
             <div style={{
@@ -107,7 +128,7 @@ const MergeDrawings: React.FC<MergeDrawingsProps> = ({ left, right, drawingName,
                             onChange={() => {
                                 setEdit(value => !value)
                                 if (edit) {
-                                    mrgDispatch(updateDrawingAction(drawingName, left))
+                                    dispatchUpdate(left);
                                 }
                             }}
                         >
@@ -117,7 +138,8 @@ const MergeDrawings: React.FC<MergeDrawingsProps> = ({ left, right, drawingName,
                 </div>
                 {leftSelected && edit ? (<div>
                     <DrawingPage
-                        overrideDrawing={curr}
+                        overrideFiles={files}
+                        overrideDrawing={currOverrideDrawing}
                         excalidrawProps={{
                             gridModeEnabled: true,
                             zenModeEnabled: true,
@@ -125,7 +147,7 @@ const MergeDrawings: React.FC<MergeDrawingsProps> = ({ left, right, drawingName,
                         drawingName={drawingName}
                     />
                 </div>) : <div style={{ opacity: leftSelected && edit ? 1 : .7, margin: '0px 0.5em 0.5em' }}>
-                    <ViewOnlyDrawing height={left.size.height} width={left.size.width} elements={left.elements} />
+                    <ViewOnlyDrawing files={files} height={left.size.height} width={left.size.width} elements={left.elements} />
                 </div>}
             </div>
             <div style={{
@@ -146,7 +168,7 @@ const MergeDrawings: React.FC<MergeDrawingsProps> = ({ left, right, drawingName,
                             onChange={() => {
                                 setEdit(value => !value)
                                 if (edit) {
-                                    mrgDispatch(updateDrawingAction(drawingName, right))
+                                    dispatchUpdate(right);
                                 }
                             }}
                         >
@@ -156,7 +178,8 @@ const MergeDrawings: React.FC<MergeDrawingsProps> = ({ left, right, drawingName,
                 </div>
                 {rightSelected && edit ? (<div>
                     <DrawingPage
-                        overrideDrawing={curr}
+                        overrideFiles={files}
+                        overrideDrawing={currOverrideDrawing}
                         excalidrawProps={{
                             gridModeEnabled: true,
                             zenModeEnabled: true,
@@ -164,7 +187,7 @@ const MergeDrawings: React.FC<MergeDrawingsProps> = ({ left, right, drawingName,
                         drawingName={drawingName}
                     />
                 </div>) : <div style={{ opacity: rightSelected && edit ? 1 : .7, margin: '0px 0.5em 0.5em' }}>
-                    <ViewOnlyDrawing height={right.size.height} width={right.size.width} elements={right.elements} />
+                    <ViewOnlyDrawing files={files} height={right.size.height} width={right.size.width} elements={right.elements} />
                 </div>}
             </div>
         </div></div>

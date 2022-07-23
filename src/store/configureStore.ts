@@ -24,6 +24,8 @@ import {
   REGISTER,
 } from 'redux-persist';
 import { authSuccess } from '../dropbox/store/globalActions';
+import { UploadedFiles } from '../UploadedFiles/uploadedFilesSlice';
+import uniq from 'lodash/uniq';
 /**
  * https://redux-toolkit.js.org/usage/usage-guide#use-with-redux-persist
  */
@@ -81,21 +83,40 @@ const syncDropboxToStore = (
 ) => {
   const docsPendingUpload = new Set<string>();
   const drawingsPendingUpload = new Set<string>();
+  const filesPendingUpload = new Set<string>();
 
   const dbx = new Dropbox({ auth });
 
   let prevDocuments: SlateDocuments = store.getState().documents;
   let prevDrawings: DrawingDocuments = store.getState().drawings;
+  let prevFiles: UploadedFiles = store.getState().uploadedFiles;
+
+  const reset = () => {
+    docsPendingUpload.clear();
+    drawingsPendingUpload.clear();
+    filesPendingUpload.clear();
+    const state = store.getState();
+    prevDocuments = state.documents;
+    prevDrawings = state.drawings;
+    prevFiles = state.uploadedFiles;
+  }
+
   let setPrevDocuments = (documents: SlateDocuments) => {
     prevDocuments = documents;
   };
   let setPrevDrawings = (drawings: DrawingDocuments) => {
     prevDrawings = drawings;
   };
+  let setPrevFiles = (files: UploadedFiles) => {
+    prevFiles = files;
+  }
   let documentsChanged = (documents: SlateDocuments) =>
     documents !== prevDocuments;
   let drawingsChanged = (drawings: DrawingDocuments) =>
     drawings !== prevDrawings;
+  let filesChanged = (files: UploadedFiles) =>
+    files !== prevFiles;
+  
   const isAuthorized = (
     authState: CollectionState
   ): authState is AuthorizedCollectionState => {
@@ -111,7 +132,7 @@ const syncDropboxToStore = (
 
     const rev = collection.rev!;
     const filePath = collection.selectedFilePath;
-    const { documents, drawings } = state;
+    const { documents, drawings, uploadedFiles } = state;
 
     store.dispatch(syncStart());
 
@@ -120,9 +141,11 @@ const syncDropboxToStore = (
       rev,
       documents,
       drawings,
+      uploadedFiles,
       collection.revisions,
       docsPendingUpload,
-      drawingsPendingUpload)
+      drawingsPendingUpload,
+      filesPendingUpload)
       .then(async ({response, revisions }) => {
         store.dispatch(syncSuccess(response.result.rev, revisions));
       })
@@ -144,8 +167,10 @@ const syncDropboxToStore = (
     1000
   );
   let performFollowupSyncWhenRevChanges: string | null = null;
+
+  let prevCollection: string | null = null;
   store.subscribe(() => {
-    const { dbx: { collection }, documents, drawings, merge } = store.getState();
+    const { dbx: { collection }, documents, uploadedFiles, drawings, merge } = store.getState();
     if (merge.state === 'conflict') {
       // prevent sync here, because we replace documents while the merge is in the conflict state,
       // causing a debounced sync to begin, before we get to change our auth.rev,
@@ -153,6 +178,10 @@ const syncDropboxToStore = (
       return;
     }
     
+    if (isAuthorized(collection) && collection.selectedFilePath && collection.selectedFilePath !== prevCollection) {
+      reset()
+      prevCollection = collection.selectedFilePath;
+    }
     /**
      * We need to prevent upload when we select a new (different) collection.
      * Maybe track collection selectedfilePath and clear out prevDocuments when it changes,
@@ -165,7 +194,7 @@ const syncDropboxToStore = (
       collection.rev &&
       (
         (performFollowupSyncWhenRevChanges && performFollowupSyncWhenRevChanges !== collection.rev) ||
-        (documentsChanged(documents) || drawingsChanged(drawings))
+        (documentsChanged(documents) || drawingsChanged(drawings) || filesChanged(uploadedFiles))
       )
     ) {
       performFollowupSyncWhenRevChanges = null;
@@ -189,8 +218,17 @@ const syncDropboxToStore = (
           drawingsPendingUpload.add(dk);
         })
       }
+      if (filesChanged(uploadedFiles)) {
+        const filesAddedOrRemoved = uniq(Object.keys({ ...uploadedFiles, ...prevFiles })).filter(k => {
+          return !uploadedFiles[k] || !prevFiles[k];
+        })
+        filesAddedOrRemoved.forEach(fid => {
+          filesPendingUpload.add(fid);
+        })
+      }
       setPrevDocuments(documents);
       setPrevDrawings(drawings);
+      setPrevFiles(uploadedFiles);
       if (
         collection.syncing?._type !== "debounced_pending" &&
         collection.syncing?._type !== "request_pending"

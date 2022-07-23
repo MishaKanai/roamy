@@ -12,7 +12,7 @@ import { DrawingData } from "./store/domain";
 import HoverBacklinks from "../components/AnchoredPopper";
 import { Excalidraw } from "@excalidraw/excalidraw";
 import { Resizable, ResizeCallback } from "re-resizable";
-import { ExcalidrawProps } from "@excalidraw/excalidraw/types/types";
+import { BinaryFiles, ExcalidrawProps } from "@excalidraw/excalidraw/types/types";
 import { drawingOptionsContext } from "../extension/drawingOptionsContext";
 import { useRoamyDispatch } from "../SlateGraph/Page";
 import { useTheme } from "@mui/material";
@@ -31,6 +31,7 @@ interface DrawingPageProps {
   excalidrawProps?: Partial<ExcalidrawProps>;
   preventScrollAndResize?: boolean;
   overrideDrawing?: DrawingData;
+  overrideFiles?: BinaryFiles;
   asSvg?: boolean;
 }
 
@@ -48,6 +49,7 @@ const DrawingPage: React.FC<DrawingPageProps> = React.memo(
     excalidrawProps,
     preventScrollAndResize = false,
     overrideDrawing,
+    overrideFiles,
     asSvg = false
   }) => {
     const { excalidrawInstance, excalidrawRef } = useExcalidrawInstance();
@@ -56,7 +58,8 @@ const DrawingPage: React.FC<DrawingPageProps> = React.memo(
       viewedFromParentDoc,
     });
     const currDrawing = overrideDrawing ?? _currDrawing;
-    const files = useFiles(drawingName);
+    const _files = useFiles(drawingName);
+    const files = overrideFiles ?? _files;
 
     const initialData = useMemo(() => {
       return {

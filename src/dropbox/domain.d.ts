@@ -11,4 +11,5 @@ export type IndexFileStructure = {
             rev: string;
         }
     }
+    uploadedFiles: string[];
 }

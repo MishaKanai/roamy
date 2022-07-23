@@ -12,13 +12,14 @@ import {
 import {
     updateDrawing as updateDrawingAction,
 } from '../store/globalActions';
-import { DrawingData } from "../store/domain";
+import { DrawingData, DrawingDataInStore } from "../store/domain";
 import deepEqual from "fast-deep-equal";
 import { ExcalidrawElement } from "@excalidraw/excalidraw/types/element/types";
 import { AppState, BinaryFiles } from "@excalidraw/excalidraw/types/types";
 import { useRoamyDispatch } from "../../SlateGraph/Page";
 import { useAppSelector } from "../../store/hooks";
 import rfdc from 'rfdc';
+import convertDrawingInStoreToDispatchedDrawing from "../../dropbox/resolveMerge/util/convertDrawingFromStoreRepToDispatchedRep";
 
 const INITIAL_HEIGHT = 400;
 const INITIAL_WIDTH = 600;
@@ -28,6 +29,7 @@ const createInitialEmptyDrawing = (): DrawingData => ({
         width: INITIAL_WIDTH,
     },
     elements: [],
+    files: {}
 });
 
 export const useDrawingPage = (
@@ -39,9 +41,15 @@ export const useDrawingPage = (
     const viewedFromParentDoc = options?.viewedFromParentDoc;
     const initialDrawing: DrawingData = useMemo(createInitialEmptyDrawing, []);
 
-    const canon_currDrawing: DrawingData = useAppSelector(
-        state => state.drawings[drawingName]?.drawing ?? initialDrawing
+    const store_canon_currDrawing: DrawingDataInStore = useAppSelector(
+        state => state.drawings[drawingName]?.drawing
     );
+    const canon_currDrawing: DrawingData = useMemo(() => {
+        if (!store_canon_currDrawing) {
+            return initialDrawing;
+        }
+        return convertDrawingInStoreToDispatchedDrawing(store_canon_currDrawing)
+    }, [store_canon_currDrawing, initialDrawing])
 
     const [localDrawing, dispatchLocalDrawing] = useReducer((state: DrawingData, action: Partial<DrawingData>) => {
         return Object.assign({}, state, action) as DrawingData;
@@ -93,6 +101,7 @@ export const useDrawingPage = (
     }, []); // eslint-disable-line
 
     const someRealChangeToDrawing_Ref = useRef(false);
+    
     const filesRef = useRef({} as BinaryFiles);
     const setDrawing = useCallback(
         (newDrawingElements: readonly ExcalidrawElement[], appState: AppState, files: BinaryFiles) => {
