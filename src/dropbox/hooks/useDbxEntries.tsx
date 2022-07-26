@@ -149,6 +149,7 @@ export const useDbxEntries = () => {
                 setFilePendingState({ _type: 'ok' })
                 dispatch(pushAction('/graph'))
             } catch (e) {
+                console.error(e)
                 setErr();
             }
         }
