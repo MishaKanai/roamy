@@ -18,7 +18,7 @@ const fetchDataFromCollectionAndCompose = async (dbx: Dropbox, indexFilePath: st
         ...data.uploadedFiles?.map(fid => loadFileJSON<BinaryFileData>(dbx, folderName + 'file_' + fid + '.json').then(res => ({
             ...res,
             type: 'file' as const
-        }))),
+        }))) ?? [],
         ...documentFileNames.map(dfn => loadFileJSON<SlateDocument>(dbx, folderName + 'doc_' + dfn + '.json', data.documents[dfn].rev).then(res => ({
             ...res,
             type: 'doc' as const
