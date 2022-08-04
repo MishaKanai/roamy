@@ -9,7 +9,6 @@ import DialogActions from '@mui/material/DialogActions';
 import Button from '@mui/material/Button';
 import { useDbxEntries } from '../hooks/useDbxEntries';
 
-
 interface CreateCollectionDialogProps {
     onCreate?: (collectionName: string) => void;
     children: (props: { promptCreate: (collectionName?: string) => void; }) => JSX.Element;
@@ -18,23 +17,23 @@ export default function CreateCollectionDialog({ onCreate, children }: CreateCol
     const { createNewEmptyCollection } = useDbxEntries();
     const [open, toggleOpen] = React.useState(false);
 
+    const [dialogValue, setDialogValue] = React.useState({
+        collectionName: '',
+    });
+
     const handleClose = () => {
         setDialogValue({
-            path_lower: ''
+            collectionName: ''
         });
         toggleOpen(false);
     };
 
-    const [dialogValue, setDialogValue] = React.useState({
-        path_lower: '',
-    });
-
     // called from dialog
     const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
-        const { path_lower } = dialogValue;
-        createNewEmptyCollection(path_lower)?.then(cnf => {
-            onCreate?.(path_lower);
+        const { collectionName } = dialogValue;
+        createNewEmptyCollection(collectionName)?.then(cnf => {
+            onCreate?.(collectionName);
             handleClose();
         })
     };
@@ -44,7 +43,7 @@ export default function CreateCollectionDialog({ onCreate, children }: CreateCol
         setTimeout(() => {
             toggleOpen(true);
             setDialogValue({
-                path_lower: typeof collectionName === 'undefined' ? '' : collectionName
+                collectionName: typeof collectionName === 'undefined' ? '' : collectionName
             });
         });
     }
@@ -62,8 +61,8 @@ export default function CreateCollectionDialog({ onCreate, children }: CreateCol
                             autoFocus
                             margin="dense"
                             id="path_lower"
-                            value={dialogValue.path_lower}
-                            onChange={(event) => setDialogValue({ ...dialogValue, path_lower: event.target.value })}
+                            value={dialogValue.collectionName}
+                            onChange={(event) => setDialogValue({ ...dialogValue, collectionName: event.target.value })}
                             label="Collection Name"
                             type="text"
                         />

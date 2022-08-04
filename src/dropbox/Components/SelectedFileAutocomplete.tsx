@@ -10,20 +10,23 @@ import { useAppDispatch, useAppSelector } from '../../store/hooks';
 
 const filter = createFilterOptions<DropboxFileOptionType>();
 
+const getDisplayTextFromIndexFilePath = (path_lower: string) => path_lower.slice(1, path_lower.lastIndexOf('/index.json'));
+
 export default function SelectedFileAutocomplete() {
     const currentFilePath = useAppSelector(state => state.dbx.collection.state === 'authorized' ? state.dbx.collection.selectedFilePath : null)
     const { collectionsState, loadExistingCollection } = useDbxEntries();
     const dbxEntries: DropboxFileOptionType[] = React.useMemo(() => {
         const entries = collectionsState._tag === 'success' ? collectionsState.data : collectionsState._tag === 'pending' ? collectionsState.prevData ?? null : null;
+
         return entries?.flatMap(entry =>
-            entry['.tag'] === 'file' && entry.path_lower ?
-                [{ path_lower: entry.path_lower, title: entry.path_lower, inputValue: entry.path_lower }] :
+            entry['.tag'] === 'file' && entry.path_lower && new RegExp('\\/.*\\/index\\.json').test(entry.path_lower) ?
+                [{ path_lower: entry.path_lower, title: getDisplayTextFromIndexFilePath(entry.path_lower) }] :
                 []
         ) ?? []
     }, [collectionsState])
     const initialValue = useMemo(() => currentFilePath ? {
         path_lower: currentFilePath,
-        title: currentFilePath
+        title: getDisplayTextFromIndexFilePath(currentFilePath)
     } : null, [currentFilePath])
     const [value, setValue] = React.useState<DropboxFileOptionType | null>(initialValue);
     useEffect(() => {
@@ -31,10 +34,10 @@ export default function SelectedFileAutocomplete() {
     }, [initialValue])
     const dispatch = useAppDispatch();
     return (
-        <CreateCollectionDialog onCreate={filename => {
+        <CreateCollectionDialog key={currentFilePath ?? 'none'} onCreate={collectionName => {
             setValue({
-                title: filename,
-                path_lower: filename
+                title: collectionName,
+                path_lower: '/' + collectionName + '/index.json'
             });
             dispatch(pushAction('/graph'))
         }}>{({ promptCreate }) => (
@@ -47,15 +50,19 @@ export default function SelectedFileAutocomplete() {
                 }}
                 onChange={(event, newValue) => {
                     if (typeof newValue === 'string') {
-                        promptCreate(newValue)
-                    } else if (newValue && newValue.inputValue) {
-                        if (newValue.title?.startsWith('Add "')) {
-                            promptCreate(newValue.inputValue)
+                        const existing = dbxEntries?.find(e => e.title === newValue);
+                        if (existing && existing.path_lower) {
+                            setValue(existing);
+                            loadExistingCollection(existing.path_lower);
                         } else {
-                            newValue.path_lower && loadExistingCollection(newValue.path_lower)
+                            promptCreate(newValue)
                         }
-                        setValue(newValue);
-                    } else {
+                        return;
+                    }
+                    if (newValue && newValue.inputValue && newValue.title?.startsWith('Add "')) {
+                        promptCreate(newValue.inputValue)
+                    } else if (newValue) {
+                        newValue.path_lower && loadExistingCollection(newValue.path_lower)
                         setValue(newValue);
                     }
                 }}
@@ -63,18 +70,13 @@ export default function SelectedFileAutocomplete() {
                     const filtered = filter(options, params) as DropboxFileOptionType[];
 
                     if (params.inputValue !== '') {
-                        const fileName = params.inputValue.endsWith('.json') ? params.inputValue : params.inputValue + '.json';
-                        if (!filtered.some(e => {
-                            const fn = e.path_lower?.startsWith('/') ? e.path_lower.slice(1) : e.path_lower;
-                            return fn === fileName;
-                        })) {
+                        if (!filtered.some(e => e.title?.startsWith(params.inputValue))) {
                             filtered.push({
-                                inputValue: fileName,
-                                title: `Add "${params.inputValue}.json"`,
+                                inputValue: params.inputValue,
+                                title: `Add "${params.inputValue}"`,
                             });
                         }
                     }
-
                     return filtered;
                 }}
                 options={dbxEntries}
