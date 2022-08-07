@@ -14,17 +14,22 @@ import { useFilesSelector } from '../../../Excalidraw/hooks/useFiles';
 import convertDrawingInStoreToDispatchedDrawing from '../util/convertDrawingFromStoreRepToDispatchedRep';
 import { BinaryFiles } from '@excalidraw/excalidraw/types/types';
 
+import { THEME } from "@excalidraw/excalidraw";
+
+
 const ViewOnlyDrawing: React.FC<{ elements: ExcalidrawElement[], height: any, width: any, files: BinaryFiles }> = ({ elements, height, width, files }) => {
     const { excalidrawRef } = useExcalidrawInstance();
+    const isDark = useTheme().palette.mode === 'dark';
     const initialData = useMemo(() => {
         return {
             elements: elements,
             appState: {
-                viewBackgroundColor: "transparent",
+                viewBackgroundColor: "transparent",                
+                theme: isDark ? THEME.DARK : THEME.LIGHT
             },
             files
         };
-    }, [elements, files]);
+    }, [elements, files, isDark]);
     
     return (
         <div

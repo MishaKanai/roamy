@@ -43,3 +43,7 @@ code {
 .excalidraw .App-bottom-bar > .Island .App-toolbar-content > :first-child {
   visibility: hidden !important;
 }
+.excalidraw.theme--dark {
+  background-color: transparent !important;
+  background: none !important;
+}

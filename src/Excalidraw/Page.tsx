@@ -23,6 +23,7 @@ import { useDrawingPage } from "./hooks/useDrawingPage";
 import useExcalidrawInstance from "./hooks/useExcalidrawInstance";
 import ExcalidrawSvgImage from "./ExcalidrawSvgImage";
 import useFiles from "./hooks/useFiles";
+import { THEME } from "@excalidraw/excalidraw";
 
 interface DrawingPageProps {
   drawingName: string;
@@ -61,15 +62,18 @@ const DrawingPage: React.FC<DrawingPageProps> = React.memo(
     const _files = useFiles(drawingName);
     const files = overrideFiles ?? _files;
 
+    const isDark = useTheme().palette.mode === 'dark';
+
     const initialData = useMemo(() => {
       return {
         elements: currDrawing.elements,
         files,
         appState: {
           viewBackgroundColor: "transparent",
+          theme: isDark ? THEME.DARK : THEME.LIGHT
         },
       };
-    }, [currDrawing.elements, files]);
+    }, [currDrawing.elements, files, isDark]);
 
     const registryId = useMemo(() => uniqueId(drawingName), [drawingName]);
     useEffect(() => {
@@ -80,8 +84,6 @@ const DrawingPage: React.FC<DrawingPageProps> = React.memo(
         excalidrawRegistry.unregister(drawingName, registryId);
       }
     }, [drawingName, registryId, excalidrawInstance])
-
-    const isDark = useTheme().palette.mode === 'dark';
 
     const drawing = (
       <Excalidraw
@@ -142,9 +144,7 @@ const DrawingPage: React.FC<DrawingPageProps> = React.memo(
               {title}
             </div>
           </div>
-          <div style={Object.assign(
-            { marginTop: '1.25em', paddingTop: '1em', paddingBottom: '1em' },
-            isDark ? { filter: 'invert(100%) hue-rotate(180deg)' } : {})}>
+          <div style={{ marginTop: '1.25em', paddingTop: '1em', paddingBottom: '1em' }}>
             <div style={{ position: "relative" }}>
               {preventScrollAndResize && (
                 // a perfect overlay of the drawing area
