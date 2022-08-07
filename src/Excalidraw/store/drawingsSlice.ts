@@ -85,8 +85,10 @@ const drawingsSlice = createSlice({
         builder
         .addCase(updateDrawing, (state, { payload: { newDrawing: { files, ..._newDrawing }, drawingName, updatedDate } }: PayloadAction<{ drawingName: string; newDrawing: Partial<DrawingData>, updatedDate: Date; }>) => {
             const { backReferences, backReferencesHash, drawing: prevDrawing, drawingHash: prevDrawingHash, createdDate } = state[drawingName];
-            const newDrawing = Object.assign({}, prevDrawing, _newDrawing);
-            newDrawing.filesIds = Object.keys(files ?? {});
+            const newDrawing = Object.assign({}, prevDrawing, _newDrawing);            
+            if (typeof files !== 'undefined') {
+                newDrawing.filesIds = Object.keys(files);
+            }
             const newDrawingHash = hashSum(newDrawing);
             if (newDrawingHash === prevDrawingHash) {
                 return;

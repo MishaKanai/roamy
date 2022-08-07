@@ -2,6 +2,7 @@ import { BinaryFileData } from "@excalidraw/excalidraw/types/types";
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { updateDrawing } from "../Excalidraw/store/globalActions";
 import uniq from 'lodash/uniq';
+import { ExcalidrawImageElement } from "@excalidraw/excalidraw/types/element/types";
 
 type UploadedFile = {
     fileData: BinaryFileData;
@@ -30,7 +31,14 @@ const uploadedFilesSlice = createSlice({
     extraReducers(builder) {
         builder
         .addCase(updateDrawing, (state, action) => {
-            Object.entries(action.payload.newDrawing.files ?? {}).forEach(([id, binaryFile]) => {
+            const nonDeletedImages = (action.payload.newDrawing.elements ?? []).filter(e => e.type === 'image' && !e.isDeleted).reduce((prev, curr) => {
+                const fileId = (curr as ExcalidrawImageElement).fileId;
+                if (fileId) {
+                    prev[fileId] = true;
+                }
+                return prev;
+            }, { } as { [fileId: string]: true })
+            Object.entries(action.payload.newDrawing.files ?? {}).filter(([id]) => nonDeletedImages[id]).forEach(([id, binaryFile]) => {
                 const existingBackRefs = state[id]?.drawingBackrefs ?? [];
                 state[id] = {
                     fileData: binaryFile,
