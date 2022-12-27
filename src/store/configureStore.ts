@@ -1,6 +1,6 @@
 import { configureStore, isPlain } from '@reduxjs/toolkit'
 import { $CombinedState } from '@reduxjs/toolkit';
-import storageSession from "redux-persist/lib/storage/session"; // defaults to localStorage for web
+// import storageSession from "redux-persist/lib/storage/session"; // defaults to localStorage for web
 import { routerMiddleware } from "connected-react-router";
 import createRootReducer from "./createRootReducer";
 import { createBrowserHistory } from "history";
@@ -27,6 +27,8 @@ import { authSuccess } from '../dropbox/store/globalActions';
 import { UploadedFiles } from '../UploadedFiles/uploadedFilesSlice';
 import uniq from 'lodash/uniq';
 import produce from 'immer';
+import localforage from 'localforage';
+
 /**
  * https://redux-toolkit.js.org/usage/usage-guide#use-with-redux-persist
  */
@@ -50,7 +52,7 @@ export const history = createBrowserHistory();
 
 const persistConfig = {
   key: "root",
-  storage: storageSession,
+  storage: localforage,
   blacklist: ['dbx']
 };
 

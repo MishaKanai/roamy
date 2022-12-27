@@ -61,8 +61,63 @@ import { useStore } from "react-redux";
 import { addPastedFile } from "../../UploadedFiles/uploadedFilesSlice";
 import { traverseTransformNodes } from "./utils/traverseTransformNodes";
 import { useAppSelector } from "../../store/hooks";
-import { Clear } from "@mui/icons-material";
+import { Clear, GolfCourse } from "@mui/icons-material";
+import { RootState } from "../../store/configureStore";
+import gifsicle from "gifsicle-wasm-browser";
 
+function dataURLtoFile(dataurl: string, filename: string) {
+ 
+  var arr = dataurl.split(','),
+      mime = arr[0]!.match(/:(.*?);/)![1],
+      bstr = atob(arr[1]), 
+      n = bstr.length, 
+      u8arr = new Uint8Array(n);
+      
+  while(n--){
+      u8arr[n] = bstr.charCodeAt(n);
+  }
+  
+  return new File([u8arr], filename, {type:mime});
+}
+
+
+function loadGif(intFiles: any): Promise<string> {
+  return gifsicle
+    .run({
+      input: [{
+        file: intFiles,
+        name: "1.gif"
+      }],
+      // E.g. to resize to width of 250px, add:
+      // --resize 250x_
+      command: [`
+          -O2 --lossy=100
+          
+          1.gif 
+          -o /out/out2.gif
+        `]
+    }).then((outFiles: any) => {
+      const outputFile = outFiles[0];
+      return new Promise((res, rej) => {
+        if (!outputFile) {
+          rej();
+        }
+        var reader = new FileReader();
+        reader.readAsDataURL(outputFile);
+        reader.onload = function () {
+          res(reader.result);
+        };
+        reader.onerror = rej
+      })
+    })
+  }
+
+const getImageSize = (url: string) => {
+  const stringLength = url.length - 'data:image/gif;base64,'.length;
+  const sizeInBytes = 4 * Math.ceil((stringLength / 3)) * 0.5624896334383812;
+  const sizeInKb = sizeInBytes/1000;
+  return sizeInKb;
+}
 
 /**
  * Start images
@@ -88,15 +143,9 @@ const withImages = (config: { store: Store, doc: string }) => (editor: CustomEdi
       console.log('files')
       for (const file of Array.from(files)) {
         const reader = new FileReader()
-        const [mime] = file.type.split('/')
-
+        const [mime, type] = file.type.split('/')
         if (mime === 'image') {
-          reader.addEventListener('load', () => {
-            const url = reader.result
-            // TODO
-            // binary file - we need to store this.
-            // dispatch addPastedFile
-            console.log('1')
+          const dispatchNewDoc = (url: string) => {
             const id = uuidv4() as any;
             config.store.dispatch(addPastedFile({
               doc: config.doc,
@@ -106,12 +155,19 @@ const withImages = (config: { store: Store, doc: string }) => (editor: CustomEdi
                 id,
                 mimeType: file.type as any
               }
-            }))
-            console.log('2')
-            setImmediate(() => insertImage(editor, url as string, id))
-          })
-
-          reader.readAsDataURL(file)
+            }));
+            setImmediate(() => insertImage(editor, url, id))
+          }
+          if (type === 'gif' && window.confirm('Optimize Gif?')) {
+            loadGif(file).then(optimizedGifB64 => {
+              dispatchNewDoc(optimizedGifB64)
+            })
+          } else {
+            reader.addEventListener('load', () => {
+              dispatchNewDoc(reader.result as any);
+            })
+            reader.readAsDataURL(file)
+          }
         }
       }
     } else if (isImageUrl(text)) {
@@ -120,7 +176,6 @@ const withImages = (config: { store: Store, doc: string }) => (editor: CustomEdi
       insertData(data)
     }
   }
-
   return editor
 }
 
@@ -137,7 +192,7 @@ const IdLinkImage = (props: { imageId: string, className: string }) => {
   />
 }
 
-const Image = ({ attributes, children, element: _element }: RenderElementProps) => {
+const InlineImage = ({ attributes, children, element: _element }: RenderElementProps) => {
   const element: ImageElement = _element as any;
   const editor = useSlateStatic()
   const path = ReactEditor.findPath(editor, element)
@@ -145,14 +200,14 @@ const Image = ({ attributes, children, element: _element }: RenderElementProps) 
   const selected = useSelected()
   const focused = useFocused()
   const theme = useTheme();
-
+  const store = useStore<RootState>();
   const imageClassName = css`
     display: block;
     max-width: 100%;
     max-height: 20em;
     box-shadow: ${selected && focused ? '0 0 0 3px ' + theme.palette.action.focus : 'none'};
   `;
-
+  const dataUrl = element.variant === 'id-link' ? store.getState().uploadedFiles[element.imageId]?.fileData?.dataURL : element.url
   return (
     <span {...attributes}
       contentEditable={false}
@@ -169,6 +224,7 @@ const Image = ({ attributes, children, element: _element }: RenderElementProps) 
           position: relative;
         `}
       >
+        
         {element.variant === 'id-link' ? (
           <IdLinkImage
             imageId={element.imageId}
@@ -180,6 +236,16 @@ const Image = ({ attributes, children, element: _element }: RenderElementProps) 
             src={element.url}
             className={imageClassName}
           />}
+          {selected && focused && <span
+            className={css`
+              position: absolute;
+              top: 0.5em;
+              left: 0.5em;
+              background-color: ${theme.palette.background.paper}
+            `}
+          >
+            {dataUrl && getImageSize(dataUrl).toFixed(0)}{' KB'}
+          </span>}
         {selected && focused && <span
           className={css`
             position: absolute;
@@ -189,6 +255,7 @@ const Image = ({ attributes, children, element: _element }: RenderElementProps) 
         >
           <div style={{ position: 'relative' }}>
             <IconButton
+              style={{ backgroundColor: theme.palette.background.paper }}
               size="small"
               color="secondary"
               onMouseDown={e => {
@@ -210,25 +277,6 @@ const Image = ({ attributes, children, element: _element }: RenderElementProps) 
   )
 }
 
-// const InsertImageButton = () => {
-//   const editor = useSlateStatic()
-//   return (
-//     <button
-//       onMouseDown={event => {
-//         event.preventDefault()
-//         const url = window.prompt('Enter the URL of the image:')
-//         if (url && !isImageUrl(url)) {
-//           alert('URL is not an image')
-//           return
-//         }
-//         url && insertImage(editor, url)
-//       }}
-//     >
-//       image
-//     </button>
-//   )
-// }
-
 const isImageUrl = (url?: string) => {
   if (!url) return false
   if (!isUrl(url)) return false
@@ -236,10 +284,6 @@ const isImageUrl = (url?: string) => {
   return ext && imageExtensions.includes(ext)
 }
 
-
-/**
- * end images
- */
 
 const isIos = /(iPad|iPhone|iPod)/g.test(navigator.userAgent);
 
@@ -1032,7 +1076,7 @@ export const Element: React.FC<RenderElementProps & { parentDoc: string }> = (
         </div>
       );
     case 'image':
-      return <Image {...props} />
+      return <InlineImage {...props} />
     case "bulleted-list":
       return <ul {...attributes}>{children}</ul>;
     case "heading-one":
