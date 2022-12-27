@@ -2,6 +2,7 @@ import words from 'lodash/words';
 import uniq from 'lodash/uniq';
 import { CustomElement, CustomText } from "../../SlateGraph/slate.d";
 import { SlateDocuments } from "../../SlateGraph/store/slateDocumentsSlice";
+import { nodeIsText } from '../../Autocomplete/Editor/utils/traverseTransformNodes';
 
 /*
   To implement search,
@@ -11,8 +12,6 @@ import { SlateDocuments } from "../../SlateGraph/store/slateDocumentsSlice";
   links onto documents, and specific paragraph "paths" in those documents.
   The latter we can use for backrefs with more detail (previewing how they are referenced) as well.
 */
-
-const nodeIsText = (node: CustomElement | CustomText): node is CustomText => !(node as any).type && typeof (node as any).text !== 'undefined';
 
 const traverseSlateNodes = (cb: (text: string, pathToText: string) => void) => {
   const innerTraverse = (slateNodes: (CustomElement | CustomText)[], currPath = '') => {

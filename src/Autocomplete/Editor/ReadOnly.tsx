@@ -11,7 +11,7 @@ interface ReadOnlyDocProps {
     docName: string;
 }
 const ReadOnlyDoc: React.FC<ReadOnlyDocProps> = ({ document, docName }) => {
-    const editor = useEditor();
+    const editor = useEditor(docName);
     const renderElement = useCallback(
         (props) => <Element parentDoc={docName} {...props} />,
         [docName]

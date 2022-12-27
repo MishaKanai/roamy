@@ -5,8 +5,11 @@ const getBeforeChars = (trigger: string, editor: Editor) => {
     if (!selection) {
         return null;
     }
+    if (selection.focus.offset === 0) {
+        return null;
+    }
     const wordBefore = Editor.before(editor, selection.focus, { unit: 'word' });
-    if (!wordBefore || selection.focus.offset === 0) {
+    if (!wordBefore) {
         return null;
     }
     return Editor.string(

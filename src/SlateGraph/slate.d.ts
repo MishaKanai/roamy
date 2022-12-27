@@ -70,7 +70,20 @@ export type DrawingElement = {
   children: CustomText[];
 }
 
+export type ImageElement = {
+  type: 'image';
+  children: CustomText[];
+} & ({
+  variant: 'url';
+  url: string;
+  imageId?: string;
+} | {
+  variant: 'id-link';
+  imageId: string;
+})
+
 export type CustomElement =
+    | ImageElement
     | ListItemElement
     | ParagraphElement
     | HeadingOneElement

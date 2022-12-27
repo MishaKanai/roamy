@@ -26,6 +26,7 @@ import {
 import { authSuccess } from '../dropbox/store/globalActions';
 import { UploadedFiles } from '../UploadedFiles/uploadedFilesSlice';
 import uniq from 'lodash/uniq';
+import produce from 'immer';
 /**
  * https://redux-toolkit.js.org/usage/usage-guide#use-with-redux-persist
  */
@@ -252,7 +253,35 @@ const syncDropboxToStore = (
 };
 
 const appConfigureStore = () => {
+  const devTools: any = {
+    'actionSanitizer': (action: any) => {
+      if (action['payload']?.['fileData']?.['dataUrl']) {
+        return produce(action, (draft: any) => {
+          draft['payload']['fileData']['dataUrl'] = '<<LONG_B64>>';
+        })
+      }
+      return action;
+    },
+    stateSanitizer: (state: any) => {
+      const uploadedFiles = Object.fromEntries(Object.entries(state['uploadedFiles']).map(([k, v]) => {
+        const { fileData: { dataURL, ...restInner } = ({} as any), ...restOuter } = (v as any) = {} as any;
+        return [k, {
+          ...restOuter,
+          fileData: {
+            ...restInner,
+            dataURL: '<<LONG_B64>>'
+          }
+        }]
+      })) as any;
+
+      return {
+        ...state,
+        uploadedFiles
+      }
+    }
+  };
   let store = configureStore({
+    devTools,
     reducer: persistedReducer,
     middleware: (getDefaultMiddleware) =>
       getDefaultMiddleware({

@@ -37,12 +37,15 @@ const fetchDataFromCollectionAndCompose = async (dbx: Dropbox, indexFilePath: st
     }
     documentResults.forEach(r => {
         if (r.status === 'rejected') {
-            throw new Error(r.reason);
+            // this will happen if 'they' deleted a file.
+            // throw new Error(r.reason);
+            return;
         }
         const { value } = r
         if (value.type === 'file') {
             uploadedFiles[value.data.id] = {
                 fileData: value.data,
+                docBackrefs: [], // fill this in later.
                 drawingBackrefs: [] // fill this in later.
             }
         } else if (value.type === 'doc') {

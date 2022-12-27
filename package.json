@@ -33,8 +33,10 @@
     "fp-ts": "^2.9.5",
     "hash-sum": "^2.0.0",
     "hex-rgb": "^5.0.0",
+    "image-extensions": "^1.1.0",
     "immer": "^9.0.1",
     "is-hotkey": "^0.2.0",
+    "is-url": "^1.2.4",
     "json-stable-stringify": "^1.0.1",
     "lodash": "^4.17.21",
     "moment": "^2.29.1",
@@ -90,6 +92,7 @@
   },
   "devDependencies": {
     "@types/hash-sum": "^1.0.0",
+    "@types/is-url": "^1.2.30",
     "@types/json-stable-stringify": "^1.0.33",
     "@types/react-router": "^5.1.13",
     "@types/react-router-dom": "^5.1.7"

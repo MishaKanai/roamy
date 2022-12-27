@@ -17,6 +17,7 @@ import { syncSuccess } from '../../store/activeCollectionSlice';
 import { replaceDocs } from '../../../SlateGraph/store/slateDocumentsSlice';
 import { replaceFiles, UploadedFiles } from '../../../UploadedFiles/uploadedFilesSlice';
 import getFilesToDrawings from '../../util/getFilesToDrawings';
+import getFilesToDocs from '../../util/getFilesToDocx';
 
 const useAutomerge = () => {
     const _lastRev = useAppSelector(state => state.dbx.collection.state === 'authorized' && state.dbx.collection.rev);
@@ -171,7 +172,8 @@ export const useSubmitMergedDoc = () => {
             }
         })
         const filesToDrawings = getFilesToDrawings(drawings);
-        const newUploadedFiles = Object.keys(filesToDrawings).reduce((prev, fileId) => {
+        const filesToDocs = getFilesToDocs(documents);
+        const newUploadedFiles = Object.keys({ ...filesToDrawings, ...filesToDocs }).reduce((prev, fileId) => {
             prev[fileId] = uploadedFiles[fileId]
             return prev;
         }, {} as UploadedFiles)

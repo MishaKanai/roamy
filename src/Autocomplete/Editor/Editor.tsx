@@ -33,7 +33,7 @@ import FormatUnderlinedIcon from "@mui/icons-material/FormatUnderlined";
 import FormatItalicIcon from "@mui/icons-material/FormatItalic";
 import FormatListBulletedIcon from "@mui/icons-material/FormatListBulleted";
 import Page from "../../SlateGraph/Page";
-import { DrawingElement, CustomElement, CustomEditor, PortalElement, ReferenceElement } from "../../SlateGraph/slate.d";
+import { DrawingElement, CustomElement, CustomEditor, PortalElement, ReferenceElement, ImageElement } from "../../SlateGraph/slate.d";
 import Link from "../../components/Link";
 import deepEqual from "fast-deep-equal";
 import HoverBacklinks from "../../components/AnchoredPopper";
@@ -47,7 +47,198 @@ import nestedEditorContext from "../nestedEditorContext";
 import useBackgroundColor from "./hooks/useBackgroundColor";
 import UniversalSticky from "./utils/UniversalSticky3";
 import scrollIntoView from 'scroll-into-view-if-needed'
+import imageExtensions from 'image-extensions'
 
+import isUrl from 'is-url'
+import {
+  useSlateStatic,
+  useSelected,
+  useFocused,
+} from 'slate-react'
+import { css } from '@emotion/css'
+import { Store } from "redux";
+import { useStore } from "react-redux";
+import { addPastedFile } from "../../UploadedFiles/uploadedFilesSlice";
+import { traverseTransformNodes } from "./utils/traverseTransformNodes";
+import { useAppSelector } from "../../store/hooks";
+import { Clear, Delete } from "@mui/icons-material";
+
+
+/**
+ * Start images
+ */
+
+const withImages = (config: { store: Store, doc: string }) => (editor: CustomEditor) => {
+  const { insertData, isVoid, isInline } = editor
+
+  editor.isInline = (element: CustomElement) => {
+    return element.type === "image" ? true : isInline(element);
+  };
+
+  editor.isVoid = (element: CustomElement) => {
+    return element.type === 'image' ? true : isVoid(element)
+  }
+
+  editor.insertData = (data: DataTransfer) => {
+    console.log('inserted')
+    const text = data.getData('text/plain')
+    const { files } = data
+
+    if (files && files.length > 0) {
+      console.log('files')
+      for (const file of Array.from(files)) {
+        const reader = new FileReader()
+        const [mime] = file.type.split('/')
+
+        if (mime === 'image') {
+          reader.addEventListener('load', () => {
+            const url = reader.result
+            // TODO
+            // binary file - we need to store this.
+            // dispatch addPastedFile
+            console.log('1')
+            const id = uuidv4() as any;
+            config.store.dispatch(addPastedFile({
+              doc: config.doc,
+              fileData: {
+                created: Date.now(),
+                dataURL: url as any,
+                id,
+                mimeType: file.type as any
+              }
+            }))
+            console.log('2')
+            setImmediate(() => insertImage(editor, url as string, id))
+          })
+
+          reader.readAsDataURL(file)
+        }
+      }
+    } else if (isImageUrl(text)) {
+      insertImage(editor, text)
+    } else {
+      insertData(data)
+    }
+  }
+
+  return editor
+}
+
+const IdLinkImage = (props: { imageId: string, className: string }) => {
+  const image = useAppSelector(state => state.uploadedFiles[props.imageId]);
+  if (!image) {
+    console.error('image not found: ' + props.imageId)
+    return null;
+  }
+  return <img
+    alt="user uploaded"
+    src={image.fileData.dataURL}
+    className={props.className}
+  />
+}
+
+const Image = ({ attributes, children, element: _element }: RenderElementProps) => {
+  const element: ImageElement = _element as any;
+  const editor = useSlateStatic()
+  const path = ReactEditor.findPath(editor, element)
+
+  const selected = useSelected()
+  const focused = useFocused()
+  const theme = useTheme();
+
+  const imageClassName = css`
+    display: block;
+    max-width: 100%;
+    max-height: 20em;
+    box-shadow: ${selected && focused ? '0 0 0 3px ' + theme.palette.action.focus : 'none'};
+  `;
+
+  return (
+    <span {...attributes}
+      contentEditable={false}
+      style={{
+        userSelect: "none",
+        verticalAlign: "baseline",
+        display: "inline-block",
+        fontSize: "0.9em",
+      }}
+    >
+      <div
+        className={css`
+          display: inline-block;
+          position: relative;
+        `}
+      >
+        {element.variant === 'id-link' ? (
+          <IdLinkImage
+            imageId={element.imageId}
+            className={imageClassName}
+          />
+        ) :
+          <img
+            alt="user uploaded"
+            src={element.url}
+            className={imageClassName}
+          />}
+        {selected && focused && <span
+          className={css`
+            position: absolute;
+            top: 0.5em;
+            right: 0.5em;
+          `}
+        >
+          <div style={{ position: 'relative' }}>
+            <IconButton
+              size="small"
+              color="secondary"
+              onMouseDown={e => {
+                e.preventDefault();
+                e.stopPropagation();
+              }}
+              onClick={(e) => {
+                console.log('clicked')
+                Transforms.removeNodes(editor, { at: path })
+              }}
+            >
+              <Clear fontSize="small" />
+            </IconButton>
+          </div>
+        </span>}
+      </div>
+    </span>
+  )
+}
+
+// const InsertImageButton = () => {
+//   const editor = useSlateStatic()
+//   return (
+//     <button
+//       onMouseDown={event => {
+//         event.preventDefault()
+//         const url = window.prompt('Enter the URL of the image:')
+//         if (url && !isImageUrl(url)) {
+//           alert('URL is not an image')
+//           return
+//         }
+//         url && insertImage(editor, url)
+//       }}
+//     >
+//       image
+//     </button>
+//   )
+// }
+
+const isImageUrl = (url?: string) => {
+  if (!url) return false
+  if (!isUrl(url)) return false
+  const ext = new URL(url).pathname.split('.').pop()
+  return ext && imageExtensions.includes(ext)
+}
+
+
+/**
+ * end images
+ */
 
 const isIos = /(iPad|iPhone|iPod)/g.test(navigator.userAgent);
 
@@ -260,6 +451,7 @@ const Toolbar = React.memo(({ title }: { title: React.ReactNode }) => {
           format="bulleted-list"
           icon={<FormatListBulletedIcon />}
         />
+        {/* <InsertImageButton /> */}
       </div>
     </div>
   )
@@ -288,13 +480,23 @@ interface SlateTemplateEditorProps<Triggers extends string[]> {
   docName: string;
 }
 
-export const useEditor = () => {
+export const useEditor = (doc: string) => {
+  const store = useStore();
   return useMemo(
-    () =>
-      withReferences(
-        withPortals(withReact(withNodeId({ reuseId: false, idCreator: uuidv4 })(withHistory(createEditor())) as any))
-      ),
-    []
+    () => withNodeId({ reuseId: false, idCreator: uuidv4 })(
+      withImages({
+        store,
+        doc
+      })(
+        withReferences(
+          withPortals(
+            withHistory(withReact(createEditor()))
+          ) as any
+        )
+      )
+    )
+    ,
+    [store, doc]
   );
 }
 
@@ -320,7 +522,7 @@ const SlateAutocompleteEditorComponent = <Triggers extends string[]>(
     [docName]
   );
   const renderLeaf = useCallback((props) => <Leaf {...props} />, []);
-  const editor = useEditor();
+  const editor = useEditor(docName);
   // editor.children = value is what sets Slate's value when the 'value' prop changes externally.
   // we use useMemo so this is updated before the child renders, so it's up to date
   // (if we used useEffect, we would have to trigger a second rendering after to show the changes.)
@@ -429,7 +631,30 @@ const SlateAutocompleteEditorComponent = <Triggers extends string[]>(
     (_value: Descendant[]) => {
       // this gets called on clicks! we need to only update on different values in order to prevent losing focus when changing focus between parents/children/sibling editors
       if (!deepEqual(_value, value)) {
-        setValue(_value);
+        let found = false
+        const newValue = traverseTransformNodes(
+          (_node) => {
+            const node = _node as CustomElement;
+            if (node.type === 'image' && node.variant === 'url' && node.imageId) {
+              const { variant, url, ...rest } = node
+              found = true;
+              return {
+                ...rest,
+                imageId: node.imageId as string,
+                variant: 'id-link'
+              }
+            }
+            return null;
+          }
+        )(_value)
+        if (found) {
+          console.log('found')
+          // this causes reset of editor which we don't want while typing.
+          setValue(newValue)
+        } else {
+          setValue(_value);
+        }
+
         handleChange(
           editor,
           ({ popupTarget, search, trigger }) => {
@@ -589,6 +814,22 @@ export const Leaf: React.FC<RenderLeafProps> = React.memo(({ attributes, childre
 
   return <span {...attributes}>{children}</span>;
 });
+
+const insertImage = (editor: CustomEditor, url: string, imageId?: string) => {
+  const drawing: ImageElement = {
+    type: "image",
+    variant: 'url',
+    imageId,
+    url,
+    children: [{ text: "" }],
+  };
+  Transforms.insertNodes(editor, [
+    drawing,
+    { type: "paragraph", children: [{ text: "" }] } as any,
+  ]);
+  Transforms.move(editor);
+};
+
 const insertDrawing = (editor: CustomEditor, drawingReference: string) => {
   const drawing: DrawingElement = {
     type: "drawing",
@@ -790,6 +1031,8 @@ export const Element: React.FC<RenderElementProps & { parentDoc: string }> = (
           </div>
         </div>
       );
+    case 'image':
+      return <Image {...props} />
     case "bulleted-list":
       return <ul {...attributes}>{children}</ul>;
     case "heading-one":

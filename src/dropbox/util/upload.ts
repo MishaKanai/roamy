@@ -1,10 +1,12 @@
 import { Dropbox } from "dropbox";
 import hash_sum from "hash-sum";
+import uniq from "lodash/uniq";
 import { DrawingDocuments } from "../../Excalidraw/store/drawingsSlice";
 import { SlateDocuments } from "../../SlateGraph/store/slateDocumentsSlice";
 import { UploadedFiles } from "../../UploadedFiles/uploadedFilesSlice";
 import { IndexFileStructure } from "../domain";
 import { Revisions } from "../store/activeCollectionSlice";
+import getFilesToDocs from "./getFilesToDocx";
 import getFilesToDrawings from "./getFilesToDrawings";
 
 const getFileFileName = (fileId: string) => 'file_' + fileId + '.json';
@@ -124,13 +126,14 @@ const upload = async (
     drawings: Object.fromEntries(Object.entries(drawings).map(([drawingName, drawing]) => {
       return [drawingName, newIndexFileEntries.drawings[drawingName] ?? ({ hash: hash_sum(drawing), rev: existingRevisions?.drawings[drawingName] })];
     })),
-    uploadedFiles: Object.keys(getFilesToDrawings(drawings))
+    uploadedFiles: uniq([...Object.keys(getFilesToDrawings(drawings)), ...Object.keys(getFilesToDocs(documents)) ])
   }
 
   const revisions = {
     documents: Object.fromEntries(Object.entries(indexFile.documents).map(([k, doc]) => [k, doc.rev])),
     drawings: Object.fromEntries(Object.entries(indexFile.drawings).map(([k, drawing]) => [k, drawing.rev])),
   }
+
   return dbx
     .filesUpload({
       mode: {
