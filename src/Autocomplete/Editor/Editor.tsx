@@ -61,7 +61,7 @@ import { useStore } from "react-redux";
 import { addPastedFile } from "../../UploadedFiles/uploadedFilesSlice";
 import { traverseTransformNodes } from "./utils/traverseTransformNodes";
 import { useAppSelector } from "../../store/hooks";
-import { Clear, Delete } from "@mui/icons-material";
+import { Clear } from "@mui/icons-material";
 
 
 /**
@@ -205,6 +205,7 @@ const Image = ({ attributes, children, element: _element }: RenderElementProps) 
           </div>
         </span>}
       </div>
+      {children}
     </span>
   )
 }
@@ -816,7 +817,7 @@ export const Leaf: React.FC<RenderLeafProps> = React.memo(({ attributes, childre
 });
 
 const insertImage = (editor: CustomEditor, url: string, imageId?: string) => {
-  const drawing: ImageElement = {
+  const image: ImageElement = {
     type: "image",
     variant: 'url',
     imageId,
@@ -824,8 +825,7 @@ const insertImage = (editor: CustomEditor, url: string, imageId?: string) => {
     children: [{ text: "" }],
   };
   Transforms.insertNodes(editor, [
-    drawing,
-    { type: "paragraph", children: [{ text: "" }] } as any,
+    image,
   ]);
   Transforms.move(editor);
 };
