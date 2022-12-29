@@ -17,7 +17,7 @@ import HomeIcon from '@mui/icons-material/Home';
 // import CreateIcon from '@mui/icons-material/Create';
 // import AddIcon from '@mui/icons-material/Add';
 import SettingsIcon from '@mui/icons-material/Settings';
-import { ListSubheader } from '@mui/material';
+import { ListSubheader, useTheme } from '@mui/material';
 import { useLocation } from 'react-router';
 import useFileSelected from '../dropbox/hooks/useFileSelected';
 import NetworkIcon from '../icons/NetworkIcon';
@@ -29,7 +29,7 @@ import { useDebounce } from 'use-debounce/lib';
 import CreateFab from './FabArea';
 import { useAppSelector } from '../store/hooks';
 
-const drawerWidth = 240;
+const drawerWidth = 220;
 
 const useRecentlyUpdated = () => {
     const _documents = useAppSelector(state => state.documents);
@@ -149,7 +149,6 @@ const ResponsiveDrawer = React.memo((props: ResponsiveDrawerProps) => {
     const docsPage = pathname === '/docs' || pathname === '/docs/';
     const specificDoc = pathname.startsWith('/docs/') && pathname.length > '/docs/'.length;
     const graphPage = pathname === '/graph' || pathname === '/graph/';
-
     const handleDrawerToggle = () => {
         setMobileOpen(!mobileOpen);
     };
@@ -161,7 +160,6 @@ const ResponsiveDrawer = React.memo((props: ResponsiveDrawerProps) => {
                     <div style={{ margin: '1em' }}>
                         <SelectedFileAutocomplete />
                     </div>
-                    <Divider />
                     {fileLoaded && <div>
                         <List dense>
                             <ListItem dense button component={Link} to="/docs">
@@ -176,16 +174,7 @@ const ResponsiveDrawer = React.memo((props: ResponsiveDrawerProps) => {
                                 </ListItemIcon>
                                 <ListItemText primary="Graph View" />
                             </ListItem>
-                            {/*
-                        <ListItem dense button>
-                            <ListItemIcon>
-                                <HistoryIcon />
-                            </ListItemIcon>
-                            <ListItemText primary="History" />
-                        </ListItem>
-                        */}
                         </List>
-                        <Divider />
                     </div>}
                 </div>
                 {/* <div style={{ display: 'flex', justifyContent: 'space-between', flexDirection: 'row-reverse', padding: '4px 16px' }}>
@@ -197,39 +186,30 @@ const ResponsiveDrawer = React.memo((props: ResponsiveDrawerProps) => {
                 {false && fileLoaded && <RecentlyUpdatedList />}
             </div>
             <div>
-                {!atHome && (<>
-                    <Divider />
-                    <List dense>
-                        <ListItem dense button component={Link} to="/">
-                            <ListItemIcon>
-                                <HomeIcon />
-                            </ListItemIcon>
-                            <ListItemText primary="Home" />
-                        </ListItem>
-                    </List>
-                </>)}
-                <Divider />
-                <List dense>
-                    <ListItem dense button component={Link} to="/settings">
-                        <ListItemIcon>
-                            <SettingsIcon />
-                        </ListItemIcon>
-                        <ListItemText primary="Settings" />
-                    </ListItem>
-                </List>
-                <Divider />
-                <List dense>
-                    <ListItem dense button onClick={() => {
-                        localStorage.clear();
-                        sessionStorage.clear();
-                        window.location.href = "/";
-                    }}>
-                        <ListItemIcon>
-                            <LogoutIcon />
-                        </ListItemIcon>
-                        <ListItemText primary="Logout" />
-                    </ListItem>
-                </List>
+            <List dense>
+                {!atHome && <ListItem dense button component={Link} to="/">
+                    <ListItemIcon>
+                        <HomeIcon />
+                    </ListItemIcon>
+                    <ListItemText primary="Home" />
+                </ListItem>}
+                <ListItem dense button component={Link} to="/settings">
+                    <ListItemIcon>
+                        <SettingsIcon />
+                    </ListItemIcon>
+                    <ListItemText primary="Settings" />
+                </ListItem>
+                <ListItem dense button onClick={() => {
+                    localStorage.clear();
+                    sessionStorage.clear();
+                    window.location.href = "/";
+                }}>
+                    <ListItemIcon>
+                        <LogoutIcon />
+                    </ListItemIcon>
+                    <ListItemText primary="Logout" />
+                </ListItem>
+            </List>
             </div>
         </div>
     );
