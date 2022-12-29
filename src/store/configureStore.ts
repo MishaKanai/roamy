@@ -264,7 +264,7 @@ const appConfigureStore = () => {
       return action;
     },
     stateSanitizer: (state: any) => {
-      const uploadedFiles = Object.fromEntries(Object.entries(state['uploadedFiles']).map(([k, v]) => {
+      const uploadedFiles = Object.fromEntries(Object.entries(state['files']['uploadedFiles']).map(([k, v]) => {
         const { fileData: { dataURL, ...restInner } = ({} as any), ...restOuter } = (v as any) = {} as any;
         return [k, {
           ...restOuter,
