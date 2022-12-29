@@ -48,7 +48,6 @@ import useBackgroundColor from "./hooks/useBackgroundColor";
 import UniversalSticky from "./utils/UniversalSticky3";
 import scrollIntoView from 'scroll-into-view-if-needed'
 import imageExtensions from 'image-extensions'
-
 import isUrl from 'is-url'
 import {
   useSlateStatic,
@@ -83,18 +82,7 @@ const UploadFileButton = ({ docName }: { docName: string }) => {
         if (!file) {
           return;
         }
-        const [mime, type] = file.type.split('/')
-        const reader = new FileReader();
-        reader.readAsDataURL(file as Blob);
-        reader.onload = function () {
-          const base64 = reader.result as string;
-          if (!base64) {
-            return;
-          }
-          console.log({
-            mime,
-            type
-          })
+        const addFileB64 = (base64: string) => {
           const id = uuidv4() as any;
           store.dispatch(addPastedFile({
             doc: docName,
@@ -106,6 +94,23 @@ const UploadFileButton = ({ docName }: { docName: string }) => {
             }
           }));
           setImmediate(() => insertImage(editor, base64, id))
+        }
+
+        if (file.type === 'image/gif' && window.confirm('Optimize Gif?')) {
+          loadGif(file).then(base64 => {
+            addFileB64(base64)
+          })
+          return;
+        }
+
+        const reader = new FileReader();
+        reader.readAsDataURL(file as Blob);
+        reader.onload = () => {
+          const base64 = reader.result as string;
+          if (!base64) {
+            return;
+          }
+         addFileB64(base64);
         };
         reader.onerror = (err) => {
           console.error(err)
