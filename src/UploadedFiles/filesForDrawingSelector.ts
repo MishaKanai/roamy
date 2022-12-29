@@ -7,9 +7,9 @@ const createFilesForDrawingSelector = <T extends { drawings: {
     [drawingName: string]: {
         drawing: DrawingDataInStore
     }
-}; uploadedFiles: UploadedFiles }>() => createSelector(
+}; files: { uploadedFiles: UploadedFiles } }>() => createSelector(
     (state: T, drawingName: string) => state.drawings[drawingName]?.drawing?.filesIds,
-    (state: T) => state.uploadedFiles,
+    (state: T) => state.files.uploadedFiles,
     (filesIds, uploadedFiles) => {
         return filesIds?.reduce((prev, currId) => {
             prev[currId] = uploadedFiles[currId].fileData;

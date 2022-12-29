@@ -220,7 +220,7 @@ const withImages = (config: { store: Store, doc: string }) => (editor: CustomEdi
 }
 
 const IdLinkImage = (props: { imageId: string, className: string }) => {
-  const image = useAppSelector(state => state.uploadedFiles[props.imageId]);
+  const image = useAppSelector(state => state.files.uploadedFiles[props.imageId]);
   if (!image) {
     console.error('image not found: ' + props.imageId)
     return null;
@@ -253,7 +253,7 @@ const InlineImage = ({ attributes, children, element: _element }: RenderElementP
     max-height: 20em;
     box-shadow: ${selected && focused ? '0 0 0 3px ' + theme.palette.action.focus : 'none'};
   `;
-  const dataUrl = element.variant === 'id-link' ? store.getState().uploadedFiles[element.imageId]?.fileData?.dataURL : element.url
+  const dataUrl = element.variant === 'id-link' ? store.getState().files.uploadedFiles[element.imageId]?.fileData?.dataURL : element.url
   return (
     <span {...attributes}
       contentEditable={false}

@@ -109,7 +109,9 @@ const MergeDrawings: React.FC<MergeDrawingsProps> = ({ left, right, drawingName,
                 drawing: curr
             }
         },
-        uploadedFiles: allFiles
+        files: {
+            uploadedFiles: allFiles
+        }
     });
     const currOverrideDrawing = useMemo(() => convertDrawingInStoreToDispatchedDrawing(curr), [curr]);
     

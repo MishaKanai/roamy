@@ -1,6 +1,6 @@
 import { configureStore, isPlain } from '@reduxjs/toolkit'
 import { $CombinedState } from '@reduxjs/toolkit';
-// import storageSession from "redux-persist/lib/storage/session"; // defaults to localStorage for web
+import storageSession from "redux-persist/lib/storage/session";
 import { routerMiddleware } from "connected-react-router";
 import createRootReducer from "./createRootReducer";
 import { createBrowserHistory } from "history";
@@ -27,7 +27,6 @@ import { authSuccess } from '../dropbox/store/globalActions';
 import { UploadedFiles } from '../UploadedFiles/uploadedFilesSlice';
 import uniq from 'lodash/uniq';
 import produce from 'immer';
-import localforage from 'localforage';
 
 /**
  * https://redux-toolkit.js.org/usage/usage-guide#use-with-redux-persist
@@ -52,8 +51,8 @@ export const history = createBrowserHistory();
 
 const persistConfig = {
   key: "root",
-  storage: localforage,
-  blacklist: ['dbx']
+  storage: storageSession,
+  blacklist: ['dbx', 'files']
 };
 
 /**
@@ -92,7 +91,7 @@ const syncDropboxToStore = (
 
   let prevDocuments: SlateDocuments = store.getState().documents;
   let prevDrawings: DrawingDocuments = store.getState().drawings;
-  let prevFiles: UploadedFiles = store.getState().uploadedFiles;
+  let prevFiles: UploadedFiles = store.getState().files.uploadedFiles;
 
   const reset = () => {
     docsPendingUpload.clear();
@@ -101,7 +100,7 @@ const syncDropboxToStore = (
     const state = store.getState();
     prevDocuments = state.documents;
     prevDrawings = state.drawings;
-    prevFiles = state.uploadedFiles;
+    prevFiles = state.files.uploadedFiles;
   }
 
   let setPrevDocuments = (documents: SlateDocuments) => {
@@ -135,7 +134,7 @@ const syncDropboxToStore = (
 
     const rev = collection.rev!;
     const filePath = collection.selectedFilePath;
-    const { documents, drawings, uploadedFiles } = state;
+    const { documents, drawings, files: { uploadedFiles } } = state;
 
     store.dispatch(syncStart());
 
@@ -173,7 +172,7 @@ const syncDropboxToStore = (
 
   let prevCollection: string | null = null;
   store.subscribe(() => {
-    const { dbx: { collection }, documents, uploadedFiles, drawings, merge } = store.getState();
+    const { dbx: { collection }, documents, files: { uploadedFiles }, drawings, merge } = store.getState();
     if (merge.state === 'conflict') {
       // prevent sync here, because we replace documents while the merge is in the conflict state,
       // causing a debounced sync to begin, before we get to change our auth.rev,

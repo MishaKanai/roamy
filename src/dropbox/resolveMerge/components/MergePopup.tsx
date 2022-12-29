@@ -24,7 +24,7 @@ const useAutomerge = () => {
     const lastRevRef = useRef(_lastRev);
     const documents = useAppSelector(state => state.documents);
     const drawings = useAppSelector(state => state.drawings);
-    const uploadedFiles = useAppSelector(state => state.uploadedFiles);
+    const uploadedFiles = useAppSelector(state => state.files.uploadedFiles);
     const { state, fetchCurrentDoc } = useFetchCurrentDoc()
     const { state: lastRevState, fetchCurrentDoc: fetchLastRevDoc } = useFetchCurrentDoc();
     useEffect(() => {

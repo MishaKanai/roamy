@@ -7,7 +7,9 @@ import { DrawingDataInStore } from "../store/domain";
 export const useFilesSelector = (drawingName: string) => {
     const filesSelector = useMemo(createFilesForDrawingSelector, []);
     return useCallback((state: {
-        uploadedFiles: UploadedFiles;
+        files: {
+            uploadedFiles: UploadedFiles;
+        }
         drawings: {
             [drawingName: string]: {
                 drawing: DrawingDataInStore
