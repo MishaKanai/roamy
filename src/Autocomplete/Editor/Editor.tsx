@@ -61,23 +61,60 @@ import { useStore } from "react-redux";
 import { addPastedFile } from "../../UploadedFiles/uploadedFilesSlice";
 import { traverseTransformNodes } from "./utils/traverseTransformNodes";
 import { useAppSelector } from "../../store/hooks";
-import { Clear, GolfCourse } from "@mui/icons-material";
+import { Clear, Image } from "@mui/icons-material";
 import { RootState } from "../../store/configureStore";
 import gifsicle from "gifsicle-wasm-browser";
 
-function dataURLtoFile(dataurl: string, filename: string) {
- 
-  var arr = dataurl.split(','),
-      mime = arr[0]!.match(/:(.*?);/)![1],
-      bstr = atob(arr[1]), 
-      n = bstr.length, 
-      u8arr = new Uint8Array(n);
-      
-  while(n--){
-      u8arr[n] = bstr.charCodeAt(n);
-  }
+const UploadFileButton = ({ docName }: { docName: string }) => {
+  const editor = useSlateStatic();
+  const store = useStore();
+  const inputRef = useRef<HTMLInputElement>(null);
+  return <>
   
-  return new File([u8arr], filename, {type:mime});
+    <IconButton onClick={() => inputRef.current?.click()}>
+      <Image />
+    </IconButton>
+   <input
+      ref={inputRef}
+      type="file"
+      style={{ display: 'none' }}
+      onChange={(e) => {
+        const file = e.target.files?.[0];
+        if (!file) {
+          return;
+        }
+        const [mime, type] = file.type.split('/')
+        const reader = new FileReader();
+        reader.readAsDataURL(file as Blob);
+        reader.onload = function () {
+          const base64 = reader.result as string;
+          if (!base64) {
+            return;
+          }
+          console.log({
+            mime,
+            type
+          })
+          const id = uuidv4() as any;
+          store.dispatch(addPastedFile({
+            doc: docName,
+            fileData: {
+              created: Date.now(),
+              dataURL: base64 as any,
+              id,
+              mimeType: file.type as any
+            }
+          }));
+          setImmediate(() => insertImage(editor, base64, id))
+        };
+        reader.onerror = (err) => {
+          console.error(err)
+        }
+
+        inputRef.current!.value = '';
+      }}
+    />
+  </>
 }
 
 
@@ -102,7 +139,7 @@ function loadGif(intFiles: any): Promise<string> {
         if (!outputFile) {
           rej();
         }
-        var reader = new FileReader();
+        const reader = new FileReader();
         reader.readAsDataURL(outputFile);
         reader.onload = function () {
           res(reader.result);
@@ -135,12 +172,10 @@ const withImages = (config: { store: Store, doc: string }) => (editor: CustomEdi
   }
 
   editor.insertData = (data: DataTransfer) => {
-    console.log('inserted')
     const text = data.getData('text/plain')
     const { files } = data
 
     if (files && files.length > 0) {
-      console.log('files')
       for (const file of Array.from(files)) {
         const reader = new FileReader()
         const [mime, type] = file.type.split('/')
@@ -184,6 +219,12 @@ const IdLinkImage = (props: { imageId: string, className: string }) => {
   if (!image) {
     console.error('image not found: ' + props.imageId)
     return null;
+  }
+  if (image.fileData.mimeType.startsWith('video')) {
+    return <video controls style={{ width: '100%'}}>
+      <source src={image.fileData.dataURL} type={image.fileData.mimeType}></source>
+      Your browser does not support the video tag.
+    </video>
   }
   return <img
     alt="user uploaded"
@@ -263,7 +304,6 @@ const InlineImage = ({ attributes, children, element: _element }: RenderElementP
                 e.stopPropagation();
               }}
               onClick={(e) => {
-                console.log('clicked')
                 Transforms.removeNodes(editor, { at: path })
               }}
             >
@@ -471,7 +511,7 @@ const getToolbarStyle = (backgroundColor: string) => ({
   backgroundColor,
 } as const);
 
-const Toolbar = React.memo(({ title }: { title: React.ReactNode }) => {
+const Toolbar = React.memo(({ title, doc }: { title: React.ReactNode, doc: string }) => {
   const backgroundColor = useBackgroundColor();
   const toolbarStyle = useMemo(() => getToolbarStyle(backgroundColor), [backgroundColor]);
   return (
@@ -496,6 +536,7 @@ const Toolbar = React.memo(({ title }: { title: React.ReactNode }) => {
           format="bulleted-list"
           icon={<FormatListBulletedIcon />}
         />
+        <UploadFileButton docName={doc} />
         {/* <InsertImageButton /> */}
       </div>
     </div>
@@ -726,7 +767,7 @@ const SlateAutocompleteEditorComponent = <Triggers extends string[]>(
   const theme = useTheme()
 
   const toolbarStyle = useMemo(() => getToolbarStyle(backgroundColor), [backgroundColor])
-  const renderToolbar = useCallback(() => <Toolbar title={title} />, [title]);
+  const renderToolbar = useCallback(() => <Toolbar title={title} doc={docName} />, [title, docName]);
 
   const editable = props.renderEditableRegion({
     editor,
