@@ -9,6 +9,7 @@ import { Provider } from "react-redux";
 import configureStore from "./store/configureStore";
 import { PersistGate } from "redux-persist/integration/react";
 import CssBaseline from '@mui/material/CssBaseline';
+import { DropboxRemoteFilesProvider } from "./RemoteFiles/implementations/dropboxRemoteFiles";
 
 const extraComponents: any = {
   MUIDataTable: {
@@ -24,11 +25,11 @@ const extraComponents: any = {
 
 const globalTheme = createTheme({
   palette: {
-    mode: 'dark'
+    mode: 'dark',
   },
   typography: {
     fontFamily: "Courier Prime",
-  }
+  },
 })
 const theme = createTheme({
   components: {
@@ -65,7 +66,9 @@ ReactDOM.render(
       <PersistGate loading={null} persistor={persistor}>
         <ThemeProvider theme={theme}>
           <CssBaseline />
+          <DropboxRemoteFilesProvider>
             <App />
+          </DropboxRemoteFilesProvider>
         </ThemeProvider>
       </PersistGate>
     </Provider>
