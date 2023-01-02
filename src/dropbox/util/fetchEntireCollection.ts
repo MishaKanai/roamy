@@ -1,10 +1,12 @@
 import { BinaryFileData } from "@excalidraw/excalidraw/types/types";
 import { Dropbox } from "dropbox";
 import { DrawingDocument, DrawingDocuments } from "../../Excalidraw/store/drawingsSlice";
+import { RemoteFiles } from "../../RemoteFiles/remoteFilesSlice";
 import { SlateDocument, SlateDocuments } from "../../SlateGraph/store/slateDocumentsSlice";
 import { UploadedFiles } from "../../UploadedFiles/uploadedFilesSlice";
 import { IndexFileStructure } from "../domain";
 import { Revisions } from "../store/activeCollectionSlice";
+import getFileCounts from "./getFileCounts";
 import getFilesToDrawings from "./getFilesToDrawings";
 import loadFileJSON from "./loadFileJSON";
 
@@ -31,6 +33,7 @@ const fetchDataFromCollectionAndCompose = async (dbx: Dropbox, indexFilePath: st
     const documents: SlateDocuments = {};
     const drawings: DrawingDocuments = {};
     const uploadedFiles: UploadedFiles = {};
+
     const revisions: Revisions = {
         documents: {},
         drawings: {},
@@ -58,17 +61,20 @@ const fetchDataFromCollectionAndCompose = async (dbx: Dropbox, indexFilePath: st
     })
     const drawingsToFilesInvertedIndex = getFilesToDrawings(drawings);
 
+    const remoteFiles: RemoteFiles = getFileCounts(documents);
+
     Object.values(uploadedFiles).forEach(uf => {
         uf.drawingBackrefs = drawingsToFilesInvertedIndex[uf.fileData.id] ?? []
     })
-    
+
     return {
         indexFile: data, 
         documents,
         drawings,
         uploadedFiles,
         rev,
-        revisions
+        revisions,
+        remoteFiles
     }
 }
 export default fetchDataFromCollectionAndCompose;

@@ -7,7 +7,7 @@ export type CustomEditor = BaseEditor & ReactEditor & HistoryEditor
 
 export type ListItemElement = {
   id?: string;
-  type: 'paragraph'
+  type: 'list-item'
   children: CustomText[]
 }
 
@@ -63,6 +63,7 @@ export type NumberedListElement = {
   }[];
 };
 
+
 export type DrawingElement = {
   id?: string;
   type: "drawing";
@@ -82,17 +83,24 @@ export type ImageElement = {
   imageId: string;
 })
 
+export type RemoteFileElement = {
+  type: 'remotefile';
+  children: CustomText[];
+  fileIdentifier: string;
+}
+
 export type CustomElement =
-    | ImageElement
-    | ListItemElement
-    | ParagraphElement
-    | HeadingOneElement
-    | HeadingTwoElement
-    | ReferenceElement
-    | PortalElement
-    | BulletedListElement
-    | NumberedListElement
-    | DrawingElement
+  | RemoteFileElement
+  | ImageElement
+  | ListItemElement
+  | ParagraphElement
+  | HeadingOneElement
+  | HeadingTwoElement
+  | ReferenceElement
+  | PortalElement
+  | BulletedListElement
+  | NumberedListElement
+  | DrawingElement
 
 export type FormattedText = { id?: string; text: string; bold?: true, italic?: true, underline?: true }
 

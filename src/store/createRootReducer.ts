@@ -8,6 +8,7 @@ import mergeReducer from "../dropbox/resolveMerge/store/reducer";
 import recentlyOpenedReducer from "../RecentlyOpened/store/recentlyOpenedSlice";
 import collectionsReducer from "../dropbox/collections/reducer";
 import uploadedFilesReducer from '../UploadedFiles/uploadedFilesSlice';
+import remoteFilesReducer from '../RemoteFiles/remoteFilesSlice'
 import {
   persistReducer
 } from 'redux-persist';
@@ -26,7 +27,8 @@ const createRootReducer = (history: History) =>
       key: 'uploadedFiles',
       storage: storageSession
     }, combineReducers({
-      uploadedFiles: uploadedFilesReducer
+      uploadedFiles: uploadedFilesReducer,
+      remoteFiles: remoteFilesReducer
     }))
   });
 

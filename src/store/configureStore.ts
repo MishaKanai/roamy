@@ -27,6 +27,7 @@ import { authSuccess } from '../dropbox/store/globalActions';
 import { UploadedFiles } from '../UploadedFiles/uploadedFilesSlice';
 import uniq from 'lodash/uniq';
 import produce from 'immer';
+import { RemoteFiles } from '../RemoteFiles/remoteFilesSlice';
 
 /**
  * https://redux-toolkit.js.org/usage/usage-guide#use-with-redux-persist
@@ -86,21 +87,25 @@ const syncDropboxToStore = (
   const docsPendingUpload = new Set<string>();
   const drawingsPendingUpload = new Set<string>();
   const filesPendingUpload = new Set<string>();
+  const remoteFilesPendingDeletion = new Set<string>();
 
   const dbx = new Dropbox({ auth });
 
   let prevDocuments: SlateDocuments = store.getState().documents;
   let prevDrawings: DrawingDocuments = store.getState().drawings;
   let prevFiles: UploadedFiles = store.getState().files.uploadedFiles;
+  let prevRemoteFiles: RemoteFiles = store.getState().files.remoteFiles;
 
   const reset = () => {
     docsPendingUpload.clear();
     drawingsPendingUpload.clear();
     filesPendingUpload.clear();
+    remoteFilesPendingDeletion.clear();
     const state = store.getState();
     prevDocuments = state.documents;
     prevDrawings = state.drawings;
     prevFiles = state.files.uploadedFiles;
+    prevRemoteFiles = state.files.remoteFiles;
   }
 
   let setPrevDocuments = (documents: SlateDocuments) => {
@@ -112,13 +117,18 @@ const syncDropboxToStore = (
   let setPrevFiles = (files: UploadedFiles) => {
     prevFiles = files;
   }
+  let setPrevRemoteFiles = (remoteFiles: RemoteFiles) => {
+    prevRemoteFiles = remoteFiles;
+  }
+  
   let documentsChanged = (documents: SlateDocuments) =>
     documents !== prevDocuments;
   let drawingsChanged = (drawings: DrawingDocuments) =>
     drawings !== prevDrawings;
   let filesChanged = (files: UploadedFiles) =>
     files !== prevFiles;
-  
+  let remoteFilesChanged = (remoteFiles: RemoteFiles) =>
+    remoteFiles !== prevRemoteFiles
   const isAuthorized = (
     authState: CollectionState
   ): authState is AuthorizedCollectionState => {
@@ -147,7 +157,8 @@ const syncDropboxToStore = (
       collection.revisions,
       docsPendingUpload,
       drawingsPendingUpload,
-      filesPendingUpload)
+      filesPendingUpload,
+      remoteFilesPendingDeletion)
       .then(async ({response, revisions }) => {
         store.dispatch(syncSuccess(response.result.rev, revisions));
       })
@@ -172,7 +183,7 @@ const syncDropboxToStore = (
 
   let prevCollection: string | null = null;
   store.subscribe(() => {
-    const { dbx: { collection }, documents, files: { uploadedFiles }, drawings, merge } = store.getState();
+    const { dbx: { collection }, documents, files: { uploadedFiles, remoteFiles }, drawings, merge } = store.getState();
     if (merge.state === 'conflict') {
       // prevent sync here, because we replace documents while the merge is in the conflict state,
       // causing a debounced sync to begin, before we get to change our auth.rev,
@@ -196,7 +207,9 @@ const syncDropboxToStore = (
       collection.rev &&
       (
         (performFollowupSyncWhenRevChanges && performFollowupSyncWhenRevChanges !== collection.rev) ||
-        (documentsChanged(documents) || drawingsChanged(drawings) || filesChanged(uploadedFiles))
+        (documentsChanged(documents) || drawingsChanged(drawings) || filesChanged(uploadedFiles) || remoteFilesChanged(remoteFiles))
+        // lets not sync based on remoteFile change - that can wait until the document creates a change.
+        // just ensure we remove the entry in remoteFiles first (before the dispatch of the changed doc is sent.)
       )
     ) {
       performFollowupSyncWhenRevChanges = null;
@@ -228,9 +241,27 @@ const syncDropboxToStore = (
           filesPendingUpload.add(fid);
         })
       }
+      if (remoteFilesChanged(remoteFiles)) {
+        Object.entries(prevRemoteFiles).forEach(([fileId, { count }]) => {
+          if (count && !remoteFiles?.[fileId]?.count) {
+            remoteFilesPendingDeletion.add(fileId);
+          }
+        })
+        // undo/prevent pending deletions that were undone during debounce
+        Object.entries(remoteFiles).forEach(([fileId, { count }]) => {
+          if (count === 0) {
+            return;
+          }
+          if (remoteFilesPendingDeletion.has(fileId)) {
+            remoteFilesPendingDeletion.delete(fileId)
+          }
+        })
+      }
       setPrevDocuments(documents);
       setPrevDrawings(drawings);
       setPrevFiles(uploadedFiles);
+      setPrevRemoteFiles(remoteFiles);
+
       if (
         collection.syncing?._type !== "debounced_pending" &&
         collection.syncing?._type !== "request_pending"

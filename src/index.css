@@ -47,3 +47,9 @@ code {
   background-color: transparent !important;
   background: none !important;
 }
+
+a > g > text {
+  cursor: pointer;
+  text-decoration: underline;
+  font-family: unset;
+}

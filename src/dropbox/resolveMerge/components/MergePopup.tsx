@@ -18,6 +18,8 @@ import { replaceDocs } from '../../../SlateGraph/store/slateDocumentsSlice';
 import { replaceFiles, UploadedFiles } from '../../../UploadedFiles/uploadedFilesSlice';
 import getFilesToDrawings from '../../util/getFilesToDrawings';
 import getFilesToDocs from '../../util/getFilesToDocx';
+import getFileCounts from '../../util/getFileCounts';
+import { replaceRemoteFiles } from '../../../RemoteFiles/remoteFilesSlice';
 
 const useAutomerge = () => {
     const _lastRev = useAppSelector(state => state.dbx.collection.state === 'authorized' && state.dbx.collection.rev);
@@ -177,10 +179,18 @@ export const useSubmitMergedDoc = () => {
             prev[fileId] = uploadedFiles[fileId]
             return prev;
         }, {} as UploadedFiles)
+
+        const newRemoteFiles = getFileCounts(documents)
+        
         
         store.dispatch(replaceFiles(newUploadedFiles));
         store.dispatch(replaceDocs(documents));
         store.dispatch(replaceDrawings(drawings));
+        store.dispatch(replaceRemoteFiles({ remoteFiles: newRemoteFiles }))
+        const remoteFilesToDelete = new Set<string>();
+        // lets not delete anything on merge conflict resolves right now,
+        // because I would rather not delete something another user wants to keep around.
+        // we can add a 'review' page for cleaning up garbage.
 
 
         upload(dbx,
@@ -192,7 +202,8 @@ export const useSubmitMergedDoc = () => {
             collection.revisions,
             docsPendingUpload,
             drawingsPendingUpload,
-            filesPendingUpload
+            filesPendingUpload,
+            remoteFilesToDelete
         ).then(({ response, revisions }) => {
             store.dispatch(syncSuccess(response.result.rev, revisions));
         }).catch((error: DropboxResponseError<unknown>) => {

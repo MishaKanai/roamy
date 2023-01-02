@@ -33,7 +33,7 @@ import FormatUnderlinedIcon from "@mui/icons-material/FormatUnderlined";
 import FormatItalicIcon from "@mui/icons-material/FormatItalic";
 import FormatListBulletedIcon from "@mui/icons-material/FormatListBulleted";
 import Page from "../../SlateGraph/Page";
-import { DrawingElement, CustomElement, CustomEditor, PortalElement, ReferenceElement, ImageElement } from "../../SlateGraph/slate.d";
+import { DrawingElement, CustomElement, CustomEditor, PortalElement, ReferenceElement, ImageElement, RemoteFileElement } from "../../SlateGraph/slate.d";
 import Link from "../../components/Link";
 import deepEqual from "fast-deep-equal";
 import HoverBacklinks from "../../components/AnchoredPopper";
@@ -57,23 +57,25 @@ import {
 import { css } from '@emotion/css'
 import { Store } from "redux";
 import { useStore } from "react-redux";
-import { addPastedFile } from "../../UploadedFiles/uploadedFilesSlice";
 import { traverseTransformNodes } from "./utils/traverseTransformNodes";
 import { useAppSelector } from "../../store/hooks";
 import { Clear, Image } from "@mui/icons-material";
 import { RootState } from "../../store/configureStore";
 import gifsicle from "gifsicle-wasm-browser";
+import { remoteFilesApiContext } from "../../RemoteFiles/remoteFiles";
+import { RemoteFilesApi } from "../../RemoteFiles/api";
 
 const UploadFileButton = ({ docName }: { docName: string }) => {
   const editor = useSlateStatic();
-  const store = useStore();
+  // const store = useStore();
   const inputRef = useRef<HTMLInputElement>(null);
+  const remoteFiles = useContext(remoteFilesApiContext);
   return <>
-  
+
     <IconButton onClick={() => inputRef.current?.click()}>
       <Image />
     </IconButton>
-   <input
+    <input
       ref={inputRef}
       type="file"
       style={{ display: 'none' }}
@@ -83,17 +85,25 @@ const UploadFileButton = ({ docName }: { docName: string }) => {
           return;
         }
         const addFileB64 = (base64: string) => {
-          const id = uuidv4() as any;
-          store.dispatch(addPastedFile({
-            doc: docName,
-            fileData: {
-              created: Date.now(),
-              dataURL: base64 as any,
-              id,
-              mimeType: file.type as any
-            }
-          }));
-          setImmediate(() => insertImage(editor, base64, id))
+          remoteFiles.uploadFile({
+            type: 'b64',
+            base64,
+            mimeType: file.type
+          }).then(({ id: fileIdentifier }) => {
+            insertRemoteFile(editor, fileIdentifier)
+          })
+
+          // const id = uuidv4() as any;
+          // store.dispatch(addPastedFile({
+          //   doc: docName,
+          //   fileData: {
+          //     created: Date.now(),
+          //     dataURL: base64 as any,
+          //     id,
+          //     mimeType: file.type as any
+          //   }
+          // }));
+          // setImmediate(() => insertImage(editor, base64, id))
         }
 
         if (file.type === 'image/gif' && window.confirm('Optimize Gif?')) {
@@ -110,7 +120,7 @@ const UploadFileButton = ({ docName }: { docName: string }) => {
           if (!base64) {
             return;
           }
-         addFileB64(base64);
+          addFileB64(base64);
         };
         reader.onerror = (err) => {
           console.error(err)
@@ -134,7 +144,7 @@ function loadGif(intFiles: any): Promise<string> {
       // --resize 250x_
       command: [`
           -O2 --lossy=100
-          
+          --resize 250x_
           1.gif 
           -o /out/out2.gif
         `]
@@ -152,12 +162,12 @@ function loadGif(intFiles: any): Promise<string> {
         reader.onerror = rej
       })
     })
-  }
+}
 
 const getImageSize = (url: string) => {
   const stringLength = url.length - 'data:image/gif;base64,'.length;
   const sizeInBytes = 4 * Math.ceil((stringLength / 3)) * 0.5624896334383812;
-  const sizeInKb = sizeInBytes/1000;
+  const sizeInKb = sizeInBytes / 1000;
   return sizeInKb;
 }
 
@@ -165,20 +175,23 @@ const getImageSize = (url: string) => {
  * Start images
  */
 
-const withImages = (config: { store: Store, doc: string }) => (editor: CustomEditor) => {
+const withImages = (config: { store: Store, doc: string, remoteFilesApi: RemoteFilesApi }) => (editor: CustomEditor) => {
   const { insertData, isVoid, isInline } = editor
 
   editor.isInline = (element: CustomElement) => {
-    return element.type === "image" ? true : isInline(element);
+    return element.type === "image" || element.type === 'remotefile' ? true : isInline(element);
   };
 
   editor.isVoid = (element: CustomElement) => {
-    return element.type === 'image' ? true : isVoid(element)
+    return element.type === 'image' || element.type === 'remotefile' ? true : isVoid(element)
   }
 
   editor.insertData = (data: DataTransfer) => {
     const text = data.getData('text/plain')
     const { files } = data
+    console.log('insertData', data, {
+      text,
+    })
 
     if (files && files.length > 0) {
       for (const file of Array.from(files)) {
@@ -186,17 +199,25 @@ const withImages = (config: { store: Store, doc: string }) => (editor: CustomEdi
         const [mime, type] = file.type.split('/')
         if (mime === 'image') {
           const dispatchNewDoc = (url: string) => {
-            const id = uuidv4() as any;
-            config.store.dispatch(addPastedFile({
-              doc: config.doc,
-              fileData: {
-                created: Date.now(),
-                dataURL: url as any,
-                id,
-                mimeType: file.type as any
-              }
-            }));
-            setImmediate(() => insertImage(editor, url, id))
+            config.remoteFilesApi.uploadFile({
+              type: 'b64',
+              base64: url,
+              mimeType: file.type
+            }).then(({ id: fileIdentifier }) => {
+              insertRemoteFile(editor, fileIdentifier)
+            })
+
+            // const id = uuidv4() as any;
+            // config.store.dispatch(addPastedFile({
+            //   doc: config.doc,
+            //   fileData: {
+            //     created: Date.now(),
+            //     dataURL: url as any,
+            //     id,
+            //     mimeType: file.type as any
+            //   }
+            // }));
+            // setImmediate(() => insertImage(editor, url, id))
           }
           if (type === 'gif' && window.confirm('Optimize Gif?')) {
             loadGif(file).then(optimizedGifB64 => {
@@ -226,7 +247,7 @@ const IdLinkImage = (props: { imageId: string, className: string }) => {
     return null;
   }
   if (image.fileData.mimeType.startsWith('video')) {
-    return <video controls style={{ width: '100%'}}>
+    return <video controls style={{ width: '100%' }}>
       <source src={image.fileData.dataURL} type={image.fileData.mimeType}></source>
       Your browser does not support the video tag.
     </video>
@@ -236,6 +257,121 @@ const IdLinkImage = (props: { imageId: string, className: string }) => {
     src={image.fileData.dataURL}
     className={props.className}
   />
+}
+
+const RemoteFile = ({ attributes, children, element: _element }: RenderElementProps) => {
+  const element: RemoteFileElement = _element as any;
+  const editor = useSlateStatic()
+  const path = ReactEditor.findPath(editor, element)
+
+  const selected = useSelected()
+  const focused = useFocused()
+  const theme = useTheme();
+
+  const remoteFileApi = useContext(remoteFilesApiContext);
+  const [state, setState] = useState<{
+    type: 'initial'
+  } | {
+    type: 'loaded',
+    base64: string,
+    mimeType: string
+  }>({ type: 'initial' });
+  useEffect(() => {
+    const download = () => remoteFileApi.downloadFile(element.fileIdentifier).then(({ base64 }) => {
+      console.log({
+        base64
+      })
+      setState({
+        type: 'loaded',
+        base64,
+        mimeType: base64.split(';base64')[0]?.slice('data:'.length)
+      })
+    })
+    download().catch(err => {
+      if (err.status === 409) {
+        // lets try to recover the file if we deleted it
+        remoteFileApi?.recoverFile?.(element.fileIdentifier).then(() => {
+          // file was successfuylly recovered:
+          download();
+
+        })
+      }
+    })
+  }, [element.fileIdentifier, remoteFileApi])
+
+
+  const imageClassName = css`
+    display: block;
+    max-width: 100%;
+    max-height: 20em;
+    box-shadow: ${selected && focused ? '0 0 0 3px ' + theme.palette.action.focus : 'none'};
+  `;
+  return (
+    <span {...attributes}
+      contentEditable={false}
+      style={{
+        userSelect: "none",
+        verticalAlign: "baseline",
+        display: "inline-block",
+        fontSize: "0.9em",
+      }}
+    >
+      <div
+        className={css`
+          display: inline-block;
+          position: relative;
+        `}
+      >
+        {state.type === 'initial' ? null : state.mimeType.startsWith('image') ? (
+          <img
+            alt="user uploaded"
+            src={state.base64}
+            className={imageClassName}
+          />
+        ) : state.mimeType.startsWith('video') ? (
+          <video controls style={{ width: '100%' }}>
+            <source src={state.base64} type={state.mimeType}></source>
+            Your browser does not support the video tag.
+          </video>
+        ) : <p>File type not supported.</p>}
+        {selected && focused && state.type === 'loaded' && <span
+          className={css`
+              position: absolute;
+              top: 0.5em;
+              left: 0.5em;
+              background-color: ${theme.palette.background.paper}
+            `}
+        >
+          {state.base64 && getImageSize(state.base64).toFixed(0)}{' KB'}
+        </span>}
+        {selected && focused && <span
+          className={css`
+            position: absolute;
+            top: 0.5em;
+            right: 0.5em;
+          `}
+        >
+          <div style={{ position: 'relative' }}>
+            <IconButton
+              style={{ backgroundColor: theme.palette.background.paper }}
+              size="small"
+              color="secondary"
+              onMouseDown={e => {
+                e.preventDefault();
+                e.stopPropagation();
+              }}
+              onClick={(e) => {
+                Transforms.removeNodes(editor, { at: path })
+              }}
+            >
+              <Clear fontSize="small" />
+            </IconButton>
+          </div>
+        </span>}
+      </div>
+      {children}
+    </span>
+  )
 }
 
 const InlineImage = ({ attributes, children, element: _element }: RenderElementProps) => {
@@ -270,7 +406,7 @@ const InlineImage = ({ attributes, children, element: _element }: RenderElementP
           position: relative;
         `}
       >
-        
+
         {element.variant === 'id-link' ? (
           <IdLinkImage
             imageId={element.imageId}
@@ -282,16 +418,16 @@ const InlineImage = ({ attributes, children, element: _element }: RenderElementP
             src={element.url}
             className={imageClassName}
           />}
-          {selected && focused && <span
-            className={css`
+        {selected && focused && <span
+          className={css`
               position: absolute;
               top: 0.5em;
               left: 0.5em;
               background-color: ${theme.palette.background.paper}
             `}
-          >
-            {dataUrl && getImageSize(dataUrl).toFixed(0)}{' KB'}
-          </span>}
+        >
+          {dataUrl && getImageSize(dataUrl).toFixed(0)}{' KB'}
+        </span>}
         {selected && focused && <span
           className={css`
             position: absolute;
@@ -542,7 +678,6 @@ const Toolbar = React.memo(({ title, doc }: { title: React.ReactNode, doc: strin
           icon={<FormatListBulletedIcon />}
         />
         <UploadFileButton docName={doc} />
-        {/* <InsertImageButton /> */}
       </div>
     </div>
   )
@@ -573,11 +708,13 @@ interface SlateTemplateEditorProps<Triggers extends string[]> {
 
 export const useEditor = (doc: string) => {
   const store = useStore();
+  const remoteFilesApi = useContext(remoteFilesApiContext);
   return useMemo(
     () => withNodeId({ reuseId: false, idCreator: uuidv4 })(
       withImages({
         store,
-        doc
+        doc,
+        remoteFilesApi
       })(
         withReferences(
           withPortals(
@@ -587,7 +724,7 @@ export const useEditor = (doc: string) => {
       )
     )
     ,
-    [store, doc]
+    [store, doc, remoteFilesApi]
   );
 }
 
@@ -906,6 +1043,19 @@ export const Leaf: React.FC<RenderLeafProps> = React.memo(({ attributes, childre
   return <span {...attributes}>{children}</span>;
 });
 
+const insertRemoteFile = (editor: CustomEditor, fileIdentifier: string) => {
+  const remoteFile: RemoteFileElement = {
+    type: "remotefile",
+    fileIdentifier,
+    children: [{ text: fileIdentifier }],
+  };
+  Transforms.insertNodes(editor, [
+    remoteFile,
+    { type: "paragraph", children: [{ text: "" }] } as any,
+  ]);
+  Transforms.move(editor);
+};
+
 const insertImage = (editor: CustomEditor, url: string, imageId?: string) => {
   const image: ImageElement = {
     type: "image",
@@ -916,6 +1066,7 @@ const insertImage = (editor: CustomEditor, url: string, imageId?: string) => {
   };
   Transforms.insertNodes(editor, [
     image,
+    { type: "paragraph", children: [{ text: "" }] } as any,
   ]);
   Transforms.move(editor);
 };
@@ -1001,7 +1152,7 @@ export const Element: React.FC<RenderElementProps & { parentDoc: string }> = (
   const colorOfPortal = useBackgroundColor(1);
   const theme = useTheme();
   const isSmall = useMediaQuery("(max-width:599px)");
-  switch ((element as any).type) {
+  switch (element.type) {
     case "reference":
       return <Reference {...props} />;
     case "drawing":
@@ -1121,6 +1272,8 @@ export const Element: React.FC<RenderElementProps & { parentDoc: string }> = (
           </div>
         </div>
       );
+    case 'remotefile':
+      return <RemoteFile {...props} />
     case 'image':
       return <InlineImage {...props} />
     case "bulleted-list":

@@ -13,6 +13,7 @@ import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import { replaceDocs } from '../../SlateGraph/store/slateDocumentsSlice';
 import { replaceDrawings } from '../../Excalidraw/store/drawingsSlice';
 import { replaceFiles } from '../../UploadedFiles/uploadedFilesSlice';
+import { replaceRemoteFiles } from '../../RemoteFiles/remoteFilesSlice';
 
 const folderPath = "";
 
@@ -119,6 +120,7 @@ export const useDbxEntries = () => {
                 dispatch(replaceFiles({}))
                 dispatch(replaceDocs({}));
                 dispatch(replaceDrawings({}));
+                dispatch(replaceRemoteFiles({ remoteFiles: {} }))
             })
             .then(() => {
                 setFilePendingState({ _type: 'ok' })
@@ -134,7 +136,7 @@ export const useDbxEntries = () => {
             setFilePendingState({ _type: 'pending' })
             const setErr = () => setFilePendingState({ _type: 'error', message: 'error occurred loading file ' + indexFilePath });
             try {
-                const { documents, drawings, uploadedFiles, rev, revisions } = await fetchDataFromCollectionAndCompose(dbx, indexFilePath);
+                const { documents, drawings, uploadedFiles, rev, revisions, remoteFiles } = await fetchDataFromCollectionAndCompose(dbx, indexFilePath);
                 II.clear();
                 dispatch(
                     selectFilePathAction(
@@ -146,6 +148,7 @@ export const useDbxEntries = () => {
                 dispatch(replaceFiles(uploadedFiles))
                 dispatch(replaceDocs(documents));
                 dispatch(replaceDrawings(drawings));
+                dispatch(replaceRemoteFiles({ remoteFiles }))
                 setFilePendingState({ _type: 'ok' })
                 dispatch(pushAction('/graph'))
             } catch (e) {

@@ -1,5 +1,6 @@
 import { useCallback, useState } from "react"
 import { DrawingDocuments } from "../../Excalidraw/store/drawingsSlice"
+import { RemoteFiles } from "../../RemoteFiles/remoteFilesSlice"
 import { SlateDocuments } from "../../SlateGraph/store/slateDocumentsSlice"
 import { useAppSelector } from "../../store/hooks"
 import { UploadedFiles } from "../../UploadedFiles/uploadedFilesSlice"
@@ -20,6 +21,7 @@ export type FetchCurrentDocState = {
         documents: SlateDocuments,
         drawings: DrawingDocuments,
         uploadedFiles: UploadedFiles,
+        remoteFiles: RemoteFiles,
     }
 }
 const initial = { type: 'initial' } as const;
@@ -46,7 +48,8 @@ const useFetchCurrentDoc = () => {
                 data: {
                     documents: data.documents,
                     drawings: data.drawings,
-                    uploadedFiles: data.uploadedFiles
+                    uploadedFiles: data.uploadedFiles,
+                    remoteFiles: data.remoteFiles
                 }
             })
         } catch (e) {

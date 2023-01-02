@@ -24,6 +24,7 @@ const upload = async (
   docsPendingUpload: Set<string>,
   drawingsPendingUpload: Set<string>,
   filesPendingUpload: Set<string>,
+  remoteFilesPendingDelete: Set<string>,
 ) => {
   const folderPath = indexFilePath.slice(0, indexFilePath.lastIndexOf('/')) + '/';
 
@@ -162,7 +163,9 @@ const upload = async (
       // we delete after successfully saving all the rest, so we don't have to undo deletion due to a merge error.
       let deletionResults = await Promise.allSettled([
         ...files.map(fileId => dbx.filesDeleteV2({ path: folderPath + getFileFileName(fileId) })),
+        ...Array.from(remoteFilesPendingDelete).map(fileId => dbx.filesDeleteV2({ path: folderPath + fileId }))
       ])
+      
       deletionResults.forEach(r => {
         if (r.status === 'rejected') {
           console.error('deletion failed: error below');

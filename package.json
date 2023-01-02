@@ -36,11 +36,13 @@
     "hex-rgb": "^5.0.0",
     "image-extensions": "^1.1.0",
     "immer": "^9.0.1",
+    "imurmurhash": "^0.1.4",
     "is-hotkey": "^0.2.0",
     "is-url": "^1.2.4",
     "json-stable-stringify": "^1.0.1",
     "localforage": "^1.10.0",
     "lodash": "^4.17.21",
+    "mime": "^3.0.0",
     "moment": "^2.29.1",
     "mui-datatables": "4.0.0",
     "re-resizable": "^6.9.0",
@@ -94,8 +96,10 @@
   },
   "devDependencies": {
     "@types/hash-sum": "^1.0.0",
+    "@types/imurmurhash": "^0.1.1",
     "@types/is-url": "^1.2.30",
     "@types/json-stable-stringify": "^1.0.33",
+    "@types/mime": "^3.0.1",
     "@types/react-router": "^5.1.13",
     "@types/react-router-dom": "^5.1.7"
   }
