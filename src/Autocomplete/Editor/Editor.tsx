@@ -27,7 +27,7 @@ import {
 import ReactDOM from "react-dom";
 import { handleChange } from "./utils/autocompleteUtils";
 import isHotkey from "is-hotkey";
-import { Card, IconButton, useTheme, List, ListItem, useMediaQuery } from "@mui/material";
+import { Card, IconButton, useTheme, List, ListItem, useMediaQuery, Skeleton } from "@mui/material";
 import FormatBoldIcon from "@mui/icons-material/FormatBold";
 import FormatUnderlinedIcon from "@mui/icons-material/FormatUnderlined";
 import FormatItalicIcon from "@mui/icons-material/FormatItalic";
@@ -59,11 +59,12 @@ import { Store } from "redux";
 import { useStore } from "react-redux";
 import { traverseTransformNodes } from "./utils/traverseTransformNodes";
 import { useAppSelector } from "../../store/hooks";
-import { Clear, Image } from "@mui/icons-material";
+import { Clear, Image as ImageIcon } from "@mui/icons-material";
 import { RootState } from "../../store/configureStore";
 import gifsicle from "gifsicle-wasm-browser";
 import { remoteFilesApiContext } from "../../RemoteFiles/remoteFiles";
 import { RemoteFilesApi } from "../../RemoteFiles/api";
+import { makeStyles } from "@mui/styles";
 
 const UploadFileButton = ({ docName }: { docName: string }) => {
   const editor = useSlateStatic();
@@ -73,7 +74,7 @@ const UploadFileButton = ({ docName }: { docName: string }) => {
   return <>
 
     <IconButton onClick={() => inputRef.current?.click()}>
-      <Image />
+      <ImageIcon />
     </IconButton>
     <input
       ref={inputRef}
@@ -90,7 +91,23 @@ const UploadFileButton = ({ docName }: { docName: string }) => {
             base64,
             mimeType: file.type
           }).then(({ id: fileIdentifier }) => {
-            insertRemoteFile(editor, fileIdentifier)
+            
+            return new Promise<{ height?: string | number; width?: string | number; fileIdentifier: string; }>((resolve, reject) => {
+              const img = new Image();
+
+              img.onload = () => {
+                  resolve({
+                    fileIdentifier,
+                    width: img.width,
+                    height: img.height,
+                  });
+              }
+              img.onerror = () => resolve({ fileIdentifier });
+      
+              img.src = base64;
+            })
+          }).then(({ width, height, fileIdentifier }) => {
+            insertRemoteFile(editor, fileIdentifier, width, height)
           })
 
           // const id = uuidv4() as any;
@@ -142,8 +159,9 @@ function loadGif(intFiles: any): Promise<string> {
       }],
       // E.g. to resize to width of 250px, add:
       // --resize 250x_
+      // was -O2 --lossy=60
       command: [`
-          -O2 --lossy=100
+          -O2 --lossy=60
           --resize 250x_
           1.gif 
           -o /out/out2.gif
@@ -204,7 +222,18 @@ const withImages = (config: { store: Store, doc: string, remoteFilesApi: RemoteF
               base64: url,
               mimeType: file.type
             }).then(({ id: fileIdentifier }) => {
-              insertRemoteFile(editor, fileIdentifier)
+              return new Promise<{ height?: string | number; width?: string | number; fileIdentifier: string }>((resolve, reject) => {
+                const img = new Image();
+  
+                img.onload = () => {
+                    resolve({ fileIdentifier, width: img.width, height: img.height });
+                }
+                img.onerror = () => resolve({ fileIdentifier });
+        
+                img.src = url;
+              })
+            }).then(({ fileIdentifier, width, height }) => {
+              insertRemoteFile(editor, fileIdentifier, width, height);
             })
 
             // const id = uuidv4() as any;
@@ -259,6 +288,26 @@ const IdLinkImage = (props: { imageId: string, className: string }) => {
   />
 }
 
+const useStyles = makeStyles((theme: any) => ({
+  wrapper: {
+    width: '100%',
+    display: 'block',
+    position: 'relative',
+    '&::after': ({
+      content: '""',
+      display: 'block',
+      paddingTop: (props: { ratioStr: string }) => props.ratioStr // '70%'
+    })
+  },
+  main: {
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    right: 0,
+    left: 0
+  }
+  
+}))
 const RemoteFile = ({ attributes, children, element: _element }: RenderElementProps) => {
   const element: RemoteFileElement = _element as any;
   const editor = useSlateStatic()
@@ -267,6 +316,7 @@ const RemoteFile = ({ attributes, children, element: _element }: RenderElementPr
   const selected = useSelected()
   const focused = useFocused()
   const theme = useTheme();
+  const classes = useStyles({ ratioStr: `${((element.height as number) / (element.width as any)) * 100}%` })
 
   const remoteFileApi = useContext(remoteFilesApiContext);
   const [state, setState] = useState<{
@@ -276,6 +326,7 @@ const RemoteFile = ({ attributes, children, element: _element }: RenderElementPr
     base64: string,
     mimeType: string
   }>({ type: 'initial' });
+
   useEffect(() => {
     const download = () => remoteFileApi.downloadFile(element.fileIdentifier).then(({ base64 }) => {
       console.log({
@@ -303,9 +354,9 @@ const RemoteFile = ({ attributes, children, element: _element }: RenderElementPr
   const imageClassName = css`
     display: block;
     max-width: 100%;
-    max-height: 20em;
     box-shadow: ${selected && focused ? '0 0 0 3px ' + theme.palette.action.focus : 'none'};
   `;
+  
   return (
     <span {...attributes}
       contentEditable={false}
@@ -314,15 +365,26 @@ const RemoteFile = ({ attributes, children, element: _element }: RenderElementPr
         verticalAlign: "baseline",
         display: "inline-block",
         fontSize: "0.9em",
+        maxWidth: element.width,
+        width: '100%'
       }}
     >
       <div
         className={css`
           display: inline-block;
           position: relative;
+          width: 100%
         `}
       >
-        {state.type === 'initial' ? null : state.mimeType.startsWith('image') ? (
+        {state.type === 'initial' ? (
+          <div className={imageClassName}>
+            <div className={classes.wrapper}>
+              <div className={classes.main}>
+                <Skeleton variant="rectangular" style={{ height: '100%', width: '100%' }} />
+              </div>
+            </div>
+          </div>
+        ): state.mimeType.startsWith('image') ? (
           <img
             alt="user uploaded"
             src={state.base64}
@@ -334,6 +396,7 @@ const RemoteFile = ({ attributes, children, element: _element }: RenderElementPr
             Your browser does not support the video tag.
           </video>
         ) : <p>File type not supported.</p>}
+
         {selected && focused && state.type === 'loaded' && <span
           className={css`
               position: absolute;
@@ -1043,10 +1106,12 @@ export const Leaf: React.FC<RenderLeafProps> = React.memo(({ attributes, childre
   return <span {...attributes}>{children}</span>;
 });
 
-const insertRemoteFile = (editor: CustomEditor, fileIdentifier: string) => {
+const insertRemoteFile = (editor: CustomEditor, fileIdentifier: string, width?: number | string, height?: number | string) => {
   const remoteFile: RemoteFileElement = {
     type: "remotefile",
     fileIdentifier,
+    width,
+    height,
     children: [{ text: fileIdentifier }],
   };
   Transforms.insertNodes(editor, [

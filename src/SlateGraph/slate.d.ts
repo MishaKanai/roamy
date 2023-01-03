@@ -87,6 +87,8 @@ export type RemoteFileElement = {
   type: 'remotefile';
   children: CustomText[];
   fileIdentifier: string;
+  width?: string | number; // for placeholder size - set this on file add/upload
+  height?: string | number; // for placeholder size - set this on file add/upload
 }
 
 export type CustomElement =
