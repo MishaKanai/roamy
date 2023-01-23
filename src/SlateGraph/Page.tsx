@@ -11,6 +11,7 @@ import { Descendant } from "slate";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
 import { RootState } from "../store/configureStore";
 import { createDoc, deleteDoc, updateDoc } from "./store/globalActions";
+import DocTitle from "../components/EditableTitle";
 
 export const useRoamyDispatch = (): (action: RootAction) => void => {
   const mergeCtxt = useContext(mergeContext);
@@ -136,7 +137,7 @@ export const PageRoute = React.memo(() => {
         fontSize: "x-large",
         marginBottom: 0,
         textTransform: 'capitalize'
-      }}>{docName}</b>&nbsp;
+      }}><DocTitle editable id={docName} type="documents" /></b>&nbsp;
       {/* &nbsp;&nbsp;<SyncStatus />&nbsp; */}
       <span style={{ position: "relative" }}>
         <span style={{ position: "absolute", bottom: 0, whiteSpace: "nowrap" }}>

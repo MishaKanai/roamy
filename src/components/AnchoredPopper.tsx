@@ -9,6 +9,7 @@ import createStyles from '@mui/styles/createStyles';
 import Link from "../components/Link";
 import { useAppSelector } from "../store/hooks";
 import { RootState } from "../store/configureStore";
+import DocTitle from "./EditableTitle";
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -95,7 +96,9 @@ export default function HoverBacklinks({
                 >
                   {backReferences.map((br) => (
                     <li key={br}>
-                      <Link to={`/docs/${br}`}>{br}</Link>
+                      <Link to={`/docs/${br}`}>
+                        <DocTitle id={br} type="documents" />
+                      </Link>
                     </li>
                   ))}
                 </ul>

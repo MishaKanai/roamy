@@ -3,6 +3,7 @@ import uniq from 'lodash/uniq';
 import { CustomElement, CustomText } from "../../SlateGraph/slate.d";
 import { SlateDocuments } from "../../SlateGraph/store/slateDocumentsSlice";
 import { nodeIsText } from '../../Autocomplete/Editor/utils/traverseTransformNodes';
+import { DrawingDocuments } from '../../Excalidraw/store/drawingsSlice';
 
 /*
   To implement search,
@@ -13,7 +14,7 @@ import { nodeIsText } from '../../Autocomplete/Editor/utils/traverseTransformNod
   The latter we can use for backrefs with more detail (previewing how they are referenced) as well.
 */
 
-const traverseSlateNodes = (cb: (text: string, pathToText: string) => void) => {
+const traverseSlateNodes = (cb: (text: string, pathToText: string) => void, documents: SlateDocuments, drawings: DrawingDocuments) => {
   const innerTraverse = (slateNodes: (CustomElement | CustomText)[], currPath = '') => {
     slateNodes.forEach((node, i) => {
       const pathToNode = `${currPath}[${i}]`
@@ -31,13 +32,13 @@ const traverseSlateNodes = (cb: (text: string, pathToText: string) => void) => {
             })
             return;
           case 'portal':
-            cb(node.portalReference, pathToNode)
+            cb(documents[node.portalReference]?.displayName ?? node.portalReference, pathToNode)
             return;
           case 'reference':
-            cb(node.docReference, pathToNode)
+            cb(documents[node.docReference]?.displayName ?? node.docReference, pathToNode)
             return;
           case 'drawing': 
-            cb(node.drawingReference, pathToNode);
+            cb(drawings[node.drawingReference]?.displayName ?? node.drawingReference, pathToNode);
             return;
           default:
             innerTraverse(node.children, pathToNode + '.children')
@@ -53,7 +54,7 @@ type DocTextCb = (args: {
   pathToText: string,
 }) => void;
 
-const traverseDocs = (docs: SlateDocuments, cb: DocTextCb) => {
+const traverseDocs = (docs: SlateDocuments, drawings: DrawingDocuments, cb: DocTextCb) => {
   Object.values(docs).forEach(doc => {
     traverseSlateNodes((text, pathToText) => {
       cb({
@@ -61,7 +62,10 @@ const traverseDocs = (docs: SlateDocuments, cb: DocTextCb) => {
         text,
         pathToText
       })
-    })(doc.document)
+    },
+    docs,
+    drawings
+    )(doc.document)
   })
 }
 export interface InvertedIndex {
@@ -87,9 +91,9 @@ const updateIndex = (invertedIndex: InvertedIndex): DocTextCb => {
     })
   }
 }
-const buildInvertedIndex = (docs: SlateDocuments) => {
+const buildInvertedIndex = (docs: SlateDocuments, drawings: DrawingDocuments) => {
   let invertedIndex: InvertedIndex = {}
-  traverseDocs(docs, updateIndex(invertedIndex))
+  traverseDocs(docs, drawings, updateIndex(invertedIndex))
   return invertedIndex;
 }
 
@@ -104,14 +108,14 @@ export const II = (() => {
       invertedIndex = null;
       textNodeCb = null;
     },
-    buildInitialIndex(docs: SlateDocuments) {
-      invertedIndex = buildInvertedIndex(docs);
+    buildInitialIndex(docs: SlateDocuments, drawings: DrawingDocuments) {
+      invertedIndex = buildInvertedIndex(docs, drawings);
       textNodeCb = updateIndex(invertedIndex)
       Object.values(docs).forEach(doc => {
         docHashes[doc.name] = doc.documentHash
       })
     },
-    updateIndexWithDocuments(docs: SlateDocuments) {
+    updateIndexWithDocuments(docs: SlateDocuments, drawings: DrawingDocuments) {
       if (!invertedIndex) {
         throw new Error('inverted index not built - buildInitialIndex has not been called')
       }
@@ -133,7 +137,9 @@ export const II = (() => {
               pathToText,
               docName: doc.name
             })
-          })(doc.document)
+          },
+          docs,
+          drawings)(doc.document)
         })
     },
     getIndex() {

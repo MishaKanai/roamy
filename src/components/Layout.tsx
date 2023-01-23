@@ -13,7 +13,7 @@ import LogoutIcon from '@mui/icons-material/Logout';
 import SelectedFileAutocomplete from '../dropbox/Components/SelectedFileAutocomplete';
 import HomeIcon from '@mui/icons-material/Home';
 import SettingsIcon from '@mui/icons-material/Settings';
-import { ListSubheader } from '@mui/material';
+import { ListItemButton, ListSubheader } from '@mui/material';
 import { useLocation } from 'react-router';
 import useFileSelected from '../dropbox/hooks/useFileSelected';
 import NetworkIcon from '../icons/NetworkIcon';
@@ -24,6 +24,7 @@ import { parsePath } from '../RecentlyOpened/store/recentlyOpenedSlice';
 import { useDebounce } from 'use-debounce/lib';
 import CreateFab from './FabArea';
 import { useAppSelector } from '../store/hooks';
+import DocTitle from './EditableTitle';
 
 const drawerWidth = 220;
 
@@ -111,21 +112,21 @@ const RecentlyOpenedList = () => {
                     const key = d.name + ':' + d.type
                     if (d.type === 'document') {
                         return (
-                            <ListItem disabled={d.isCurrent} key={key} dense button component={Link} to={`/docs/${d.name}`}>
+                            <ListItemButton selected={d.isCurrent || undefined} /*disabled={d.isCurrent}*/ key={key} dense component={Link} to={`/docs/${d.name}`}>
                                 <ListItemIcon>
                                     <DocumentIcon />
                                 </ListItemIcon>
-                                <ListItemText primary={d.name} />
-                            </ListItem>
+                                <ListItemText primary={<DocTitle type="documents" editable={false} id={d.name} />} />
+                            </ListItemButton>
                         )
                     }
                     return (
-                        <ListItem key={key} dense button component={Link} to={`/drawings/${d.name}`}>
+                        <ListItemButton selected={d.isCurrent || undefined} key={key} dense component={Link} to={`/drawings/${d.name}`}>
                             <ListItemIcon>
                                 <PenTipIcon />
                             </ListItemIcon>
-                            <ListItemText primary={d.name} />
-                        </ListItem>
+                            <ListItemText primary={<DocTitle type="drawings" editable={false} id={d.name} />} />
+                        </ListItemButton>
                     )
                 })}
             </List>

@@ -7,6 +7,7 @@ import { createDoc, deleteDoc, updateDoc } from './globalActions';
 
 export interface SlateDocument {
     name: string;
+    displayName?: string;
     document: Descendant[];
     documentHash: string;
     references: string[]; // to other docs
@@ -32,6 +33,9 @@ const slateDocumentsSlice = createSlice({
             prepare: (docs: SlateDocuments) => ({
                payload: { docs }
             })
+        },
+        setTitle(state, { payload: { name, displayName }}: PayloadAction<{ name: string, displayName: string }>) {
+            state[name].displayName = displayName || undefined;
         }
     },
     extraReducers(builder) {
@@ -77,6 +81,7 @@ const slateDocumentsSlice = createSlice({
                 const backReferences = state[docName]?.backReferences ?? [];
                 state[docName] = {
                     name: docName,
+                    displayName: state[docName].displayName,
                     document: newDoc,
                     documentHash: hashSum(newDoc),
                     references,
@@ -107,5 +112,5 @@ const slateDocumentsSlice = createSlice({
     },
 })
 
-export const { replaceDocs } = slateDocumentsSlice.actions;
+export const { replaceDocs, setTitle } = slateDocumentsSlice.actions;
 export default slateDocumentsSlice.reducer;

@@ -33,6 +33,7 @@ const fetchEntries = (() => {
                     path: folderPath,
                     recursive: true,
                     include_non_downloadable_files: false,
+                    limit: 2000
                 })
                 .then(function (response) {
                     const entries = response?.result?.entries?.filter((e) =>

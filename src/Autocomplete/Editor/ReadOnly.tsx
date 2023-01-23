@@ -4,6 +4,7 @@ import {
     Slate,
     Editable,
 } from "slate-react";
+import DocTitle from '../../components/EditableTitle';
 import { useEditor, Element, Leaf } from "./Editor";
 
 interface ReadOnlyDocProps {
@@ -20,7 +21,7 @@ const ReadOnlyDoc: React.FC<ReadOnlyDocProps> = ({ document, docName }) => {
     return (
         <Slate editor={editor} value={document} onChange={value => null}>
             <div style={{ fontSize: "large", padding: '5px 2px 2px' }}>
-              <b>{docName}</b>
+              <b><DocTitle id={docName} type="documents" /></b>
             </div>
             <div style={{ height: '6px' }} />
             <Editable renderLeaf={renderLeaf} renderElement={renderElement} readOnly placeholder="Enter some plain text..." />

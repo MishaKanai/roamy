@@ -7,6 +7,7 @@ import { updateDrawing } from './globalActions';
 
 export interface DrawingDocument {
     name: string;
+    displayName?: string;
     drawing: DrawingDataInStore;
     drawingHash: string;
     backReferences: string[]
@@ -35,6 +36,9 @@ const drawingsSlice = createSlice({
                 return { payload: { drawings } };
             }
         },
+        setDrawingTitle(state, { payload: { name, displayName }}: PayloadAction<{ name: string, displayName: string }>) {
+            state[name].displayName = displayName || undefined;
+        },
         createDrawing: {
             reducer(state, { payload: { drawing, drawingName, withBackref, createdDate } }: PayloadAction<{
                 drawingName: string;
@@ -48,6 +52,7 @@ const drawingsSlice = createSlice({
                     ...state,
                     [drawingName]: {
                         name: drawingName,
+                        displayName: undefined,
                         drawing: {
                             size,
                             elements,
@@ -84,7 +89,7 @@ const drawingsSlice = createSlice({
     extraReducers(builder) {
         builder
         .addCase(updateDrawing, (state, { payload: { newDrawing: { files, ..._newDrawing }, drawingName, updatedDate } }: PayloadAction<{ drawingName: string; newDrawing: Partial<DrawingData>, updatedDate: Date; }>) => {
-            const { backReferences, backReferencesHash, drawing: prevDrawing, drawingHash: prevDrawingHash, createdDate } = state[drawingName];
+            const { backReferences, backReferencesHash, drawing: prevDrawing, drawingHash: prevDrawingHash, createdDate, displayName } = state[drawingName];
             const newDrawing = Object.assign({}, prevDrawing, _newDrawing);            
             if (typeof files !== 'undefined') {
                 newDrawing.filesIds = Object.keys(files);
@@ -95,6 +100,7 @@ const drawingsSlice = createSlice({
             }
             state[drawingName] = {
                 name: drawingName,
+                displayName,
                 drawing: newDrawing,
                 drawingHash: newDrawingHash,
                 backReferences,
@@ -140,6 +146,6 @@ const drawingsSlice = createSlice({
     },
 });
 
-export const { replaceDrawings, createDrawing, deleteDrawing } = drawingsSlice.actions;
+export const { replaceDrawings, createDrawing, deleteDrawing, setDrawingTitle } = drawingsSlice.actions;
 
 export default drawingsSlice.reducer;

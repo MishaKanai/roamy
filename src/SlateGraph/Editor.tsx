@@ -2,9 +2,9 @@ import React from "react";
 import { Descendant } from "slate";
 import { ReactEditor } from "slate-react";
 import SlateAutocompleteEditor, { RenderEditableRegion } from "../Autocomplete/Editor/Editor";
-import { drawingNamesSelector } from "../Excalidraw/globalSelectors";
+import { drawingTitlesSelector } from "../Excalidraw/globalSelectors";
 import { useAppSelector } from "../store/hooks";
-import { docNamesSelector } from "./globalSelectors";
+import { docTitlesSelector } from "./globalSelectors";
 
 const triggers = ["<<", "[[", "{{"] as ["<<", "[[", "{{"];
 
@@ -24,19 +24,21 @@ const SlateGraphEditor: React.FunctionComponent<{
   createDoc: (newDocName: string) => void;
   renderEditableRegion?: RenderEditableRegion;
 }> = React.memo(({ value, setValue, createDoc, docName, title, ...props }) => {
-  const docNames = useAppSelector(docNamesSelector);
-  const drawingNames = useAppSelector(drawingNamesSelector);
+
+  const docTitles = useAppSelector(docTitlesSelector);
+  const drawingTitles = useAppSelector(drawingTitlesSelector);
+
   const getSearchResults = React.useCallback(
     (search, trigger, precedingText = "") => {
       // search results
-      return (trigger === "{{" ? drawingNames : docNames)
-        .filter((n) => docName !== n && (!search || n.startsWith(search)))
-        .map((n) => ({
-          text: n,
-          char: n,
+      return (trigger === "{{" ? drawingTitles : docTitles)
+        .filter(([n, title = n]) => docName !== n && (!search || title.startsWith(search)))
+        .map(([n, title = n]) => ({
+          id: n,
+          title
         }));
     },
-    [docNames, drawingNames, docName]
+    [docTitles, drawingTitles, docName]
   );
   return (
     <SlateAutocompleteEditor

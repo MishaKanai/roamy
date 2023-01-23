@@ -11,6 +11,7 @@ import { DrawingDocument } from '../../Excalidraw/store/drawingsSlice';
 import { SlateDocument } from '../../SlateGraph/store/slateDocumentsSlice';
 import { sortBy } from 'lodash';
 import { useAppSelector } from '../../store/hooks';
+import DocTitle from '../../components/EditableTitle';
 
 const serialize = (nodes: any[]) => {
     return nodes.map(n => Node.string(n)).join('\n')
@@ -20,9 +21,16 @@ function renderReferences(k: 'references', item: SlateDocument): JSX.Element;
 function renderReferences(k: 'backReferences',  item: DrawingDocument | SlateDocument): JSX.Element;
 function renderReferences(k: 'backReferences' | 'references', item: any): JSX.Element {
     return <ul style={{ padding: 0 }}>
-        {item[k].map((r: string) => <li style={{ listStyle: 'none' }} key={r}><Link to={'/docs/' + r}>
-            {k === 'backReferences' ? <>&#8592;&nbsp;{r}</> : <>{r}&nbsp;&#8594;</>}
-        </Link></li>)}
+        {item[k].map((r: string) => {
+            const TitleEl = <DocTitle id={r} type="documents" />
+            return (
+                <li style={{ listStyle: 'none' }} key={r}>
+                    <Link to={'/docs/' + r}>
+                        {k === 'backReferences' ? <>&#8592;&nbsp;{TitleEl}</> : <>{TitleEl}&nbsp;&#8594;</>}
+                    </Link>
+                </li>
+            );
+        })}
     </ul>
 }
 
@@ -61,8 +69,8 @@ const MasonrySearch: React.FC<{}> = () => {
                             if (sortedItem.type === 'doc') {
                                 const docKey = sortedItem.key;
                                 const item = documents[docKey];
-                                return <Card key={'drawing:' + docKey}>
-                                    <CardHeader title={<Link to={'/docs/' + item.name}>{item.name}</Link>} />
+                                return <Card key={'document:' + docKey}>
+                                    <CardHeader title={<Link to={'/docs/' + item.name}><DocTitle id={item.name} type="documents" /></Link>} />
                                     <CardContent>
                                         {(() => {
                                             if (input) {
@@ -88,7 +96,7 @@ const MasonrySearch: React.FC<{}> = () => {
                             const drawingKey = sortedItem.key;
                             const item = drawings[drawingKey];
                             return <Card key={'drawing:' + drawingKey}>
-                                <CardHeader title={<Link to={'/drawings/' + item.name}>{item.name}</Link>} />
+                                <CardHeader title={<Link to={'/drawings/' + item.name}><DocTitle id={item.name} type="drawings" /></Link>} />
                                 <CardContent>
                                     <ExcalidrawSvgImage drawingName={item.name} />
                                     <div style={{ display: 'flex', justifyContent: 'space-between' }}>

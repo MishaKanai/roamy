@@ -65,6 +65,8 @@ import gifsicle from "gifsicle-wasm-browser";
 import { remoteFilesApiContext } from "../../RemoteFiles/remoteFiles";
 import { RemoteFilesApi } from "../../RemoteFiles/api";
 import { makeStyles } from "@mui/styles";
+import DocTitle from "../../components/EditableTitle";
+import hash_sum from "hash-sum";
 
 const UploadFileButton = ({ docName }: { docName: string }) => {
   const editor = useSlateStatic();
@@ -759,8 +761,8 @@ interface SlateTemplateEditorProps<Triggers extends string[]> {
     searchTrigger: Triggers[keyof Triggers] | null,
     precedingText: string
   ) => {
-    text: string;
-    char: string;
+    id: string;
+    title: string;
   }[];
   value: Descendant[];
   setValue: (value: Descendant[]) => void;
@@ -814,6 +816,7 @@ const SlateAutocompleteEditorComponent = <Triggers extends string[]>(
   );
   const renderLeaf = useCallback((props) => <Leaf {...props} />, []);
   const editor = useEditor(docName);
+  const docDisplayName = useAppSelector(state => state.documents[docName].displayName);
   // editor.children = value is what sets Slate's value when the 'value' prop changes externally.
   // we use useMemo so this is updated before the child renders, so it's up to date
   // (if we used useEffect, we would have to trigger a second rendering after to show the changes.)
@@ -822,25 +825,33 @@ const SlateAutocompleteEditorComponent = <Triggers extends string[]>(
   }, [value, editor])
 
 
-  const chars = useMemo(() => {
+  const items = useMemo(() => {
     const precedingText = getPrecedingText(editor);
     const results = getSearchResults(search, trigger, precedingText);
+    if (!search) {
+      const hash = hash_sum(Date.now()) // create a new random short hash id
+      return [
+        {
+          id: CREATE_PREFIX + hash + '"',
+          title: CREATE_PREFIX + hash + '"',
+        }
+      ].concat(results);
+    }
     if (
-      !search ||
-      results.some((r) => r.text === search || r.char === search)
+      results.some((r) => r.title === search || r.id === search)
     ) {
       return results;
     }
-    if (search === docName) {
+    if (search === docName || search === docDisplayName) {
       return results;
     }
     return results.concat([
       {
-        char: CREATE_PREFIX + search + '"',
-        text: CREATE_PREFIX + search + '"',
+        id: CREATE_PREFIX + search + '"',
+        title: CREATE_PREFIX + search + '"',
       },
     ]);
-  }, [getSearchResults, docName, search, trigger, editor]);
+  }, [getSearchResults, docName, search, trigger, editor, docDisplayName]);
 
   const selectItem = useCallback((selected: string) => {
     Transforms.select(editor, target!);
@@ -877,22 +888,22 @@ const SlateAutocompleteEditorComponent = <Triggers extends string[]>(
         switch (event.key) {
           case "ArrowDown":
             event.preventDefault();
-            const prevIndex = index >= chars.length - 1 ? 0 : index + 1;
+            const prevIndex = index >= items.length - 1 ? 0 : index + 1;
             setIndex(prevIndex);
             break;
           case "ArrowUp":
             event.preventDefault();
-            const nextIndex = index <= 0 ? chars.length - 1 : index - 1;
+            const nextIndex = index <= 0 ? items.length - 1 : index - 1;
             setIndex(nextIndex);
             break;
           case "Tab":
           case "Enter":
-            const selected = chars[index]?.char;
+            const selected = items[index]?.id;
             if (selected) {
               event.preventDefault();
               selectItem(selected);
             } else {
-              console.log(chars, index);
+              console.log(items, index);
               console.error("hit");
             }
             break;
@@ -907,7 +918,7 @@ const SlateAutocompleteEditorComponent = <Triggers extends string[]>(
   );
 
   useEffect(() => {
-    if (target && chars.length > 0) {
+    if (target && items.length > 0) {
       const el = ref.current;
       if (el) {
         const domRange = ReactEditor.toDOMRange(editor, target);
@@ -916,7 +927,7 @@ const SlateAutocompleteEditorComponent = <Triggers extends string[]>(
         el.style.left = `${rect.left + window.pageXOffset}px`;
       }
     }
-  }, [chars.length, editor, index, search, target]);
+  }, [items.length, editor, index, search, target]);
   const [isFocused, setIsFocused] = useState(false);
   const _handleChange = useCallback(
     (_value: Descendant[]) => {
@@ -1059,7 +1070,7 @@ const SlateAutocompleteEditorComponent = <Triggers extends string[]>(
           </span>
           {editable}
         </>)}
-        {target && chars.length > 0 && (
+        {target && items.length > 0 && (
           <Portal>
             <Card
               ref={ref}
@@ -1074,11 +1085,11 @@ const SlateAutocompleteEditorComponent = <Triggers extends string[]>(
               }}
             >
               <List dense>
-                {chars.map((char, i) => (
-                  <ListItem button dense key={char.text} onClick={() => selectItem(char.char)} style={{
+                {items.map((item, i) => (
+                  <ListItem button dense key={item.id} onClick={() => selectItem(item.id)} style={{
                     background: i === index ? theme.palette.action.focus : undefined,
                   }}>
-                    {char.text}
+                    {item.title}
                   </ListItem>
                 ))}
               </List>
@@ -1193,7 +1204,8 @@ const Reference: React.FC<RenderElementProps> = ({
       }}
     >
       <Link to={`/docs/${(element as any).docReference}`}>
-        [[{(element as any).docReference}]]
+        <DocTitle type="documents" id={(element as any).docReference} />
+        {/* [[{(element as any).docReference}]] */}
       </Link>
       {children}
     </span>
@@ -1253,7 +1265,7 @@ export const Element: React.FC<RenderElementProps & { parentDoc: string }> = (
                               to={`/drawings/${(element as any).drawingReference
                                 }`}
                             >
-                              {(element as any).drawingReference}
+                              <DocTitle id={(element as any).drawingReference} type="drawings" />
                             </Link>
                             <span style={{ marginLeft: '.25em' }}>
                               <HoverBacklinks
@@ -1314,7 +1326,7 @@ export const Element: React.FC<RenderElementProps & { parentDoc: string }> = (
                 title={
                   <div style={{ display: "flex", flexDirection: "row" }}>
                     <Link to={`/docs/${(element as any).portalReference}`}>
-                      {(element as any).portalReference}
+                      <DocTitle id={(element as any).portalReference} type="documents" />
                     </Link>
                     <span style={{ marginLeft: '.25em' }}>
                       <HoverBacklinks

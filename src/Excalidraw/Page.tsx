@@ -24,6 +24,7 @@ import useExcalidrawInstance from "./hooks/useExcalidrawInstance";
 import ExcalidrawSvgImage from "./ExcalidrawSvgImage";
 import useFiles from "./hooks/useFiles";
 import { THEME } from "@excalidraw/excalidraw";
+import DocTitle from "../components/EditableTitle";
 
 interface DrawingPageProps {
   drawingName: string;
@@ -197,7 +198,9 @@ export const DrawingPageRoute = React.memo(() => {
   const { renderDrawingOptions } = useContext(drawingOptionsContext);
   const title = (
     <div style={{ display: "flex", flexDirection: "row" }}>
-      <b style={{ fontSize: "x-large", marginBottom: 0 }}>{drawingName}</b>
+      <b style={{ fontSize: "x-large", marginBottom: 0 }}>
+        <DocTitle id={drawingName} type="drawings" editable />
+      </b>
       &nbsp;
       {renderDrawingOptions?.({ drawingId: drawingName })}
       &nbsp;
