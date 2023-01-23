@@ -1,10 +1,12 @@
 import Graph from "react-vis-graph-wrapper";
-import React, { useMemo } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Box, Theme, useTheme } from "@mui/material";
 import { createSelector } from "reselect";
 import Search, { HighlightedSearchResults } from "../Search/components/Search";
 import { useAppSelector } from "../store/hooks";
 import { RootState } from "../store/configureStore";
+import { useStore } from "react-redux";
+import { drawingSvgStore } from "../Excalidraw/svgFromDrawing";
 
 const getOptions = (theme: Theme) => {
   const contrastTextColor = theme.palette.getContrastText(theme.palette.background.default);
@@ -41,6 +43,9 @@ type GraphNode = {
   label: string;
   type?: NodeType | undefined;
   color?: any;
+  font?: {
+    color?: string;
+  }
 };
 type GraphDescription = {
   nodes: GraphNode[];
@@ -59,8 +64,11 @@ const createGraphSelector = () => createSelector(
     Object.values(documents).forEach(doc => {
       nodes.push({
         id: doc.name,
-        label: doc.name,
-        type: 'document'
+        label: doc?.displayName ?? doc?.name,
+        type: 'document',
+        font: !doc?.displayName ? {
+          color: 'grey'
+        } : undefined
       });
       doc.references.forEach(ref => {
         edges.push({
@@ -73,8 +81,11 @@ const createGraphSelector = () => createSelector(
     Object.values(drawings).forEach(drawing => {
       nodes.push({
         id: 'drawing:' + drawing.name,
-        label: drawing.name,
+        label: drawing?.displayName ?? drawing?.name,
         type: 'drawing',
+        font: !drawing?.displayName ? {
+          color: "grey"
+        } : undefined,
         color: {
           border: 'grey',
           background: 'transparent'
@@ -103,7 +114,78 @@ interface AppGraphProps {
 const AppGraph = ({ filterNode }: AppGraphProps) => {
   const theme = useTheme()
   const edgesSelector = useMemo(() => createGraphSelector(), []);
-  const { nodes, edges } = useAppSelector(edgesSelector)
+  const { nodes: _nodes, edges } = useAppSelector(edgesSelector)
+  const [nodes, setNewNodes] = useState(_nodes);
+  const store = useStore<any>();
+  const isDark = theme.palette.mode === 'dark';
+  useEffect(() => {
+    
+    const whenDone = (results: (string | null)[]) => {
+      setNewNodes(_nodes.map((n, i) => {
+        const r = results[i]
+        if (!r) {
+          return n;
+        }
+        return ({ ...n, shape: 'image', image: {
+          selected: r,
+          unselected: r
+       } })
+      }))
+    }
+    // -1 means unresolved
+    // null means we don't need any data for this node index.
+    // string is the generated svg base64 string
+
+    // when an svg is generated, we check if we are done (no -1s) and if so, call 'whenDone' with the ready results
+    let results: (string | null | -1)[] = _nodes.map(n => -1);
+    const cancels: (() => void)[] = [];
+    _nodes.forEach((n, i) => {
+      if (n.type === 'drawing') {
+        const id = n.id.slice('drawing:'.length);
+        const cancel = drawingSvgStore.subscribeToSvg(store, id, isDark, (svgB64) => {
+          results[i] = svgB64
+          if (results.every(r => r !== -1)) {
+            whenDone(results as (string | null)[]);
+          }
+        });
+        cancels.push(cancel);
+      } else {
+        results[i] = (null)
+      }
+    })
+    return () => {
+      cancels.forEach(cancel => {
+        cancel()
+      });
+    }
+
+    // OLD VERSION: THIS WILL MEMORY LEAK.
+    // DO THIS OUTSIDE THE COMPONENT.
+    // const promises: Promise<string | null>[] = []
+    // _nodes.forEach(n => {
+    //   if (n.type === 'drawing') {
+    //     const id = n.id.slice('drawing:'.length);
+    //     promises.push(getDrawingSvgB64(store, id, theme.palette.mode === 'dark'))
+    //   } else {
+    //     promises.push(Promise.resolve(null))
+    //   }
+    // })
+    // Promise.allSettled(promises).then(results => {
+    //   results.forEach(r => console.log(r))
+    //   // console.log(results)
+    //   setNewNodes(_nodes.map((n, i) => {
+
+    //     const r: PromiseSettledResult<string | null> = results[i]
+    //     if (!r || r.status === 'rejected' || !r.value) {
+    //       return n;
+    //     }
+    //     return ({ ...n, shape: 'image', image: {
+    //       selected: r.value,
+    //       unselected: r.value
+    //    } })
+    //   }))
+    // })
+  }, [_nodes, store, isDark])
 
   const { graph, events } = useMemo(() => {
     return {

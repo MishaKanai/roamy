@@ -8,6 +8,7 @@ import { exportToSvg } from "@excalidraw/excalidraw";
 import { useAppSelector } from "../store/hooks";
 import useFiles from "./hooks/useFiles";
 import { THEME } from "@excalidraw/excalidraw";
+
 interface DrawingPageProps {
     drawingName: string;
     height?: string;
@@ -42,7 +43,7 @@ const ExcalidrawSvgImage: React.FC<DrawingPageProps> = React.memo(
             const divEl = el.current;
             let svgEl: SVGSVGElement | undefined;
             const getSvg = async () => {
-                const svg = await exportToSvg(initialData,)
+                const svg = await exportToSvg(initialData)
                 svg.style.height = height ?? 'auto';
                 svg.style.width = width ?? '100%';
                 svgEl = svg;
