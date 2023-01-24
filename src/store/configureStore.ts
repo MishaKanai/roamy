@@ -217,7 +217,8 @@ const syncDropboxToStore = (
         // calculate different documents
         const docKeysChanged = Object.entries(documents).filter(([docName, doc]) => {
           return doc.documentHash !== prevDocuments[docName]?.documentHash ||
-            doc.backReferencesHash !== prevDocuments[docName]?.backReferencesHash
+            doc.backReferencesHash !== prevDocuments[docName]?.backReferencesHash ||
+            doc.displayName !== prevDocuments[docName]?.displayName
         }).map(([docName]) => docName);
         docKeysChanged.forEach(dk => {
           docsPendingUpload.add(dk);
@@ -227,7 +228,8 @@ const syncDropboxToStore = (
         // calculate different documents
         const drawingKeysChanged = Object.entries(drawings).filter(([drawingName, drawing]) => {
           return drawing.drawingHash !== prevDrawings[drawingName]?.drawingHash ||
-            drawing.backReferencesHash !== prevDrawings[drawingName]?.backReferencesHash
+            drawing.backReferencesHash !== prevDrawings[drawingName]?.backReferencesHash ||
+            drawing.displayName !== prevDrawings[drawingName]?.displayName
         }).map(([drawingName]) => drawingName);
         drawingKeysChanged.forEach(dk => {
           drawingsPendingUpload.add(dk);
