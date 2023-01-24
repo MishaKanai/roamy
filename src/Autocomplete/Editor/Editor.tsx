@@ -816,7 +816,7 @@ const SlateAutocompleteEditorComponent = <Triggers extends string[]>(
   );
   const renderLeaf = useCallback((props) => <Leaf {...props} />, []);
   const editor = useEditor(docName);
-  const docDisplayName = useAppSelector(state => state.documents[docName].displayName);
+  const docDisplayName = useAppSelector(state => state.documents[docName]?.displayName);
   // editor.children = value is what sets Slate's value when the 'value' prop changes externally.
   // we use useMemo so this is updated before the child renders, so it's up to date
   // (if we used useEffect, we would have to trigger a second rendering after to show the changes.)
