@@ -240,7 +240,7 @@ const ProvideFilterNode: React.FunctionComponent<{
       return prev;
     }, {} as { [k: string]: true })
     return (node: GraphNode) => {
-      return node.type === 'drawing' && searchText ? Boolean(node.label?.includes(searchText)) : Boolean(obj[node.label])
+      return node.type === 'drawing' && searchText ? Boolean(node.label?.includes(searchText)) : Boolean(obj[node.id])
     }
   }, [results, searchText])
   return <>
