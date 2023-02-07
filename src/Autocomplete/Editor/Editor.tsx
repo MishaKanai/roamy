@@ -67,7 +67,7 @@ import { RemoteFilesApi } from "../../RemoteFiles/api";
 import { makeStyles } from "@mui/styles";
 import DocTitle from "../../components/EditableTitle";
 import hash_sum from "hash-sum";
-import { Resizable, ResizeCallback } from "re-resizable";
+import { Resizable } from "re-resizable";
 
 const UploadFileButton = ({ docName }: { docName: string }) => {
   const editor = useSlateStatic();
