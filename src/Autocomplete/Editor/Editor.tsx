@@ -67,6 +67,7 @@ import { RemoteFilesApi } from "../../RemoteFiles/api";
 import { makeStyles } from "@mui/styles";
 import DocTitle from "../../components/EditableTitle";
 import hash_sum from "hash-sum";
+import { Resizable, ResizeCallback } from "re-resizable";
 
 const UploadFileButton = ({ docName }: { docName: string }) => {
   const editor = useSlateStatic();
@@ -312,6 +313,7 @@ const useStyles = makeStyles((theme: any) => ({
 }))
 const RemoteFile = ({ attributes, children, element: _element }: RenderElementProps) => {
   const element: RemoteFileElement = _element as any;
+  
   const editor = useSlateStatic()
   const path = ReactEditor.findPath(editor, element)
 
@@ -367,72 +369,82 @@ const RemoteFile = ({ attributes, children, element: _element }: RenderElementPr
         verticalAlign: "baseline",
         display: "inline-block",
         fontSize: "0.9em",
-        maxWidth: element.width,
-        width: '100%'
       }}
     >
       <div
         className={css`
           display: inline-block;
           position: relative;
-          width: 100%
         `}
       >
-        {state.type === 'initial' ? (
-          <div className={imageClassName}>
-            <div className={classes.wrapper}>
-              <div className={classes.main}>
-                <Skeleton variant="rectangular" style={{ height: '100%', width: '100%' }} />
+        <Resizable
+          lockAspectRatio
+          defaultSize={{
+            width: element.width!,
+            height: 'auto'
+          }}
+          onResizeStop={(e, direction, ref, d) => {
+            const newWidth = parseInt(element.width as any) + d.width;
+            const newHeight = parseInt(element.height as any) + d.height;
+            Transforms.setNodes(editor, { width: newWidth, height: newHeight }, { at: path });
+          }}
+        >
+          {state.type === 'initial' ? (
+            <div className={imageClassName}>
+              <div className={classes.wrapper}>
+                <div className={classes.main}>
+                  <Skeleton variant="rectangular" style={{ height: '100%', width: '100%' }} />
+                </div>
               </div>
             </div>
-          </div>
-        ): state.mimeType.startsWith('image') ? (
-          <img
-            alt="user uploaded"
-            src={state.base64}
-            className={imageClassName}
-          />
-        ) : state.mimeType.startsWith('video') ? (
-          <video controls style={{ width: '100%' }}>
-            <source src={state.base64} type={state.mimeType}></source>
-            Your browser does not support the video tag.
-          </video>
-        ) : <p>File type not supported.</p>}
+          ): state.mimeType.startsWith('image') ? (
+            <img
+              alt="user uploaded"
+              src={state.base64}
+              className={imageClassName}
+            />
+          ) : state.mimeType.startsWith('video') ? (
+            <video controls style={{ width: '100%' }}>
+              <source src={state.base64} type={state.mimeType}></source>
+              Your browser does not support the video tag.
+            </video>
+          ) : <p>File type not supported.</p>}
 
-        {selected && focused && state.type === 'loaded' && <span
-          className={css`
+          {selected && focused && state.type === 'loaded' && <span
+            className={css`
+                position: absolute;
+                top: 0.5em;
+                left: 0.5em;
+                background-color: ${theme.palette.background.paper}
+              `}
+          >
+            {state.base64 && getImageSize(state.base64).toFixed(0)}{' KB'}
+          </span>}
+          {selected && focused && <span
+            className={css`
               position: absolute;
               top: 0.5em;
-              left: 0.5em;
-              background-color: ${theme.palette.background.paper}
+              right: 0.5em;
             `}
-        >
-          {state.base64 && getImageSize(state.base64).toFixed(0)}{' KB'}
-        </span>}
-        {selected && focused && <span
-          className={css`
-            position: absolute;
-            top: 0.5em;
-            right: 0.5em;
-          `}
-        >
-          <div style={{ position: 'relative' }}>
-            <IconButton
-              style={{ backgroundColor: theme.palette.background.paper }}
-              size="small"
-              color="secondary"
-              onMouseDown={e => {
-                e.preventDefault();
-                e.stopPropagation();
-              }}
-              onClick={(e) => {
-                Transforms.removeNodes(editor, { at: path })
-              }}
-            >
-              <Clear fontSize="small" />
-            </IconButton>
-          </div>
-        </span>}
+          >
+            <div style={{ position: 'relative' }}>
+              <IconButton
+                style={{ backgroundColor: theme.palette.background.paper }}
+                size="small"
+                color="secondary"
+                onMouseDown={e => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                }}
+                onClick={(e) => {
+                  Transforms.removeNodes(editor, { at: path })
+                }}
+              >
+                <Clear fontSize="small" />
+              </IconButton>
+            </div>
+          </span>}
+          </Resizable>
       </div>
       {children}
     </span>
