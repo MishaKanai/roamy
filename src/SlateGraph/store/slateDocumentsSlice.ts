@@ -34,7 +34,7 @@ const slateDocumentsSlice = createSlice({
                payload: { docs }
             })
         },
-        setTitle(state, { payload: { name, displayName }}: PayloadAction<{ name: string, displayName: string }>) {
+        setTitle(state, { payload: { name, displayName }}: PayloadAction<{ name: string, displayName?: string }>) {
             state[name].displayName = displayName || undefined;
         }
     },
