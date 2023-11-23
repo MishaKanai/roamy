@@ -7,5 +7,5 @@
  */
 const SINGLEFILE = import.meta.env.VITE_APP_SINGLEFILE;
 
-const isSingleFile = () => !SINGLEFILE;
+const isSingleFile = () => !!SINGLEFILE;
 export default isSingleFile;
