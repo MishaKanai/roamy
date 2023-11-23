@@ -69,7 +69,8 @@
   },
   "scripts": {
     "start": "vite",
-    "build": "tsc && vite build",
+    "build": "tsc && vite build && yarn build-single-file",
+    "build-single-file": "VITE_APP_SINGLEFILE=true vite build && mv build-single-file/index.html build/singlefile.txt && npx rimraf build-single-file",
     "serve": "vite preview",
     "prepare": "yarn build-lib",
     "build-lib": "tsc -p lib.tsconfig.json"
@@ -105,6 +106,7 @@
     "setimmediate": "^1.0.5",
     "vite": "^5.0.2",
     "vite-plugin-node-polyfills": "^0.16.0",
+    "vite-plugin-singlefile": "^0.13.5",
     "vite-plugin-svgr": "^4.2.0",
     "vite-tsconfig-paths": "^4.2.1"
   },
