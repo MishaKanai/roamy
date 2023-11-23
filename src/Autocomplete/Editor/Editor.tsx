@@ -1410,8 +1410,7 @@ export const Element: React.FC<RenderElementProps & { parentDoc: string }> = (
                                   />
                                 </span>
                                 {(isSmall && props.parentDoc) ||
-                                isSingleFile() ||
-                                !editable ? null : (
+                                isSingleFile() ? null : (
                                   <span
                                     style={{
                                       marginLeft: ".25em",
