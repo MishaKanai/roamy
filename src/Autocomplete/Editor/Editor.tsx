@@ -27,13 +27,29 @@ import {
 import ReactDOM from "react-dom";
 import { handleChange } from "./utils/autocompleteUtils";
 import isHotkey from "is-hotkey";
-import { Card, IconButton, useTheme, List, ListItem, useMediaQuery, Skeleton } from "@mui/material";
+import {
+  Card,
+  IconButton,
+  useTheme,
+  List,
+  ListItem,
+  useMediaQuery,
+  Skeleton,
+} from "@mui/material";
 import FormatBoldIcon from "@mui/icons-material/FormatBold";
 import FormatUnderlinedIcon from "@mui/icons-material/FormatUnderlined";
 import FormatItalicIcon from "@mui/icons-material/FormatItalic";
 import FormatListBulletedIcon from "@mui/icons-material/FormatListBulleted";
 import Page from "../../SlateGraph/Page";
-import { DrawingElement, CustomElement, CustomEditor, PortalElement, ReferenceElement, ImageElement, RemoteFileElement } from "../../SlateGraph/slate.d";
+import {
+  DrawingElement,
+  CustomElement,
+  CustomEditor,
+  PortalElement,
+  ReferenceElement,
+  ImageElement,
+  RemoteFileElement,
+} from "../../SlateGraph/slate.d";
 import Link from "../../components/Link";
 import deepEqual from "fast-deep-equal";
 import HoverBacklinks from "../../components/AnchoredPopper";
@@ -41,20 +57,16 @@ import DrawingPage from "../../Excalidraw/Page";
 import EditIcon from "@mui/icons-material/Edit";
 import { drawingOptionsContext } from "../../extension/drawingOptionsContext";
 import { withNodeId } from "@udecode/plate-node-id";
-import { v4 as uuidv4 } from 'uuid';
+import { v4 as uuidv4 } from "uuid";
 import mergeContext from "../../dropbox/resolveMerge/mergeContext";
 import nestedEditorContext from "../nestedEditorContext";
 import useBackgroundColor from "./hooks/useBackgroundColor";
 import UniversalSticky from "./utils/UniversalSticky3";
-import scrollIntoView from 'scroll-into-view-if-needed'
-import imageExtensions from 'image-extensions'
-import isUrl from 'is-url'
-import {
-  useSlateStatic,
-  useSelected,
-  useFocused,
-} from 'slate-react'
-import { css } from '@emotion/css'
+import scrollIntoView from "scroll-into-view-if-needed";
+import imageExtensions from "image-extensions";
+import isUrl from "is-url";
+import { useSlateStatic, useSelected, useFocused } from "slate-react";
+import { css } from "@emotion/css";
 import { Store } from "redux";
 import { useStore } from "react-redux";
 import { traverseTransformNodes } from "./utils/traverseTransformNodes";
@@ -68,108 +80,120 @@ import { makeStyles } from "@mui/styles";
 import DocTitle from "../../components/EditableTitle";
 import hash_sum from "hash-sum";
 import { Resizable } from "re-resizable";
+import isSingleFile from "../../util/isSingleFile";
 
 const UploadFileButton = ({ docName }: { docName: string }) => {
   const editor = useSlateStatic();
   // const store = useStore();
   const inputRef = useRef<HTMLInputElement>(null);
   const remoteFiles = useContext(remoteFilesApiContext);
-  return <>
-
-    <IconButton onClick={() => inputRef.current?.click()}>
-      <ImageIcon />
-    </IconButton>
-    <input
-      ref={inputRef}
-      type="file"
-      style={{ display: 'none' }}
-      onChange={(e) => {
-        const file = e.target.files?.[0];
-        if (!file) {
-          return;
-        }
-        const addFileB64 = (base64: string) => {
-          remoteFiles.uploadFile({
-            type: 'b64',
-            base64,
-            mimeType: file.type
-          }).then(({ id: fileIdentifier }) => {
-            
-            return new Promise<{ height?: string | number; width?: string | number; fileIdentifier: string; }>((resolve, reject) => {
-              const img = new Image();
-
-              img.onload = () => {
-                  resolve({
-                    fileIdentifier,
-                    width: img.width,
-                    height: img.height,
-                  });
-              }
-              img.onerror = () => resolve({ fileIdentifier });
-      
-              img.src = base64;
-            })
-          }).then(({ width, height, fileIdentifier }) => {
-            insertRemoteFile(editor, fileIdentifier, width, height)
-          })
-
-          // const id = uuidv4() as any;
-          // store.dispatch(addPastedFile({
-          //   doc: docName,
-          //   fileData: {
-          //     created: Date.now(),
-          //     dataURL: base64 as any,
-          //     id,
-          //     mimeType: file.type as any
-          //   }
-          // }));
-          // setImmediate(() => insertImage(editor, base64, id))
-        }
-
-        if (file.type === 'image/gif' && window.confirm('Optimize Gif?')) {
-          loadGif(file).then(base64 => {
-            addFileB64(base64)
-          })
-          return;
-        }
-
-        const reader = new FileReader();
-        reader.readAsDataURL(file as Blob);
-        reader.onload = () => {
-          const base64 = reader.result as string;
-          if (!base64) {
+  return (
+    <>
+      <IconButton onClick={() => inputRef.current?.click()}>
+        <ImageIcon />
+      </IconButton>
+      <input
+        ref={inputRef}
+        type="file"
+        style={{ display: "none" }}
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          if (!file) {
             return;
           }
-          addFileB64(base64);
-        };
-        reader.onerror = (err) => {
-          console.error(err)
-        }
+          const addFileB64 = (base64: string) => {
+            remoteFiles
+              .uploadFile({
+                type: "b64",
+                base64,
+                mimeType: file.type,
+              })
+              .then(({ id: fileIdentifier }) => {
+                return new Promise<{
+                  height?: string | number;
+                  width?: string | number;
+                  fileIdentifier: string;
+                }>((resolve, reject) => {
+                  const img = new Image();
 
-        inputRef.current!.value = '';
-      }}
-    />
-  </>
-}
+                  img.onload = () => {
+                    resolve({
+                      fileIdentifier,
+                      width: img.width,
+                      height: img.height,
+                    });
+                  };
+                  img.onerror = () => resolve({ fileIdentifier });
 
+                  img.src = base64;
+                });
+              })
+              .then(({ width, height, fileIdentifier }) => {
+                insertRemoteFile(editor, fileIdentifier, width, height);
+              });
+
+            // const id = uuidv4() as any;
+            // store.dispatch(addPastedFile({
+            //   doc: docName,
+            //   fileData: {
+            //     created: Date.now(),
+            //     dataURL: base64 as any,
+            //     id,
+            //     mimeType: file.type as any
+            //   }
+            // }));
+            // setImmediate(() => insertImage(editor, base64, id))
+          };
+
+          if (file.type === "image/gif" && window.confirm("Optimize Gif?")) {
+            loadGif(file).then((base64) => {
+              addFileB64(base64);
+            });
+            return;
+          }
+
+          const reader = new FileReader();
+          reader.readAsDataURL(file as Blob);
+          reader.onload = () => {
+            const base64 = reader.result as string;
+            if (!base64) {
+              return;
+            }
+            addFileB64(base64);
+          };
+          reader.onerror = (err) => {
+            console.error(err);
+          };
+
+          inputRef.current!.value = "";
+        }}
+      />
+    </>
+  );
+};
 
 function loadGif(intFiles: any): Promise<string> {
   return gifsicle
     .run({
-      input: [{
-        file: intFiles,
-        name: "1.gif"
-      }],
+      input: [
+        {
+          file: intFiles,
+          name: "1.gif",
+        },
+      ],
       // E.g. to resize to width of 250px, add:
       // --resize 250x_
       // was -O2 --lossy=60
-      command: [`
+      command: [
+        `
           -O2 --lossy=60
           --resize 250x_
           1.gif 
           -o /out/out2.gif
-        `]
-    }).then((outFiles: any) => {
+        `,
+      ],
+    })
+    .then((outFiles: any) => {
       const outputFile = outFiles[0];
       return new Promise((res, rej) => {
         if (!outputFile) {
@@ -180,189 +204,225 @@ function loadGif(intFiles: any): Promise<string> {
         reader.onload = function () {
           res(reader.result);
         };
-        reader.onerror = rej
-      })
-    })
+        reader.onerror = rej;
+      });
+    });
 }
 
 const getImageSize = (url: string) => {
-  const stringLength = url.length - 'data:image/gif;base64,'.length;
-  const sizeInBytes = 4 * Math.ceil((stringLength / 3)) * 0.5624896334383812;
+  const stringLength = url.length - "data:image/gif;base64,".length;
+  const sizeInBytes = 4 * Math.ceil(stringLength / 3) * 0.5624896334383812;
   const sizeInKb = sizeInBytes / 1000;
   return sizeInKb;
-}
+};
 
 /**
  * Start images
  */
 
-const withImages = (config: { store: Store, doc: string, remoteFilesApi: RemoteFilesApi }) => (editor: CustomEditor) => {
-  const { insertData, isVoid, isInline } = editor
+const withImages =
+  (config: { store: Store; doc: string; remoteFilesApi: RemoteFilesApi }) =>
+  (editor: CustomEditor) => {
+    const { insertData, isVoid, isInline } = editor;
 
-  editor.isInline = (element: CustomElement) => {
-    return element.type === "image" || element.type === 'remotefile' ? true : isInline(element);
-  };
+    editor.isInline = (element: CustomElement) => {
+      return element.type === "image" || element.type === "remotefile"
+        ? true
+        : isInline(element);
+    };
 
-  editor.isVoid = (element: CustomElement) => {
-    return element.type === 'image' || element.type === 'remotefile' ? true : isVoid(element)
-  }
+    editor.isVoid = (element: CustomElement) => {
+      return element.type === "image" || element.type === "remotefile"
+        ? true
+        : isVoid(element);
+    };
 
-  editor.insertData = (data: DataTransfer) => {
-    const text = data.getData('text/plain')
-    const { files } = data
-    console.log('insertData', data, {
-      text,
-    })
+    editor.insertData = (data: DataTransfer) => {
+      const text = data.getData("text/plain");
+      const { files } = data;
+      console.log("insertData", data, {
+        text,
+      });
 
-    if (files && files.length > 0) {
-      for (const file of Array.from(files)) {
-        const reader = new FileReader()
-        const [mime, type] = file.type.split('/')
-        if (mime === 'image') {
-          const dispatchNewDoc = (url: string) => {
-            config.remoteFilesApi.uploadFile({
-              type: 'b64',
-              base64: url,
-              mimeType: file.type
-            }).then(({ id: fileIdentifier }) => {
-              return new Promise<{ height?: string | number; width?: string | number; fileIdentifier: string }>((resolve, reject) => {
-                const img = new Image();
-  
-                img.onload = () => {
-                    resolve({ fileIdentifier, width: img.width, height: img.height });
-                }
-                img.onerror = () => resolve({ fileIdentifier });
-        
-                img.src = url;
-              })
-            }).then(({ fileIdentifier, width, height }) => {
-              insertRemoteFile(editor, fileIdentifier, width, height);
-            })
+      if (files && files.length > 0) {
+        for (const file of Array.from(files)) {
+          const reader = new FileReader();
+          const [mime, type] = file.type.split("/");
+          if (mime === "image") {
+            const dispatchNewDoc = (url: string) => {
+              config.remoteFilesApi
+                .uploadFile({
+                  type: "b64",
+                  base64: url,
+                  mimeType: file.type,
+                })
+                .then(({ id: fileIdentifier }) => {
+                  return new Promise<{
+                    height?: string | number;
+                    width?: string | number;
+                    fileIdentifier: string;
+                  }>((resolve, reject) => {
+                    const img = new Image();
 
-            // const id = uuidv4() as any;
-            // config.store.dispatch(addPastedFile({
-            //   doc: config.doc,
-            //   fileData: {
-            //     created: Date.now(),
-            //     dataURL: url as any,
-            //     id,
-            //     mimeType: file.type as any
-            //   }
-            // }));
-            // setImmediate(() => insertImage(editor, url, id))
-          }
-          if (type === 'gif' && window.confirm('Optimize Gif?')) {
-            loadGif(file).then(optimizedGifB64 => {
-              dispatchNewDoc(optimizedGifB64)
-            })
-          } else {
-            reader.addEventListener('load', () => {
-              dispatchNewDoc(reader.result as any);
-            })
-            reader.readAsDataURL(file)
+                    img.onload = () => {
+                      resolve({
+                        fileIdentifier,
+                        width: img.width,
+                        height: img.height,
+                      });
+                    };
+                    img.onerror = () => resolve({ fileIdentifier });
+
+                    img.src = url;
+                  });
+                })
+                .then(({ fileIdentifier, width, height }) => {
+                  insertRemoteFile(editor, fileIdentifier, width, height);
+                });
+
+              // const id = uuidv4() as any;
+              // config.store.dispatch(addPastedFile({
+              //   doc: config.doc,
+              //   fileData: {
+              //     created: Date.now(),
+              //     dataURL: url as any,
+              //     id,
+              //     mimeType: file.type as any
+              //   }
+              // }));
+              // setImmediate(() => insertImage(editor, url, id))
+            };
+            if (type === "gif" && window.confirm("Optimize Gif?")) {
+              loadGif(file).then((optimizedGifB64) => {
+                dispatchNewDoc(optimizedGifB64);
+              });
+            } else {
+              reader.addEventListener("load", () => {
+                dispatchNewDoc(reader.result as any);
+              });
+              reader.readAsDataURL(file);
+            }
           }
         }
+      } else if (isImageUrl(text)) {
+        insertImage(editor, text);
+      } else {
+        insertData(data);
       }
-    } else if (isImageUrl(text)) {
-      insertImage(editor, text)
-    } else {
-      insertData(data)
-    }
-  }
-  return editor
-}
+    };
+    return editor;
+  };
 
-const IdLinkImage = (props: { imageId: string, className: string }) => {
-  const image = useAppSelector(state => state.files.uploadedFiles[props.imageId]);
+const IdLinkImage = (props: { imageId: string; className: string }) => {
+  const image = useAppSelector(
+    (state) => state.files.uploadedFiles[props.imageId]
+  );
   if (!image) {
-    console.error('image not found: ' + props.imageId)
+    console.error("image not found: " + props.imageId);
     return null;
   }
-  if (image.fileData.mimeType.startsWith('video')) {
-    return <video controls style={{ width: '100%' }}>
-      <source src={image.fileData.dataURL} type={image.fileData.mimeType}></source>
-      Your browser does not support the video tag.
-    </video>
+  if (image.fileData.mimeType.startsWith("video")) {
+    return (
+      <video controls style={{ width: "100%" }}>
+        <source
+          src={image.fileData.dataURL}
+          type={image.fileData.mimeType}
+        ></source>
+        Your browser does not support the video tag.
+      </video>
+    );
   }
-  return <img
-    alt="user uploaded"
-    src={image.fileData.dataURL}
-    className={props.className}
-  />
-}
+  return (
+    <img
+      alt="user uploaded"
+      src={image.fileData.dataURL}
+      className={props.className}
+    />
+  );
+};
 
 const useStyles = makeStyles((theme: any) => ({
   wrapper: {
-    width: '100%',
-    display: 'block',
-    position: 'relative',
-    '&::after': ({
+    width: "100%",
+    display: "block",
+    position: "relative",
+    "&::after": {
       content: '""',
-      display: 'block',
-      paddingTop: (props: { ratioStr: string }) => props.ratioStr // '70%'
-    })
+      display: "block",
+      paddingTop: (props: { ratioStr: string }) => props.ratioStr, // '70%'
+    },
   },
   main: {
-    position: 'absolute',
+    position: "absolute",
     top: 0,
     bottom: 0,
     right: 0,
-    left: 0
-  }
-  
-}))
-const RemoteFile = ({ attributes, children, element: _element }: RenderElementProps) => {
+    left: 0,
+  },
+}));
+const RemoteFile = ({
+  attributes,
+  children,
+  element: _element,
+}: RenderElementProps) => {
   const element: RemoteFileElement = _element as any;
-  
-  const editor = useSlateStatic()
-  const path = ReactEditor.findPath(editor, element)
 
-  const selected = useSelected()
-  const focused = useFocused()
+  const editor = useSlateStatic();
+  const path = ReactEditor.findPath(editor, element);
+
+  const selected = useSelected();
+  const focused = useFocused();
   const theme = useTheme();
-  const classes = useStyles({ ratioStr: `${((element.height as number) / (element.width as any)) * 100}%` })
+  const classes = useStyles({
+    ratioStr: `${((element.height as number) / (element.width as any)) * 100}%`,
+  });
 
   const remoteFileApi = useContext(remoteFilesApiContext);
-  const [state, setState] = useState<{
-    type: 'initial'
-  } | {
-    type: 'loaded',
-    base64: string,
-    mimeType: string
-  }>({ type: 'initial' });
+  const [state, setState] = useState<
+    | {
+        type: "initial";
+      }
+    | {
+        type: "loaded";
+        base64: string;
+        mimeType: string;
+      }
+  >({ type: "initial" });
 
   useEffect(() => {
-    const download = () => remoteFileApi.downloadFile(element.fileIdentifier).then(({ base64 }) => {
-      console.log({
-        base64
-      })
-      setState({
-        type: 'loaded',
-        base64,
-        mimeType: base64.split(';base64')[0]?.slice('data:'.length)
-      })
-    })
-    download().catch(err => {
+    const download = () =>
+      remoteFileApi.downloadFile(element.fileIdentifier).then(({ base64 }) => {
+        console.log({
+          base64,
+        });
+        setState({
+          type: "loaded",
+          base64,
+          mimeType: base64.split(";base64")[0]?.slice("data:".length),
+        });
+      });
+    download().catch((err) => {
       if (err.status === 409) {
         // lets try to recover the file if we deleted it
         remoteFileApi?.recoverFile?.(element.fileIdentifier).then(() => {
           // file was successfuylly recovered:
           download();
-
-        })
+        });
       }
-    })
-  }, [element.fileIdentifier, remoteFileApi])
-
+    });
+  }, [element.fileIdentifier, remoteFileApi]);
 
   const imageClassName = css`
     display: block;
     max-width: 100%;
-    box-shadow: ${selected && focused ? '0 0 0 3px ' + theme.palette.action.focus : 'none'};
+    box-shadow: ${selected && focused
+      ? "0 0 0 3px " + theme.palette.action.focus
+      : "none"};
   `;
-  
+
   return (
-    <span {...attributes}
+    <span
+      {...attributes}
       contentEditable={false}
       style={{
         userSelect: "none",
@@ -381,94 +441,118 @@ const RemoteFile = ({ attributes, children, element: _element }: RenderElementPr
           lockAspectRatio
           defaultSize={{
             width: element.width!,
-            height: 'auto'
+            height: "auto",
           }}
           onResizeStop={(e, direction, ref, d) => {
             const newWidth = parseInt(element.width as any) + d.width;
             const newHeight = parseInt(element.height as any) + d.height;
-            Transforms.setNodes(editor, { width: newWidth, height: newHeight }, { at: path });
+            Transforms.setNodes(
+              editor,
+              { width: newWidth, height: newHeight },
+              { at: path }
+            );
           }}
         >
-          {state.type === 'initial' ? (
+          {state.type === "initial" ? (
             <div className={imageClassName}>
               <div className={classes.wrapper}>
                 <div className={classes.main}>
-                  <Skeleton variant="rectangular" style={{ height: '100%', width: '100%' }} />
+                  <Skeleton
+                    variant="rectangular"
+                    style={{ height: "100%", width: "100%" }}
+                  />
                 </div>
               </div>
             </div>
-          ): state.mimeType.startsWith('image') ? (
+          ) : state.mimeType.startsWith("image") ? (
             <img
               alt="user uploaded"
               src={state.base64}
               className={imageClassName}
             />
-          ) : state.mimeType.startsWith('video') ? (
-            <video controls style={{ width: '100%' }}>
+          ) : state.mimeType.startsWith("video") ? (
+            <video controls style={{ width: "100%" }}>
               <source src={state.base64} type={state.mimeType}></source>
               Your browser does not support the video tag.
             </video>
-          ) : <p>File type not supported.</p>}
+          ) : (
+            <p>File type not supported.</p>
+          )}
 
-          {selected && focused && state.type === 'loaded' && <span
-            className={css`
+          {selected && focused && state.type === "loaded" && (
+            <span
+              className={css`
                 position: absolute;
                 top: 0.5em;
                 left: 0.5em;
-                background-color: ${theme.palette.background.paper}
+                background-color: ${theme.palette.background.paper};
               `}
-          >
-            {state.base64 && getImageSize(state.base64).toFixed(0)}{' KB'}
-          </span>}
-          {selected && focused && <span
-            className={css`
-              position: absolute;
-              top: 0.5em;
-              right: 0.5em;
-            `}
-          >
-            <div style={{ position: 'relative' }}>
-              <IconButton
-                style={{ backgroundColor: theme.palette.background.paper }}
-                size="small"
-                color="secondary"
-                onMouseDown={e => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                }}
-                onClick={(e) => {
-                  Transforms.removeNodes(editor, { at: path })
-                }}
-              >
-                <Clear fontSize="small" />
-              </IconButton>
-            </div>
-          </span>}
-          </Resizable>
+            >
+              {state.base64 && getImageSize(state.base64).toFixed(0)}
+              {" KB"}
+            </span>
+          )}
+          {selected && focused && (
+            <span
+              className={css`
+                position: absolute;
+                top: 0.5em;
+                right: 0.5em;
+              `}
+            >
+              <div style={{ position: "relative" }}>
+                <IconButton
+                  style={{ backgroundColor: theme.palette.background.paper }}
+                  size="small"
+                  color="secondary"
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                  }}
+                  onClick={(e) => {
+                    Transforms.removeNodes(editor, { at: path });
+                  }}
+                >
+                  <Clear fontSize="small" />
+                </IconButton>
+              </div>
+            </span>
+          )}
+        </Resizable>
       </div>
       {children}
     </span>
-  )
-}
+  );
+};
 
-const InlineImage = ({ attributes, children, element: _element }: RenderElementProps) => {
+const InlineImage = ({
+  attributes,
+  children,
+  element: _element,
+}: RenderElementProps) => {
   const element: ImageElement = _element as any;
-  const editor = useSlateStatic()
-  const path = ReactEditor.findPath(editor, element)
+  const editor = useSlateStatic();
+  const path = ReactEditor.findPath(editor, element);
 
-  const selected = useSelected()
-  const focused = useFocused()
+  const selected = useSelected();
+  const focused = useFocused();
   const theme = useTheme();
   const store = useStore<RootState>();
   const imageClassName = css`
     display: block;
     max-width: 100%;
     max-height: 20em;
-    box-shadow: ${selected && focused ? '0 0 0 3px ' + theme.palette.action.focus : 'none'};
+    box-shadow: ${selected && focused
+      ? "0 0 0 3px " + theme.palette.action.focus
+      : "none"};
   `;
-  const dataUrl = element.variant === 'id-link' ? store.getState().files.uploadedFiles[element.imageId]?.fileData?.dataURL : element.url
+  const dataUrl =
+    element.variant === "id-link"
+      ? store.getState().files.uploadedFiles[element.imageId]?.fileData?.dataURL
+      : element.url;
   return (
-    <span {...attributes}
+    <span
+      {...attributes}
       contentEditable={false}
       style={{
         userSelect: "none",
@@ -483,65 +567,66 @@ const InlineImage = ({ attributes, children, element: _element }: RenderElementP
           position: relative;
         `}
       >
-
-        {element.variant === 'id-link' ? (
-          <IdLinkImage
-            imageId={element.imageId}
-            className={imageClassName}
-          />
-        ) :
+        {element.variant === "id-link" ? (
+          <IdLinkImage imageId={element.imageId} className={imageClassName} />
+        ) : (
           <img
             alt="user uploaded"
             src={element.url}
             className={imageClassName}
-          />}
-        {selected && focused && <span
-          className={css`
+          />
+        )}
+        {selected && focused && (
+          <span
+            className={css`
               position: absolute;
               top: 0.5em;
               left: 0.5em;
-              background-color: ${theme.palette.background.paper}
+              background-color: ${theme.palette.background.paper};
             `}
-        >
-          {dataUrl && getImageSize(dataUrl).toFixed(0)}{' KB'}
-        </span>}
-        {selected && focused && <span
-          className={css`
-            position: absolute;
-            top: 0.5em;
-            right: 0.5em;
-          `}
-        >
-          <div style={{ position: 'relative' }}>
-            <IconButton
-              style={{ backgroundColor: theme.palette.background.paper }}
-              size="small"
-              color="secondary"
-              onMouseDown={e => {
-                e.preventDefault();
-                e.stopPropagation();
-              }}
-              onClick={(e) => {
-                Transforms.removeNodes(editor, { at: path })
-              }}
-            >
-              <Clear fontSize="small" />
-            </IconButton>
-          </div>
-        </span>}
+          >
+            {dataUrl && getImageSize(dataUrl).toFixed(0)}
+            {" KB"}
+          </span>
+        )}
+        {selected && focused && (
+          <span
+            className={css`
+              position: absolute;
+              top: 0.5em;
+              right: 0.5em;
+            `}
+          >
+            <div style={{ position: "relative" }}>
+              <IconButton
+                style={{ backgroundColor: theme.palette.background.paper }}
+                size="small"
+                color="secondary"
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                }}
+                onClick={(e) => {
+                  Transforms.removeNodes(editor, { at: path });
+                }}
+              >
+                <Clear fontSize="small" />
+              </IconButton>
+            </div>
+          </span>
+        )}
       </div>
       {children}
     </span>
-  )
-}
+  );
+};
 
 const isImageUrl = (url?: string) => {
-  if (!url) return false
-  if (!isUrl(url)) return false
-  const ext = new URL(url).pathname.split('.').pop()
-  return ext && imageExtensions.includes(ext)
-}
-
+  if (!url) return false;
+  if (!isUrl(url)) return false;
+  const ext = new URL(url).pathname.split(".").pop();
+  return ext && imageExtensions.includes(ext);
+};
 
 const isIos = /(iPad|iPhone|iPod)/g.test(navigator.userAgent);
 
@@ -652,8 +737,8 @@ const toggleBlock = (editor: Editor, format: BlockFormat) => {
     match: (n) =>
       LIST_TYPES.includes(
         !Editor.isEditor(n) &&
-        SlateElement.isElement(n) &&
-        ((n as any).type as any)
+          SlateElement.isElement(n) &&
+          ((n as any).type as any)
       ),
     split: true,
   });
@@ -688,77 +773,80 @@ const BlockButton: React.FC<{ format: BlockFormat; icon: JSX.Element }> = ({
 };
 
 const CREATE_PREFIX = 'create "';
-const MarkButton: React.FC<{ format: HotKeyFormat; icon: JSX.Element }> = React.memo(({
-  format,
-  icon,
-}) => {
-  const editor = useSlate();
-  const handleMouseDown = useCallback((event: React.MouseEvent<HTMLButtonElement>) => {
-    event.preventDefault();
-    toggleMark(editor, format);
-  }, [editor, format])
+const MarkButton: React.FC<{ format: HotKeyFormat; icon: JSX.Element }> =
+  React.memo(({ format, icon }) => {
+    const editor = useSlate();
+    const handleMouseDown = useCallback(
+      (event: React.MouseEvent<HTMLButtonElement>) => {
+        event.preventDefault();
+        toggleMark(editor, format);
+      },
+      [editor, format]
+    );
 
-  const markIsActive = isMarkActive(editor, format)
-  const theme = useTheme();
-  const style = useMemo(() => {
-    if (markIsActive) {
-      return {
-        color: theme.palette.primary.main
+    const markIsActive = isMarkActive(editor, format);
+    const theme = useTheme();
+    const style = useMemo(() => {
+      if (markIsActive) {
+        return {
+          color: theme.palette.primary.main,
+        };
       }
-    }
-    return undefined;
-  }, [markIsActive, theme])
+      return undefined;
+    }, [markIsActive, theme]);
 
-  return (
-    <IconButton
-      style={style}
-      size="small"
-      onMouseDown={handleMouseDown}
-    >
-      {icon}
-    </IconButton>
-  );
-});
+    return (
+      <IconButton style={style} size="small" onMouseDown={handleMouseDown}>
+        {icon}
+      </IconButton>
+    );
+  });
 
-const getToolbarStyle = (backgroundColor: string) => ({
-  justifyContent: "space-between",
-  zIndex: 1004,
-  paddingTop: "3px",
-  width: 'min(100%, 100vw)',
-  display: "flex",
-  backgroundColor,
-} as const);
+const getToolbarStyle = (backgroundColor: string) =>
+  ({
+    justifyContent: "space-between",
+    zIndex: 1004,
+    paddingTop: "3px",
+    width: "min(100%, 100vw)",
+    display: "flex",
+    backgroundColor,
+  } as const);
 
-const Toolbar = React.memo(({ title, doc }: { title: React.ReactNode, doc: string }) => {
-  const backgroundColor = useBackgroundColor();
-  const toolbarStyle = useMemo(() => getToolbarStyle(backgroundColor), [backgroundColor]);
-  return (
-    <div style={toolbarStyle}>
-      <div style={{ fontSize: "large", padding: "2px" }}>
-        <b>{title}</b>
-      </div>
-      <div
-        style={{
-          height: "100%",
-          padding: "2px",
-          display: "flex",
-          flexDirection: "row",
-        }}
-      >
-        <MarkButton format="bold" icon={<FormatBoldIcon />} />
-        <MarkButton format="italic" icon={<FormatItalicIcon />} />
-        <MarkButton format="underline" icon={<FormatUnderlinedIcon />} />
-        {/* <BlockButton format="heading-one" icon={<LooksOneIcon />} />
+const Toolbar = React.memo(
+  ({ title, doc }: { title: React.ReactNode; doc: string }) => {
+    const backgroundColor = useBackgroundColor();
+    const toolbarStyle = useMemo(
+      () => getToolbarStyle(backgroundColor),
+      [backgroundColor]
+    );
+    return (
+      <div style={toolbarStyle}>
+        <div style={{ fontSize: "large", padding: "2px" }}>
+          <b>{title}</b>
+        </div>
+        <div
+          style={{
+            height: "100%",
+            padding: "2px",
+            display: "flex",
+            flexDirection: "row",
+          }}
+        >
+          <MarkButton format="bold" icon={<FormatBoldIcon />} />
+          <MarkButton format="italic" icon={<FormatItalicIcon />} />
+          <MarkButton format="underline" icon={<FormatUnderlinedIcon />} />
+          {/* <BlockButton format="heading-one" icon={<LooksOneIcon />} />
     <BlockButton format="heading-two" icon={<LooksTwoIcon />} /> */}
-        <BlockButton
-          format="bulleted-list"
-          icon={<FormatListBulletedIcon />}
-        />
-        <UploadFileButton docName={doc} />
+          <BlockButton
+            format="bulleted-list"
+            icon={<FormatListBulletedIcon />}
+          />
+          <UploadFileButton docName={doc} />
+        </div>
       </div>
-    </div>
-  )
-})
+    );
+  }
+);
 
 export type RenderEditableRegion = (args: {
   EditableElement: JSX.Element;
@@ -787,23 +875,21 @@ export const useEditor = (doc: string) => {
   const store = useStore();
   const remoteFilesApi = useContext(remoteFilesApiContext);
   return useMemo(
-    () => withNodeId({ reuseId: false, idCreator: uuidv4 })(
-      withImages({
-        store,
-        doc,
-        remoteFilesApi
-      })(
-        withReferences(
-          withPortals(
-            withHistory(withReact(createEditor()))
-          ) as any
+    () =>
+      withNodeId({ reuseId: false, idCreator: uuidv4 })(
+        withImages({
+          store,
+          doc,
+          remoteFilesApi,
+        })(
+          withReferences(
+            withPortals(withHistory(withReact(createEditor()))) as any
+          )
         )
-      )
-    )
-    ,
+      ),
     [store, doc, remoteFilesApi]
   );
-}
+};
 
 const SlateAutocompleteEditorComponent = <Triggers extends string[]>(
   props: SlateTemplateEditorProps<Triggers>
@@ -828,30 +914,29 @@ const SlateAutocompleteEditorComponent = <Triggers extends string[]>(
   );
   const renderLeaf = useCallback((props) => <Leaf {...props} />, []);
   const editor = useEditor(docName);
-  const docDisplayName = useAppSelector(state => state.documents[docName]?.displayName);
+  const docDisplayName = useAppSelector(
+    (state) => state.documents[docName]?.displayName
+  );
   // editor.children = value is what sets Slate's value when the 'value' prop changes externally.
   // we use useMemo so this is updated before the child renders, so it's up to date
   // (if we used useEffect, we would have to trigger a second rendering after to show the changes.)
   useMemo(() => {
     editor.children = value;
-  }, [value, editor])
-
+  }, [value, editor]);
 
   const items = useMemo(() => {
     const precedingText = getPrecedingText(editor);
     const results = getSearchResults(search, trigger, precedingText);
     if (!search) {
-      const hash = hash_sum(Date.now()) // create a new random short hash id
+      const hash = hash_sum(Date.now()); // create a new random short hash id
       return [
         {
           id: CREATE_PREFIX + hash + '"',
           title: CREATE_PREFIX + hash + '"',
-        }
+        },
       ].concat(results);
     }
-    if (
-      results.some((r) => r.title === search || r.id === search)
-    ) {
+    if (results.some((r) => r.title === search || r.id === search)) {
       return results;
     }
     if (search === docName || search === docDisplayName) {
@@ -865,27 +950,30 @@ const SlateAutocompleteEditorComponent = <Triggers extends string[]>(
     ]);
   }, [getSearchResults, docName, search, trigger, editor, docDisplayName]);
 
-  const selectItem = useCallback((selected: string) => {
-    Transforms.select(editor, target!);
-    const isCreate = selected.startsWith(CREATE_PREFIX);
-    const docRefName = isCreate
-      ? selected.slice(CREATE_PREFIX.length, -1)
-      : selected;
-    if (trigger === "[[") {
-      if (isCreate) {
-        createDoc(docRefName);
+  const selectItem = useCallback(
+    (selected: string) => {
+      Transforms.select(editor, target!);
+      const isCreate = selected.startsWith(CREATE_PREFIX);
+      const docRefName = isCreate
+        ? selected.slice(CREATE_PREFIX.length, -1)
+        : selected;
+      if (trigger === "[[") {
+        if (isCreate) {
+          createDoc(docRefName);
+        }
+        insertReference(editor, docRefName);
+      } else if (trigger === "<<") {
+        if (isCreate) {
+          createDoc(docRefName);
+        }
+        insertPortal(editor, docRefName);
+      } else if (trigger === "{{") {
+        insertDrawing(editor, docRefName);
       }
-      insertReference(editor, docRefName);
-    } else if (trigger === "<<") {
-      if (isCreate) {
-        createDoc(docRefName);
-      }
-      insertPortal(editor, docRefName);
-    } else if (trigger === "{{") {
-      insertDrawing(editor, docRefName);
-    }
-    setTarget(null);
-  }, [target, createDoc, editor, trigger])
+      setTarget(null);
+    },
+    [target, createDoc, editor, trigger]
+  );
   const onKeyDown = useCallback(
     (event) => {
       for (const hotkey in HOTKEYS) {
@@ -945,26 +1033,24 @@ const SlateAutocompleteEditorComponent = <Triggers extends string[]>(
     (_value: Descendant[]) => {
       // this gets called on clicks! we need to only update on different values in order to prevent losing focus when changing focus between parents/children/sibling editors
       if (!deepEqual(_value, value)) {
-        let found = false
-        const newValue = traverseTransformNodes(
-          (_node) => {
-            const node = _node as CustomElement;
-            if (node.type === 'image' && node.variant === 'url' && node.imageId) {
-              const { variant, url, ...rest } = node
-              found = true;
-              return {
-                ...rest,
-                imageId: node.imageId as string,
-                variant: 'id-link'
-              }
-            }
-            return null;
+        let found = false;
+        const newValue = traverseTransformNodes((_node) => {
+          const node = _node as CustomElement;
+          if (node.type === "image" && node.variant === "url" && node.imageId) {
+            const { variant, url, ...rest } = node;
+            found = true;
+            return {
+              ...rest,
+              imageId: node.imageId as string,
+              variant: "id-link",
+            };
           }
-        )(_value)
+          return null;
+        })(_value);
         if (found) {
-          console.log('found')
+          console.log("found");
           // this causes reset of editor which we don't want while typing.
-          setValue(newValue)
+          setValue(newValue);
         } else {
           setValue(_value);
         }
@@ -992,10 +1078,16 @@ const SlateAutocompleteEditorComponent = <Triggers extends string[]>(
   );
   const handleBlur = useCallback((e) => setIsFocused(false), [setIsFocused]);
   const backgroundColor = useBackgroundColor();
-  const theme = useTheme()
+  const theme = useTheme();
 
-  const toolbarStyle = useMemo(() => getToolbarStyle(backgroundColor), [backgroundColor])
-  const renderToolbar = useCallback(() => <Toolbar title={title} doc={docName} />, [title, docName]);
+  const toolbarStyle = useMemo(
+    () => getToolbarStyle(backgroundColor),
+    [backgroundColor]
+  );
+  const renderToolbar = useCallback(
+    () => <Toolbar title={title} doc={docName} />,
+    [title, docName]
+  );
 
   const editable = props.renderEditableRegion({
     editor,
@@ -1011,22 +1103,23 @@ const SlateAutocompleteEditorComponent = <Triggers extends string[]>(
             !editor.selection ||
             (editor.selection && Range.isCollapsed(editor.selection))
           ) {
-            const leafEl = domRange.startContainer.parentElement!
+            const leafEl = domRange.startContainer.parentElement!;
 
-            if (leafEl.hasAttribute('data-slate-zero-width')) {
+            if (leafEl.hasAttribute("data-slate-zero-width")) {
               return;
             }
-            leafEl.getBoundingClientRect = domRange.getBoundingClientRect.bind(domRange)
+            leafEl.getBoundingClientRect =
+              domRange.getBoundingClientRect.bind(domRange);
             scrollIntoView(leafEl, {
               /**
                * TODO
                * Would be nice to scroll to/near start, but just under the sticky scrollbar
                */
-              scrollMode: 'if-needed',
+              scrollMode: "if-needed",
               // block: 'center', // block = start | center | end | nearest
-            })
+            });
             // @ts-expect-error an unorthodox delete D:
-            delete leafEl.getBoundingClientRect
+            delete leafEl.getBoundingClientRect;
           }
         }}
         onFocus={handleFocus}
@@ -1037,51 +1130,50 @@ const SlateAutocompleteEditorComponent = <Triggers extends string[]>(
         placeholder="Enter some text..."
       />
     ),
-  })
+  });
 
   return (
-    <div style={{ position: 'relative' }}>
+    <div style={{ position: "relative" }}>
       <Slate editor={editor} value={value} onChange={_handleChange}>
         <span
           style={{
-            display: isFocused ? 'none' : undefined,
+            display: isFocused ? "none" : undefined,
             position: "absolute",
             zIndex: 200,
             fontSize: "large",
             padding: "2px",
             paddingTop: "5px",
             backgroundColor,
-            width: '100%'
+            width: "100%",
           }}
         >
           <b>{title}</b>
         </span>
         {isIos ? (
-          <UniversalSticky
-            isFocused={isFocused}
-            renderToolbar={renderToolbar}
-          >
+          <UniversalSticky isFocused={isFocused} renderToolbar={renderToolbar}>
             {editable}
           </UniversalSticky>
-        ) : (<>
-          <span
-            onMouseDownCapture={(e) => {
-              e.preventDefault();
-            }}
-            style={{
-              ...toolbarStyle,
-              visibility: isFocused ? "visible" : "hidden",
-              position: "sticky",
-              paddingTop: "0px",
-              top: 0,
-              left: 0,
-              right: 0
-            }}
-          >
-            {renderToolbar()}
-          </span>
-          {editable}
-        </>)}
+        ) : (
+          <>
+            <span
+              onMouseDownCapture={(e) => {
+                e.preventDefault();
+              }}
+              style={{
+                ...toolbarStyle,
+                visibility: isFocused ? "visible" : "hidden",
+                position: "sticky",
+                paddingTop: "0px",
+                top: 0,
+                left: 0,
+                right: 0,
+              }}
+            >
+              {renderToolbar()}
+            </span>
+            {editable}
+          </>
+        )}
         {target && items.length > 0 && (
           <Portal>
             <Card
@@ -1098,9 +1190,16 @@ const SlateAutocompleteEditorComponent = <Triggers extends string[]>(
             >
               <List dense>
                 {items.map((item, i) => (
-                  <ListItem button dense key={item.id} onClick={() => selectItem(item.id)} style={{
-                    background: i === index ? theme.palette.action.focus : undefined,
-                  }}>
+                  <ListItem
+                    button
+                    dense
+                    key={item.id}
+                    onClick={() => selectItem(item.id)}
+                    style={{
+                      background:
+                        i === index ? theme.palette.action.focus : undefined,
+                    }}
+                  >
                     {item.title}
                   </ListItem>
                 ))}
@@ -1113,23 +1212,30 @@ const SlateAutocompleteEditorComponent = <Triggers extends string[]>(
   );
 };
 
-export const Leaf: React.FC<RenderLeafProps> = React.memo(({ attributes, children, leaf }) => {
-  if ((leaf as any).bold) {
-    children = <strong>{children}</strong>;
+export const Leaf: React.FC<RenderLeafProps> = React.memo(
+  ({ attributes, children, leaf }) => {
+    if ((leaf as any).bold) {
+      children = <strong>{children}</strong>;
+    }
+
+    if ((leaf as any).italic) {
+      children = <em>{children}</em>;
+    }
+
+    if ((leaf as any).underline) {
+      children = <u>{children}</u>;
+    }
+
+    return <span {...attributes}>{children}</span>;
   }
+);
 
-  if ((leaf as any).italic) {
-    children = <em>{children}</em>;
-  }
-
-  if ((leaf as any).underline) {
-    children = <u>{children}</u>;
-  }
-
-  return <span {...attributes}>{children}</span>;
-});
-
-const insertRemoteFile = (editor: CustomEditor, fileIdentifier: string, width?: number | string, height?: number | string) => {
+const insertRemoteFile = (
+  editor: CustomEditor,
+  fileIdentifier: string,
+  width?: number | string,
+  height?: number | string
+) => {
   const remoteFile: RemoteFileElement = {
     type: "remotefile",
     fileIdentifier,
@@ -1147,7 +1253,7 @@ const insertRemoteFile = (editor: CustomEditor, fileIdentifier: string, width?: 
 const insertImage = (editor: CustomEditor, url: string, imageId?: string) => {
   const image: ImageElement = {
     type: "image",
-    variant: 'url',
+    variant: "url",
     imageId,
     url,
     children: [{ text: "" }],
@@ -1249,67 +1355,98 @@ export const Element: React.FC<RenderElementProps & { parentDoc: string }> = (
       return (
         <div {...attributes}>
           <div contentEditable={false} style={{ userSelect: "none" }}>
-            <mergeContext.Consumer>{({ inMergeContext }) => inMergeContext ? (
-              <b>{'{{'}{drawingName}{'}}'}</b>
-            ) : (
-              <drawingOptionsContext.Consumer>
-                {({ renderDrawingOptions }) => (
-                  <TogglableEditableDrawing>
-                    {({ editable, setEditable }) => (
-                      <DrawingPage
-                        asSvg={!editable}
-                        preventScrollAndResize={!editable}
-                        excalidrawProps={
-                          editable
-                            ? {
-                              gridModeEnabled: true,
-                              zenModeEnabled: true,
+            <mergeContext.Consumer>
+              {({ inMergeContext }) =>
+                inMergeContext ? (
+                  <b>
+                    {"{{"}
+                    {drawingName}
+                    {"}}"}
+                  </b>
+                ) : (
+                  <drawingOptionsContext.Consumer>
+                    {({ renderDrawingOptions }) => (
+                      <TogglableEditableDrawing>
+                        {({ editable, setEditable }) => (
+                          <DrawingPage
+                            asSvg={isSingleFile() || !editable}
+                            preventScrollAndResize={!editable}
+                            excalidrawProps={
+                              editable
+                                ? {
+                                    gridModeEnabled: true,
+                                    zenModeEnabled: true,
+                                  }
+                                : {
+                                    zenModeEnabled: true,
+                                    viewModeEnabled: true,
+                                    gridModeEnabled: true,
+                                  }
                             }
-                            : {
-                              zenModeEnabled: true,
-                              viewModeEnabled: true,
-                              gridModeEnabled: true,
+                            title={
+                              <div
+                                style={{
+                                  display: "flex",
+                                  flexDirection: "row",
+                                }}
+                              >
+                                <Link
+                                  to={`/drawings/${
+                                    (element as any).drawingReference
+                                  }`}
+                                >
+                                  <DocTitle
+                                    id={(element as any).drawingReference}
+                                    type="drawings"
+                                  />
+                                </Link>
+                                <span style={{ marginLeft: ".25em" }}>
+                                  <HoverBacklinks
+                                    selectBacklinks={(state) =>
+                                      state.drawings[drawingName]
+                                        ?.backReferences
+                                    }
+                                    dontInclude={[props.parentDoc]}
+                                  />
+                                </span>
+                                {(isSmall && props.parentDoc) ||
+                                isSingleFile() ||
+                                !editable ? null : (
+                                  <span
+                                    style={{
+                                      marginLeft: ".25em",
+                                      marginTop: -4,
+                                    }}
+                                  >
+                                    <IconButton
+                                      size="small"
+                                      onClick={() => setEditable(!editable)}
+                                    >
+                                      <EditIcon
+                                        fontSize="small"
+                                        color={editable ? "primary" : undefined}
+                                      />
+                                    </IconButton>
+                                  </span>
+                                )}
+                                {editable &&
+                                  renderDrawingOptions?.({
+                                    drawingId: drawingName,
+                                  })}
+                              </div>
                             }
-                        }
-                        title={
-                          <div style={{ display: "flex", flexDirection: "row" }}>
-                            <Link
-                              to={`/drawings/${(element as any).drawingReference
-                                }`}
-                            >
-                              <DocTitle id={(element as any).drawingReference} type="drawings" />
-                            </Link>
-                            <span style={{ marginLeft: '.25em' }}>
-                              <HoverBacklinks
-                                selectBacklinks={state =>
-                                  state.drawings[drawingName]?.backReferences
-                                }
-                                dontInclude={[props.parentDoc]}
-                              />
-                            </span>
-                            {isSmall && props.parentDoc && !editable ? null : <span style={{ marginLeft: '.25em', marginTop: -4 }}><IconButton
-                              size="small"
-                              onClick={() => setEditable(!editable)}
-                            >
-                              <EditIcon
-                                fontSize="small"
-                                color={editable ? "primary" : undefined}
-                              />
-                            </IconButton></span>}
-                            {editable &&
-                              renderDrawingOptions?.({ drawingId: drawingName })}
-                          </div>
-                        }
-                        viewedFromParentDoc={props.parentDoc}
-                        drawingName={drawingName}
-                      />
+                            viewedFromParentDoc={props.parentDoc}
+                            drawingName={drawingName}
+                          />
+                        )}
+                      </TogglableEditableDrawing>
                     )}
-                  </TogglableEditableDrawing>
-                )}
-              </drawingOptionsContext.Consumer>
-            )}</mergeContext.Consumer>
+                  </drawingOptionsContext.Consumer>
+                )
+              }
+            </mergeContext.Consumer>
           </div>
-          <div style={{ display: 'none' }}>
+          <div style={{ display: "none" }}>
             {/* https://github.com/ianstormtaylor/slate/issues/3930 */}
             {children}
           </div>
@@ -1326,45 +1463,56 @@ export const Element: React.FC<RenderElementProps & { parentDoc: string }> = (
               border: "1px solid " + theme.palette.divider,
               margin: ".25em",
               padding: ".25em",
-              backgroundColor: colorOfPortal
+              backgroundColor: colorOfPortal,
               // overflow: "hidden",
             }}
           >
-            <mergeContext.Consumer>{({ inMergeContext }) => (inMergeContext ? (
-              // TODO: mergeContext can contain list of docs to merge, and we can make a #link to that doc if present
-              <b>{'<<'}{(element as any).portalReference}{'>>'}</b>
-            ) : (
-              <Page
-                title={
-                  <div style={{ display: "flex", flexDirection: "row" }}>
-                    <Link to={`/docs/${(element as any).portalReference}`}>
-                      <DocTitle id={(element as any).portalReference} type="documents" />
-                    </Link>
-                    <span style={{ marginLeft: '.25em' }}>
-                      <HoverBacklinks
-                        selectBacklinks={state =>
-                          state.documents[docName]?.backReferences
-                        }
-                        dontInclude={[props.parentDoc]}
-                      />
-                    </span>
-                  </div>
-                }
-                viewedFromParentDoc={props.parentDoc}
-                docName={docName}
-              />
-            ))}</mergeContext.Consumer>
+            <mergeContext.Consumer>
+              {({ inMergeContext }) =>
+                inMergeContext ? (
+                  // TODO: mergeContext can contain list of docs to merge, and we can make a #link to that doc if present
+                  <b>
+                    {"<<"}
+                    {(element as any).portalReference}
+                    {">>"}
+                  </b>
+                ) : (
+                  <Page
+                    title={
+                      <div style={{ display: "flex", flexDirection: "row" }}>
+                        <Link to={`/docs/${(element as any).portalReference}`}>
+                          <DocTitle
+                            id={(element as any).portalReference}
+                            type="documents"
+                          />
+                        </Link>
+                        <span style={{ marginLeft: ".25em" }}>
+                          <HoverBacklinks
+                            selectBacklinks={(state) =>
+                              state.documents[docName]?.backReferences
+                            }
+                            dontInclude={[props.parentDoc]}
+                          />
+                        </span>
+                      </div>
+                    }
+                    viewedFromParentDoc={props.parentDoc}
+                    docName={docName}
+                  />
+                )
+              }
+            </mergeContext.Consumer>
           </div>
-          <div style={{ display: 'none' }}>
+          <div style={{ display: "none" }}>
             {/* https://github.com/ianstormtaylor/slate/issues/3930 */}
             {children}
           </div>
         </div>
       );
-    case 'remotefile':
-      return <RemoteFile {...props} />
-    case 'image':
-      return <InlineImage {...props} />
+    case "remotefile":
+      return <RemoteFile {...props} />;
+    case "image":
+      return <InlineImage {...props} />;
     case "bulleted-list":
       return <ul {...attributes}>{children}</ul>;
     case "heading-one":
@@ -1377,21 +1525,32 @@ export const Element: React.FC<RenderElementProps & { parentDoc: string }> = (
       // return <p {...attributes}>{children}</p>;
       // using a span to simulate <p> to prevent validateDOMNesting error
       // when we have children to the <p> that are lists, etc.
-      return <span style={{
-        display: 'block',
-        marginLeft: 0,
-        marginRight: 0,
-      }} {...attributes}>{children}</span>;
+      return (
+        <span
+          style={{
+            display: "block",
+            marginLeft: 0,
+            marginRight: 0,
+          }}
+          {...attributes}
+        >
+          {children}
+        </span>
+      );
   }
 };
-const SlateAutocompleteEditorWithContext: <Triggers extends string[]>(props: SlateTemplateEditorProps<Triggers>) => JSX.Element = props => {
+const SlateAutocompleteEditorWithContext: <Triggers extends string[]>(
+  props: SlateTemplateEditorProps<Triggers>
+) => JSX.Element = (props) => {
   const currentNestingContext = useContext(nestedEditorContext);
   const newNestingContext = useMemo(() => {
-    return [props.docName, ...currentNestingContext]
-  }, [currentNestingContext, props.docName])
-  return <nestedEditorContext.Provider value={newNestingContext}>
-    <SlateAutocompleteEditorComponent {...props} />
-  </nestedEditorContext.Provider>
-}
+    return [props.docName, ...currentNestingContext];
+  }, [currentNestingContext, props.docName]);
+  return (
+    <nestedEditorContext.Provider value={newNestingContext}>
+      <SlateAutocompleteEditorComponent {...props} />
+    </nestedEditorContext.Provider>
+  );
+};
 const SlateAutocompleteEditor = React.memo(SlateAutocompleteEditorWithContext);
 export default SlateAutocompleteEditor;

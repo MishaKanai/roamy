@@ -21,6 +21,7 @@ import ExcalidrawSvgImage from "./ExcalidrawSvgImage";
 import useFiles from "./hooks/useFiles";
 import { THEME } from "@excalidraw/excalidraw";
 import DocTitle from "../components/EditableTitle";
+import isSingleFile from "../util/isSingleFile";
 
 interface DrawingPageProps {
   drawingName: string;
@@ -48,7 +49,7 @@ const DrawingPage: React.FC<DrawingPageProps> = React.memo(
     preventScrollAndResize = false,
     overrideDrawing,
     overrideFiles,
-    asSvg = false,
+    asSvg = isSingleFile(),
   }) => {
     const { excalidrawInstance, excalidrawRef } = useExcalidrawInstance();
     const dispatch = useRoamyDispatch();

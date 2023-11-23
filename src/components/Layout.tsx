@@ -25,6 +25,7 @@ import { useDebounce } from "use-debounce";
 import CreateFab from "./FabArea";
 import { useAppSelector } from "../store/hooks";
 import DocTitle from "./EditableTitle";
+import isSingleFile from "../util/isSingleFile";
 
 const drawerWidth = 220;
 
@@ -228,7 +229,7 @@ const ResponsiveDrawer = React.memo((props: ResponsiveDrawerProps) => {
       >
         <div>
           <div style={{ margin: "1em" }}>
-            <SelectedFileAutocomplete />
+            {!isSingleFile() && <SelectedFileAutocomplete />}
           </div>
           {fileLoaded && (
             <div>
@@ -257,38 +258,40 @@ const ResponsiveDrawer = React.memo((props: ResponsiveDrawerProps) => {
         {fileLoaded && <RecentlyOpenedList />}
         {false && fileLoaded && <RecentlyUpdatedList />}
       </div>
-      <div>
-        <List dense>
-          {!atHome && (
-            <ListItem dense button component={Link} to="/">
+      {!isSingleFile() && (
+        <div>
+          <List dense>
+            {!atHome && (
+              <ListItem dense button component={Link} to="/">
+                <ListItemIcon>
+                  <HomeIcon />
+                </ListItemIcon>
+                <ListItemText primary="Home" />
+              </ListItem>
+            )}
+            <ListItem dense button component={Link} to="/settings">
               <ListItemIcon>
-                <HomeIcon />
+                <SettingsIcon />
               </ListItemIcon>
-              <ListItemText primary="Home" />
+              <ListItemText primary="Settings" />
             </ListItem>
-          )}
-          <ListItem dense button component={Link} to="/settings">
-            <ListItemIcon>
-              <SettingsIcon />
-            </ListItemIcon>
-            <ListItemText primary="Settings" />
-          </ListItem>
-          <ListItem
-            dense
-            button
-            onClick={() => {
-              localStorage.clear();
-              sessionStorage.clear();
-              window.location.href = "/";
-            }}
-          >
-            <ListItemIcon>
-              <LogoutIcon />
-            </ListItemIcon>
-            <ListItemText primary="Logout" />
-          </ListItem>
-        </List>
-      </div>
+            <ListItem
+              dense
+              button
+              onClick={() => {
+                localStorage.clear();
+                sessionStorage.clear();
+                window.location.href = "/";
+              }}
+            >
+              <ListItemIcon>
+                <LogoutIcon />
+              </ListItemIcon>
+              <ListItemText primary="Logout" />
+            </ListItem>
+          </List>
+        </div>
+      )}
     </div>
   );
 
@@ -359,7 +362,7 @@ const ResponsiveDrawer = React.memo((props: ResponsiveDrawerProps) => {
         }}
       >
         {props.children}
-        {fileLoaded && !atHome && <CreateFab />}
+        {fileLoaded && !atHome && !isSingleFile() && <CreateFab />}
       </Box>
     </Box>
   );

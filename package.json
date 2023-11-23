@@ -70,6 +70,7 @@
   "scripts": {
     "start": "vite",
     "build": "tsc && vite build && yarn build-single-file",
+    "dev-single-file": "VITE_APP_SINGLEFILE=true vite build && mv build-single-file/index.html public/singlefile.txt && npx rimraf build-single-file",
     "build-single-file": "VITE_APP_SINGLEFILE=true vite build && mv build-single-file/index.html build/singlefile.txt && npx rimraf build-single-file",
     "serve": "vite preview",
     "prepare": "yarn build-lib",
