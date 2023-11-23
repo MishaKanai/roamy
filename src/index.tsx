@@ -1,14 +1,15 @@
 import React from "react";
 import ReactDOM from "react-dom";
 import "./index.css";
+import "setimmediate";
 import App from "./App";
-import "@fontsource/courier-prime"
-import { createTheme, ThemeProvider } from '@mui/material/styles';
+import "@fontsource/courier-prime";
+import { createTheme, ThemeProvider } from "@mui/material/styles";
 import reportWebVitals from "./reportWebVitals";
 import { Provider } from "react-redux";
 import configureStore from "./store/configureStore";
 import { PersistGate } from "redux-persist/integration/react";
-import CssBaseline from '@mui/material/CssBaseline';
+import CssBaseline from "@mui/material/CssBaseline";
 import { DropboxRemoteFilesProvider } from "./RemoteFiles/implementations/dropboxRemoteFiles";
 
 const extraComponents: any = {
@@ -16,47 +17,50 @@ const extraComponents: any = {
     styleOverrides: {
       paper: {
         boxShadow: "none",
-        backgroundColor: 'transparent',
-        backgroundImage: 'none'
-      }
-    }
-  }
-}
+        backgroundColor: "transparent",
+        backgroundImage: "none",
+      },
+    },
+  },
+};
 
 const globalTheme = createTheme({
   palette: {
-    mode: 'dark',
+    mode: "dark",
   },
   typography: {
     fontFamily: "Courier Prime",
   },
-})
-const theme = createTheme({
-  components: {
-    MuiFab: {
-      styleOverrides: {
-        root: {
-          textTransform: 'capitalize'
-        }
-      }
+});
+const theme = createTheme(
+  {
+    components: {
+      MuiFab: {
+        styleOverrides: {
+          root: {
+            textTransform: "capitalize",
+          },
+        },
+      },
+      MuiButton: {
+        styleOverrides: {
+          root: {
+            textTransform: "capitalize",
+          },
+        },
+      },
+      MuiListItemText: {
+        styleOverrides: {
+          root: {
+            overflowWrap: "break-word",
+          },
+        },
+      },
+      ...extraComponents,
     },
-    MuiButton: {
-      styleOverrides: {
-        root: {
-          textTransform: 'capitalize'
-        }
-      }
-    },
-    MuiListItemText: {
-      styleOverrides: {
-        root: {
-          overflowWrap: 'break-word'
-        }
-      }
-    },
-    ...extraComponents,
-  }
-}, globalTheme)
+  },
+  globalTheme
+);
 
 const { store, persistor } = configureStore();
 

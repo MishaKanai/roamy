@@ -1,23 +1,19 @@
-import React, {
-  useCallback,
-  useContext,
-  useEffect,
-  useMemo,
-} from "react";
+import React, { useCallback, useContext, useEffect, useMemo } from "react";
 import { useParams } from "react-router-dom";
-import {
-  updateDrawing as updateDrawingAction,
-} from "./store/globalActions";
+import { updateDrawing as updateDrawingAction } from "./store/globalActions";
 import { DrawingData } from "./store/domain";
 import HoverBacklinks from "../components/AnchoredPopper";
 import { Excalidraw } from "@excalidraw/excalidraw";
 import { Resizable, ResizeCallback } from "re-resizable";
-import { BinaryFiles, ExcalidrawProps } from "@excalidraw/excalidraw/types/types";
+import {
+  BinaryFiles,
+  ExcalidrawProps,
+} from "@excalidraw/excalidraw/types/types";
 import { drawingOptionsContext } from "../extension/drawingOptionsContext";
 import { useRoamyDispatch } from "../SlateGraph/Page";
 import { useTheme } from "@mui/material";
 import * as excalidrawRegistry from "./registry";
-import uniqueId from 'lodash/uniqueId';
+import uniqueId from "lodash/uniqueId";
 import { RootState } from "../store/configureStore";
 import { useDrawingPage } from "./hooks/useDrawingPage";
 import useExcalidrawInstance from "./hooks/useExcalidrawInstance";
@@ -52,18 +48,19 @@ const DrawingPage: React.FC<DrawingPageProps> = React.memo(
     preventScrollAndResize = false,
     overrideDrawing,
     overrideFiles,
-    asSvg = false
+    asSvg = false,
   }) => {
     const { excalidrawInstance, excalidrawRef } = useExcalidrawInstance();
     const dispatch = useRoamyDispatch();
-    const [_currDrawing, setDrawing, submitBufferedStateToStore] = useDrawingPage(drawingName, {
-      viewedFromParentDoc,
-    });
+    const [_currDrawing, setDrawing, submitBufferedStateToStore] =
+      useDrawingPage(drawingName, {
+        viewedFromParentDoc,
+      });
     const currDrawing = overrideDrawing ?? _currDrawing;
     const _files = useFiles(drawingName);
     const files = overrideFiles ?? _files;
 
-    const isDark = useTheme().palette.mode === 'dark';
+    const isDark = useTheme().palette.mode === "dark";
 
     const initialData = useMemo(() => {
       return {
@@ -71,7 +68,7 @@ const DrawingPage: React.FC<DrawingPageProps> = React.memo(
         files,
         appState: {
           viewBackgroundColor: "transparent",
-          theme: isDark ? THEME.DARK : THEME.LIGHT
+          theme: isDark ? THEME.DARK : THEME.LIGHT,
         },
       };
     }, [currDrawing.elements, files, isDark]);
@@ -79,12 +76,16 @@ const DrawingPage: React.FC<DrawingPageProps> = React.memo(
     const registryId = useMemo(() => uniqueId(drawingName), [drawingName]);
     useEffect(() => {
       if (excalidrawInstance) {
-        excalidrawRegistry.register(drawingName, registryId, excalidrawInstance);
+        excalidrawRegistry.register(
+          drawingName,
+          registryId,
+          excalidrawInstance
+        );
       }
       return () => {
         excalidrawRegistry.unregister(drawingName, registryId);
-      }
-    }, [drawingName, registryId, excalidrawInstance])
+      };
+    }, [drawingName, registryId, excalidrawInstance]);
 
     const drawing = (
       <Excalidraw
@@ -96,7 +97,6 @@ const DrawingPage: React.FC<DrawingPageProps> = React.memo(
     );
 
     const handleMouseUp = useCallback(() => {
-
       const appState = excalidrawInstance?.getAppState();
       // only trigger sync for mouse up from drawing
       // i.e. don't sync if there's no selected selements when we mouse up.
@@ -107,45 +107,80 @@ const DrawingPage: React.FC<DrawingPageProps> = React.memo(
         elements: excalidrawInstance?.getSceneElements(),
       });
       submitBufferedStateToStore();
-    }, [drawingName, registryId, excalidrawInstance, submitBufferedStateToStore])
+    }, [
+      drawingName,
+      registryId,
+      excalidrawInstance,
+      submitBufferedStateToStore,
+    ]);
 
     const handleKeyUp = useCallback(() => {
       excalidrawRegistry.triggerSync(drawingName, registryId, {
         elements: excalidrawInstance?.getSceneElements(),
       });
       submitBufferedStateToStore();
-    }, [drawingName, registryId, excalidrawInstance, submitBufferedStateToStore])
+    }, [
+      drawingName,
+      registryId,
+      excalidrawInstance,
+      submitBufferedStateToStore,
+    ]);
 
     const currHeight = currDrawing.size.height;
     const currWidth = currDrawing.size.width;
     useEffect(() => {
       setImmediate(() => {
         excalidrawInstance?.refresh();
-      })
-    }, [currHeight, currWidth, excalidrawInstance])
-    const handleResizeStop: ResizeCallback = useCallback((e, direction, ref, d) => {
-      dispatch(
-        updateDrawingAction(drawingName, {
-          size: {
-            height: currHeight + d.height,
-            width: currWidth + d.width,
-          },
-        })
-      );
-    }, [dispatch, currHeight, currWidth, drawingName])
+      });
+    }, [currHeight, currWidth, excalidrawInstance]);
+    const handleResizeStop: ResizeCallback = useCallback(
+      (e, direction, ref, d) => {
+        dispatch(
+          updateDrawingAction(drawingName, {
+            size: {
+              height: currHeight + d.height,
+              width: currWidth + d.width,
+            },
+          })
+        );
+      },
+      [dispatch, currHeight, currWidth, drawingName]
+    );
     return (
       <>
-        {asSvg ? <div>
-          <div>{title}</div>
-          <ExcalidrawSvgImage width={"min(" + currDrawing.size.width + 'px, calc(100% - 2em))'} drawingName={drawingName} />
-        </div> : null}
-        <span style={asSvg ? { display: 'none' } : undefined} onKeyUp={handleKeyUp} onMouseUp={handleMouseUp} onBlur={handleKeyUp}>
+        {asSvg ? (
+          <div>
+            <div>{title}</div>
+            <ExcalidrawSvgImage
+              width={"min(" + currDrawing.size.width + "px, calc(100% - 2em))"}
+              drawingName={drawingName}
+            />
+          </div>
+        ) : null}
+        <span
+          style={asSvg ? { display: "none" } : undefined}
+          onKeyUp={handleKeyUp}
+          onMouseUp={handleMouseUp}
+          onBlur={handleKeyUp}
+        >
           <div style={{ position: "relative" }}>
-            <div style={{ position: "absolute", top: viewedFromParentDoc ? -24 : -34, left: 0 }}>
+            <div
+              style={{
+                position: "absolute",
+                top: viewedFromParentDoc ? -24 : -34,
+                left: 0,
+              }}
+            >
               {title}
             </div>
           </div>
-          <div style={{ marginTop: '1.25em', paddingTop: '1em', paddingBottom: '1em' }}>
+          <div
+            style={{
+              marginTop: "1.25em",
+              paddingTop: "1em",
+              paddingBottom: "1em",
+            }}
+          >
             <div style={{ position: "relative" }}>
               {preventScrollAndResize && (
                 // a perfect overlay of the drawing area

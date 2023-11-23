@@ -1,4 +1,5 @@
 import React from "react";
+import "setimmediate";
 import { History } from "history";
 import { ConnectedRouter } from "connected-react-router";
 import { Switch, Route, useRouteMatch } from "react-router-dom";
@@ -6,7 +7,7 @@ import { PageRoute } from "./SlateGraph/Page";
 import { history } from "./store/configureStore";
 import { DrawingPageRoute } from "./Excalidraw/Page";
 import AccessControlledPage from "./dropbox/Components/AccessControlledPage";
-import Box from '@mui/material/Box';
+import Box from "@mui/material/Box";
 import Demo from "./GraphVis/Demo";
 import Home from "./components/Home";
 import CollectionSettings from "./dropbox/Components/CollectionSettings";
@@ -32,7 +33,7 @@ const Docs = React.memo(() => {
 const Drawings = React.memo(() => {
   const match = useRouteMatch();
   return (
-    <div style={{ paddingTop: '1.5em' }}>
+    <div style={{ paddingTop: "1.5em" }}>
       <Switch>
         <Route path={`${match.path}/:drawingName`}>
           <DrawingPageRoute />
@@ -47,28 +48,28 @@ const Drawings = React.memo(() => {
 export const getApp = (history: History) => {
   function App() {
     return (
-      <div style={{ height: '100%' }}>
+      <div style={{ height: "100%" }}>
         <ConnectedRouter history={history}>
           <AccessControlledPage>
-          <div style={{ height: '100%' }}>
-            <Switch>
-              <Route path="/docs">
-                <Docs />
-              </Route>
-              <Route path="/drawings">
-                <Drawings />
-              </Route>
-              <Route path="/graph">
-                <Demo />
-              </Route>
-              <Route path="/settings">
-                <CollectionSettings />
-              </Route>
-              <Route path="/">
-                <Home />
-              </Route>
-            </Switch>
-          </div>
+            <div style={{ height: "100%" }}>
+              <Switch>
+                <Route path="/docs">
+                  <Docs />
+                </Route>
+                <Route path="/drawings">
+                  <Drawings />
+                </Route>
+                <Route path="/graph">
+                  <Demo />
+                </Route>
+                <Route path="/settings">
+                  <CollectionSettings />
+                </Route>
+                <Route path="/">
+                  <Home />
+                </Route>
+              </Switch>
+            </div>
           </AccessControlledPage>
         </ConnectedRouter>
       </div>

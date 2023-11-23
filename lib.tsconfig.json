@@ -1,5 +1,9 @@
 {
-  "files": ["src/App.tsx", "src/store/createRootReducer.ts", "src/extension/drawingOptionsContext.tsx"],
+  "files": [
+    "src/App.tsx",
+    "src/store/createRootReducer.ts",
+    "src/extension/drawingOptionsContext.tsx"
+  ],
   "compilerOptions": {
     "target": "es5",
     "lib": ["dom", "dom.iterable", "esnext"],
@@ -18,7 +22,8 @@
     "jsx": "react-jsx",
     "declaration": true,
     "noEmit": false,
-    "outDir": "lib/"
+    "outDir": "lib/",
+    "types": ["vite/client", "vite-plugin-svgr/client"]
   },
   "include": ["src/node_modules.d.ts"]
 }
