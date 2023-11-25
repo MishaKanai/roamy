@@ -525,7 +525,7 @@ const RemoteFile = ({
   );
 };
 
-const InlineImage = ({
+const InlineImageOrVideo = ({
   attributes,
   children,
   element: _element,
@@ -569,6 +569,10 @@ const InlineImage = ({
       >
         {element.variant === "id-link" ? (
           <IdLinkImage imageId={element.imageId} className={imageClassName} />
+        ) : element.url?.startsWith?.("data:video/mp4") ? (
+          <video style={{ width: "100%" }} controls>
+            <source src={element.url} type="video/mp4" />
+          </video>
         ) : (
           <img
             alt="user uploaded"
@@ -1511,7 +1515,7 @@ export const Element: React.FC<RenderElementProps & { parentDoc: string }> = (
     case "remotefile":
       return <RemoteFile {...props} />;
     case "image":
-      return <InlineImage {...props} />;
+      return <InlineImageOrVideo {...props} />;
     case "bulleted-list":
       return <ul {...attributes}>{children}</ul>;
     case "heading-one":

@@ -1,9 +1,9 @@
-import { configureStore, isPlain } from '@reduxjs/toolkit'
-import { $CombinedState } from '@reduxjs/toolkit';
+import { configureStore, isPlain } from "@reduxjs/toolkit";
+import { $CombinedState } from "@reduxjs/toolkit";
 import storageSession from "redux-persist/lib/storage/session";
 import { routerMiddleware } from "connected-react-router";
 import createRootReducer from "./createRootReducer";
-import { createBrowserHistory } from "history";
+import { createBrowserHistory, createHashHistory } from "history";
 import { DropboxAuth, Dropbox, DropboxResponseError } from "dropbox";
 import parseQueryString from "../dropbox/util/parseQueryString";
 import debounce from "lodash/debounce";
@@ -11,7 +11,14 @@ import { DrawingDocuments } from "../Excalidraw/store/drawingsSlice";
 import { SlateDocuments } from "../SlateGraph/store/slateDocumentsSlice";
 import { mergeTriggeredAction } from "../dropbox/resolveMerge/store/actions";
 import upload from "../dropbox/util/upload";
-import { AuthorizedCollectionState, CollectionState, syncDebounceStart, syncFailure, syncStart, syncSuccess } from "../dropbox/store/activeCollectionSlice";
+import {
+  AuthorizedCollectionState,
+  CollectionState,
+  syncDebounceStart,
+  syncFailure,
+  syncStart,
+  syncSuccess,
+} from "../dropbox/store/activeCollectionSlice";
 import getDropboxAuth from "../dropbox/singletons/getDropboxAuth";
 import {
   persistStore,
@@ -22,17 +29,17 @@ import {
   PERSIST,
   PURGE,
   REGISTER,
-} from 'redux-persist';
-import { authSuccess } from '../dropbox/store/globalActions';
-import { UploadedFiles } from '../UploadedFiles/uploadedFilesSlice';
-import uniq from 'lodash/uniq';
-import produce from 'immer';
-import { RemoteFiles } from '../RemoteFiles/remoteFilesSlice';
+} from "redux-persist";
+import { authSuccess } from "../dropbox/store/globalActions";
+import { UploadedFiles } from "../UploadedFiles/uploadedFilesSlice";
+import uniq from "lodash/uniq";
+import produce from "immer";
+import { RemoteFiles } from "../RemoteFiles/remoteFilesSlice";
+import isSingleFile from "../util/isSingleFile";
 
 /**
  * https://redux-toolkit.js.org/usage/usage-guide#use-with-redux-persist
  */
-
 
 const REDIRECT_URI = window.location.protocol + "//" + window.location.host;
 const dbxAuth = getDropboxAuth();
@@ -48,27 +55,31 @@ function hasRedirectedFromAuth() {
   return !!getCodeFromUrl();
 }
 
-export const history = createBrowserHistory();
+export const history = isSingleFile()
+  ? createHashHistory()
+  : createBrowserHistory();
 
 const persistConfig = {
   key: "root",
   storage: storageSession,
-  blacklist: ['dbx', 'files']
+  blacklist: ["dbx", "files"],
 };
 
 /**
- * 
+ *
  * previously, had to make this type explicit for the export as lib:
  * by adding
  * const persistedReducer: Reducer<RootState & PersistPartial, RootAction> =
  * we got rid of
- * 
+ *
  * Exported variable 'configureStore' has or is using name '$CombinedState' from external module
  * "/node_modules/redux/index" but cannot be named
  */
 
-const persistedReducer =
-  persistReducer(persistConfig, createRootReducer(history));
+const persistedReducer = persistReducer(
+  persistConfig,
+  createRootReducer(history)
+);
 
 /*
   TODO
@@ -82,7 +93,7 @@ const persistedReducer =
 */
 const syncDropboxToStore = (
   auth: DropboxAuth,
-  store: ReturnType<typeof appConfigureStore>['store']
+  store: ReturnType<typeof appConfigureStore>["store"]
 ) => {
   const docsPendingUpload = new Set<string>();
   const drawingsPendingUpload = new Set<string>();
@@ -106,7 +117,7 @@ const syncDropboxToStore = (
     prevDrawings = state.drawings;
     prevFiles = state.files.uploadedFiles;
     prevRemoteFiles = state.files.remoteFiles;
-  }
+  };
 
   let setPrevDocuments = (documents: SlateDocuments) => {
     prevDocuments = documents;
@@ -116,19 +127,18 @@ const syncDropboxToStore = (
   };
   let setPrevFiles = (files: UploadedFiles) => {
     prevFiles = files;
-  }
+  };
   let setPrevRemoteFiles = (remoteFiles: RemoteFiles) => {
     prevRemoteFiles = remoteFiles;
-  }
-  
+  };
+
   let documentsChanged = (documents: SlateDocuments) =>
     documents !== prevDocuments;
   let drawingsChanged = (drawings: DrawingDocuments) =>
     drawings !== prevDrawings;
-  let filesChanged = (files: UploadedFiles) =>
-    files !== prevFiles;
+  let filesChanged = (files: UploadedFiles) => files !== prevFiles;
   let remoteFilesChanged = (remoteFiles: RemoteFiles) =>
-    remoteFiles !== prevRemoteFiles
+    remoteFiles !== prevRemoteFiles;
   const isAuthorized = (
     authState: CollectionState
   ): authState is AuthorizedCollectionState => {
@@ -138,17 +148,22 @@ const syncDropboxToStore = (
     const state = store.getState();
     const auth = state.dbx.auth;
     const collection = state.dbx.collection;
-    if (auth.state !== 'authorized' || collection.state !== 'authorized') {
+    if (auth.state !== "authorized" || collection.state !== "authorized") {
       return;
     }
 
     const rev = collection.rev!;
     const filePath = collection.selectedFilePath;
-    const { documents, drawings, files: { uploadedFiles } } = state;
+    const {
+      documents,
+      drawings,
+      files: { uploadedFiles },
+    } = state;
 
     store.dispatch(syncStart());
 
-    upload(dbx,
+    upload(
+      dbx,
       filePath,
       rev,
       documents,
@@ -158,41 +173,51 @@ const syncDropboxToStore = (
       docsPendingUpload,
       drawingsPendingUpload,
       filesPendingUpload,
-      remoteFilesPendingDeletion)
-      .then(async ({response, revisions }) => {
+      remoteFilesPendingDeletion
+    )
+      .then(async ({ response, revisions }) => {
         store.dispatch(syncSuccess(response.result.rev, revisions));
       })
       .catch((error: DropboxResponseError<unknown>) => {
         const collection = store.getState().dbx.collection;
-        if (collection.state === 'authorized' && collection.rev !== rev) {
-          throw new Error('This shouldn\'t happen if we prevent debouncedSync calls while a request is currently pending' +
-            ' and simply mark a flag to do an extra sync after success.');
+        if (collection.state === "authorized" && collection.rev !== rev) {
+          throw new Error(
+            "This shouldn't happen if we prevent debouncedSync calls while a request is currently pending" +
+              " and simply mark a flag to do an extra sync after success."
+          );
         } else {
           store.dispatch(syncFailure(error));
           if (error.status === 409) {
-            store.dispatch(mergeTriggeredAction({ documents, drawings }))
+            store.dispatch(mergeTriggeredAction({ documents, drawings }));
           }
         }
       });
-  }
-  const debouncedSync = debounce(
-    sync,
-    1000
-  );
+  };
+  const debouncedSync = debounce(sync, 1000);
   let performFollowupSyncWhenRevChanges: string | null = null;
 
   let prevCollection: string | null = null;
   store.subscribe(() => {
-    const { dbx: { collection }, documents, files: { uploadedFiles, remoteFiles }, drawings, merge } = store.getState();
-    if (merge.state === 'conflict') {
+    const {
+      dbx: { collection },
+      documents,
+      files: { uploadedFiles, remoteFiles },
+      drawings,
+      merge,
+    } = store.getState();
+    if (merge.state === "conflict") {
       // prevent sync here, because we replace documents while the merge is in the conflict state,
       // causing a debounced sync to begin, before we get to change our auth.rev,
       // leading to auth.rev !== rev in the sync function.
       return;
     }
-    
-    if (isAuthorized(collection) && collection.selectedFilePath && collection.selectedFilePath !== prevCollection) {
-      reset()
+
+    if (
+      isAuthorized(collection) &&
+      collection.selectedFilePath &&
+      collection.selectedFilePath !== prevCollection
+    ) {
+      reset();
       prevCollection = collection.selectedFilePath;
     }
     /**
@@ -205,59 +230,73 @@ const syncDropboxToStore = (
       isAuthorized(collection) &&
       collection.selectedFilePath &&
       collection.rev &&
-      (
-        (performFollowupSyncWhenRevChanges && performFollowupSyncWhenRevChanges !== collection.rev) ||
-        (documentsChanged(documents) || drawingsChanged(drawings) || filesChanged(uploadedFiles) || remoteFilesChanged(remoteFiles))
-        // lets not sync based on remoteFile change - that can wait until the document creates a change.
-        // just ensure we remove the entry in remoteFiles first (before the dispatch of the changed doc is sent.)
-      )
+      ((performFollowupSyncWhenRevChanges &&
+        performFollowupSyncWhenRevChanges !== collection.rev) ||
+        documentsChanged(documents) ||
+        drawingsChanged(drawings) ||
+        filesChanged(uploadedFiles) ||
+        remoteFilesChanged(remoteFiles))
+      // lets not sync based on remoteFile change - that can wait until the document creates a change.
+      // just ensure we remove the entry in remoteFiles first (before the dispatch of the changed doc is sent.)
     ) {
       performFollowupSyncWhenRevChanges = null;
       if (documentsChanged(documents)) {
         // calculate different documents
-        const docKeysChanged = Object.entries(documents).filter(([docName, doc]) => {
-          return doc.documentHash !== prevDocuments[docName]?.documentHash ||
-            doc.backReferencesHash !== prevDocuments[docName]?.backReferencesHash ||
-            doc.displayName !== prevDocuments[docName]?.displayName
-        }).map(([docName]) => docName);
-        docKeysChanged.forEach(dk => {
+        const docKeysChanged = Object.entries(documents)
+          .filter(([docName, doc]) => {
+            return (
+              doc.documentHash !== prevDocuments[docName]?.documentHash ||
+              doc.backReferencesHash !==
+                prevDocuments[docName]?.backReferencesHash ||
+              doc.displayName !== prevDocuments[docName]?.displayName
+            );
+          })
+          .map(([docName]) => docName);
+        docKeysChanged.forEach((dk) => {
           docsPendingUpload.add(dk);
-        })
+        });
       }
       if (drawingsChanged(drawings)) {
         // calculate different documents
-        const drawingKeysChanged = Object.entries(drawings).filter(([drawingName, drawing]) => {
-          return drawing.drawingHash !== prevDrawings[drawingName]?.drawingHash ||
-            drawing.backReferencesHash !== prevDrawings[drawingName]?.backReferencesHash ||
-            drawing.displayName !== prevDrawings[drawingName]?.displayName
-        }).map(([drawingName]) => drawingName);
-        drawingKeysChanged.forEach(dk => {
+        const drawingKeysChanged = Object.entries(drawings)
+          .filter(([drawingName, drawing]) => {
+            return (
+              drawing.drawingHash !== prevDrawings[drawingName]?.drawingHash ||
+              drawing.backReferencesHash !==
+                prevDrawings[drawingName]?.backReferencesHash ||
+              drawing.displayName !== prevDrawings[drawingName]?.displayName
+            );
+          })
+          .map(([drawingName]) => drawingName);
+        drawingKeysChanged.forEach((dk) => {
           drawingsPendingUpload.add(dk);
-        })
+        });
       }
       if (filesChanged(uploadedFiles)) {
-        const filesAddedOrRemoved = uniq(Object.keys({ ...uploadedFiles, ...prevFiles })).filter(k => {
+        const filesAddedOrRemoved = uniq(
+          Object.keys({ ...uploadedFiles, ...prevFiles })
+        ).filter((k) => {
           return !uploadedFiles[k] || !prevFiles[k];
-        })
-        filesAddedOrRemoved.forEach(fid => {
+        });
+        filesAddedOrRemoved.forEach((fid) => {
           filesPendingUpload.add(fid);
-        })
+        });
       }
       if (remoteFilesChanged(remoteFiles)) {
         Object.entries(prevRemoteFiles).forEach(([fileId, { count }]) => {
           if (count && !remoteFiles?.[fileId]?.count) {
             remoteFilesPendingDeletion.add(fileId);
           }
-        })
+        });
         // undo/prevent pending deletions that were undone during debounce
         Object.entries(remoteFiles).forEach(([fileId, { count }]) => {
           if (count === 0) {
             return;
           }
           if (remoteFilesPendingDeletion.has(fileId)) {
-            remoteFilesPendingDeletion.delete(fileId)
+            remoteFilesPendingDeletion.delete(fileId);
           }
-        })
+        });
       }
       setPrevDocuments(documents);
       setPrevDrawings(drawings);
@@ -271,7 +310,7 @@ const syncDropboxToStore = (
         store.dispatch(syncDebounceStart());
       }
       // debouncedSync(auth.rev, auth.selectedFilePath, documents, drawings);
-      if (collection.syncing?._type === 'request_pending') {
+      if (collection.syncing?._type === "request_pending") {
         /*
         If we start attempting debounced syncs we might get into a conflict revision-wise
         where we get a revision #, start a fetch, a previous sync succeeds, and our current request hits the backend
@@ -288,89 +327,124 @@ const syncDropboxToStore = (
 
 const appConfigureStore = () => {
   const devTools: any = {
-    'actionSanitizer': (action: any) => {
-      if (action['payload']?.['fileData']?.['dataUrl']) {
+    actionSanitizer: (action: any) => {
+      if (action["payload"]?.["fileData"]?.["dataUrl"]) {
         return produce(action, (draft: any) => {
-          draft['payload']['fileData']['dataUrl'] = '<<LONG_B64>>';
-        })
+          draft["payload"]["fileData"]["dataUrl"] = "<<LONG_B64>>";
+        });
       }
       return action;
     },
     stateSanitizer: (state: any) => {
-      const uploadedFiles = Object.fromEntries(Object.entries(state['files']['uploadedFiles']).map(([k, v]) => {
-        const { fileData: { dataURL, ...restInner } = ({} as any), ...restOuter } = (v as any) = {} as any;
-        return [k, {
-          ...restOuter,
-          fileData: {
-            ...restInner,
-            dataURL: '<<LONG_B64>>'
-          }
-        }]
-      })) as any;
+      const uploadedFiles = Object.fromEntries(
+        Object.entries(state["files"]["uploadedFiles"]).map(([k, v]) => {
+          const {
+            fileData: { dataURL, ...restInner } = {} as any,
+            ...restOuter
+          } = ((v as any) = {} as any);
+          return [
+            k,
+            {
+              ...restOuter,
+              fileData: {
+                ...restInner,
+                dataURL: "<<LONG_B64>>",
+              },
+            },
+          ];
+        })
+      ) as any;
 
       return {
         ...state,
-        uploadedFiles
-      }
-    }
+        uploadedFiles,
+      };
+    },
   };
-  let store = configureStore({
-    devTools,
-    reducer: persistedReducer,
-    middleware: (getDefaultMiddleware) =>
-      getDefaultMiddleware({
-        serializableCheck: {
-          isSerializable: (value: unknown) => isPlain(value) || value instanceof Date || value instanceof DropboxResponseError || value instanceof Error,
-          ignoredActions: [FLUSH, REHYDRATE, PAUSE, PERSIST, PURGE, REGISTER],
-        },
-      }).concat(routerMiddleware(history)),
-    
-  })
-  let persistor = persistStore(store as any, undefined, () => {
-    if (hasRedirectedFromAuth()) {
-      // redirect to authed page OR set app to authorized.
-      dbxAuth.setCodeVerifier(window.sessionStorage.getItem("codeVerifier")!);
-      dbxAuth
-        .getAccessTokenFromCode(REDIRECT_URI, getCodeFromUrl())
-        .then((response) => {
-          const accessToken = (response.result as any).access_token;
-          
-          const refreshToken = (response.result as any).refresh_token;
-          dbxAuth.setAccessToken(accessToken);
-          dbxAuth.setRefreshToken(refreshToken);
+  const singleFileState = (window as any)["INITIAL_STATE"];
 
-          store.dispatch(authSuccess(accessToken, refreshToken));
-          
-          syncDropboxToStore(dbxAuth, store);
+  const isSerializable = (value: unknown) =>
+    isPlain(value) ||
+    value instanceof Date ||
+    value instanceof DropboxResponseError ||
+    value instanceof Error;
+
+  const ignoredActions = [FLUSH, REHYDRATE, PAUSE, PERSIST, PURGE, REGISTER];
+  let store =
+    isSingleFile() && singleFileState
+      ? configureStore({
+          devTools,
+          reducer: createRootReducer(history),
+          middleware: (getDefaultMiddleware) =>
+            getDefaultMiddleware({
+              serializableCheck: {
+                isSerializable,
+                ignoredActions,
+              },
+            }).concat(routerMiddleware(history)),
+          preloadedState: singleFileState,
         })
-        .catch((error) => {
-          console.error(error);
+      : configureStore({
+          devTools,
+          reducer: persistedReducer,
+          middleware: (getDefaultMiddleware) =>
+            getDefaultMiddleware({
+              serializableCheck: {
+                isSerializable,
+                ignoredActions,
+              },
+            }).concat(routerMiddleware(history)),
         });
-    } else {
-      const initialState = store.getState();
-      if (initialState.dbx.auth.state !== "authorized") {
-        console.log('not authorized')
-        return;
-      }
-      const accessToken = initialState.dbx.auth.accessToken;
-      const refreshToken = initialState.dbx.auth.refreshToken;
-      const dbxAuth = getDropboxAuth();
-      dbxAuth.setRefreshToken(refreshToken);
-      dbxAuth.setAccessToken(accessToken);
 
-      syncDropboxToStore(dbxAuth, store);      
-    }
-  });
+  let persistor = isSingleFile()
+    ? undefined
+    : persistStore(store as any, undefined, () => {
+        if (hasRedirectedFromAuth()) {
+          // redirect to authed page OR set app to authorized.
+          dbxAuth.setCodeVerifier(
+            window.sessionStorage.getItem("codeVerifier")!
+          );
+          dbxAuth
+            .getAccessTokenFromCode(REDIRECT_URI, getCodeFromUrl())
+            .then((response) => {
+              const accessToken = (response.result as any).access_token;
+
+              const refreshToken = (response.result as any).refresh_token;
+              dbxAuth.setAccessToken(accessToken);
+              dbxAuth.setRefreshToken(refreshToken);
+
+              store.dispatch(authSuccess(accessToken, refreshToken));
+
+              syncDropboxToStore(dbxAuth, store);
+            })
+            .catch((error) => {
+              console.error(error);
+            });
+        } else {
+          const initialState = store.getState();
+          if (initialState.dbx.auth.state !== "authorized") {
+            console.log("not authorized");
+            return;
+          }
+          const accessToken = initialState.dbx.auth.accessToken;
+          const refreshToken = initialState.dbx.auth.refreshToken;
+          const dbxAuth = getDropboxAuth();
+          dbxAuth.setRefreshToken(refreshToken);
+          dbxAuth.setAccessToken(accessToken);
+
+          syncDropboxToStore(dbxAuth, store);
+        }
+      });
   return { store, persistor };
 };
 export default appConfigureStore;
 
-type Store = ReturnType<typeof appConfigureStore>['store'];
+type Store = ReturnType<typeof appConfigureStore>["store"];
 /**
  * https://stackoverflow.com/a/72030202
  */
-export type RootState = ReturnType<Store['getState']> & {
+export type RootState = ReturnType<Store["getState"]> & {
   readonly [$CombinedState]?: undefined;
 };
 
-export type AppDispatch = Store['dispatch']
+export type AppDispatch = Store["dispatch"];

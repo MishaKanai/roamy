@@ -26,6 +26,7 @@ import CreateFab from "./FabArea";
 import { useAppSelector } from "../store/hooks";
 import DocTitle from "./EditableTitle";
 import isSingleFile from "../util/isSingleFile";
+import ExportButton from "../Export/components/ExportButton";
 
 const drawerWidth = 220;
 
@@ -231,7 +232,7 @@ const ResponsiveDrawer = React.memo((props: ResponsiveDrawerProps) => {
           <div style={{ margin: "1em" }}>
             {!isSingleFile() && <SelectedFileAutocomplete />}
           </div>
-          {fileLoaded && (
+          {(fileLoaded || isSingleFile()) && (
             <div>
               <List dense>
                 <ListItem dense button component={Link} to="/docs">
@@ -261,6 +262,11 @@ const ResponsiveDrawer = React.memo((props: ResponsiveDrawerProps) => {
       {!isSingleFile() && (
         <div>
           <List dense>
+            {fileLoaded && (
+              <ListItem>
+                <ExportButton />
+              </ListItem>
+            )}
             {!atHome && (
               <ListItem dense button component={Link} to="/">
                 <ListItemIcon>
