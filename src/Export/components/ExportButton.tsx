@@ -88,8 +88,8 @@ const ExportButton = () => {
     });
 
     const jsonScript = (() => {
-      const { documents, drawings } = newState as RootState;
-      const exportState = { documents, drawings };
+      const { documents, drawings, files } = newState as RootState;
+      const exportState = { documents, drawings, files };
 
       return `<script>
                 window.INITIAL_STATE = ${JSON.stringify(exportState)};
