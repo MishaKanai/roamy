@@ -1,23 +1,24 @@
 import { createReducer } from "@reduxjs/toolkit";
-import { authSuccess } from "./globalActions";
+import { authSuccess, loggedOut } from "./globalActions";
 
 export type AuthorizedAuthState = {
-    state: 'authorized',
-    accessToken: string,
-    refreshToken: string,
-}
-export type DropboxAuthState = {
-    state: 'not_authorized',
-} | AuthorizedAuthState
+  state: "authorized";
+};
+export type DropboxAuthState =
+  | {
+      state: "not_authorized";
+    }
+  | AuthorizedAuthState;
 
 const authReducer = createReducer(
-    { state: 'not_authorized' } as DropboxAuthState,
-    (builder) => {
-        builder.addCase(authSuccess, (state, { payload: { accessToken, refreshToken }}) => ({
-            state: 'authorized',
-            accessToken,
-            refreshToken,
-        }))
-    }
-)
+  { state: "not_authorized" } as DropboxAuthState,
+  (builder) => {
+    builder.addCase(authSuccess, () => ({
+      state: "authorized",
+    }));
+    builder.addCase(loggedOut, () => ({
+      state: "not_authorized",
+    }));
+  }
+);
 export default authReducer;

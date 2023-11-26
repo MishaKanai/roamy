@@ -31,12 +31,13 @@ import {
   REGISTER,
   Persistor,
 } from "redux-persist";
-import { authSuccess } from "../dropbox/store/globalActions";
+import { authSuccess, loggedOut } from "../dropbox/store/globalActions";
 import { UploadedFiles } from "../UploadedFiles/uploadedFilesSlice";
 import uniq from "lodash/uniq";
 import produce from "immer";
 import { RemoteFiles } from "../RemoteFiles/remoteFilesSlice";
 import isSingleFile from "../util/isSingleFile";
+import TokenManager from "../dropbox/util/storage";
 
 /**
  * https://redux-toolkit.js.org/usage/usage-guide#use-with-redux-persist
@@ -151,49 +152,11 @@ const syncDropboxToStore = (
     const auth = state.dbx.auth;
     const collection = state.dbx.collection;
 
-    const localStorageAuthorized = (() => {
-      // TODO: can memoize this so it doesn't JSON parse every time.
-      /**
-       *
-       * What else:
-       *
-       * 1. Logging out of one tab: Should we log out of all other tabs? YES. that's what logging out means.
-       * 2. What if one tab has unsaved work?
-       *    - When network is lost in regular flow
-       *    - and now we want to log off, and there's unsaved changes.
-       *        + Warn about unsaved changes.
-       *        + (2) Offer to store unsaved changes offline, for recover later.
-       *
-       *
-       *
-       */
-
-      /**
-       * !TODO! (important one.)
-       *
-       * Need to pull auth stuff _out_ of redux state, probably.
-       * We can only be logged into a single site at one time. And that should be pull lazily as possible, so logging into one tab affects
-       * all others.
-       *
-       * Think about how this will affect the architecture.
-       */
-      const auth = localStorage.getItem("persist:auth");
-      if (!auth) {
-        return false;
-      }
-      try {
-        const storedAuth = JSON.parse(auth);
-        return JSON.parse(storedAuth.state) === "authorized";
-      } catch (e) {
-        console.error(e);
-        return false;
-      }
-    })();
-    if (
-      auth.state !== "authorized" ||
-      collection.state !== "authorized" ||
-      !localStorageAuthorized
-    ) {
+    if (!TokenManager.getTokens().present) {
+      store.dispatch(loggedOut());
+      return;
+    }
+    if (auth.state !== "authorized" || collection.state !== "authorized") {
       return;
     }
 
@@ -458,7 +421,11 @@ const appConfigureStore = () => {
               dbxAuth.setAccessToken(accessToken);
               dbxAuth.setRefreshToken(refreshToken);
 
-              store.dispatch(authSuccess(accessToken, refreshToken));
+              TokenManager.setTokens({
+                accessToken,
+                refreshToken,
+              });
+              store.dispatch(authSuccess());
 
               syncDropboxToStore(dbxAuth, store);
             })
@@ -471,8 +438,14 @@ const appConfigureStore = () => {
             console.log("not authorized");
             return;
           }
-          const accessToken = initialState.dbx.auth.accessToken;
-          const refreshToken = initialState.dbx.auth.refreshToken;
+          // read this stuff from localStorage.
+          const tokens = TokenManager.getTokens();
+          if (!tokens.present) {
+            console.log("Still not authorized.");
+            store.dispatch(loggedOut());
+            return;
+          }
+          const { accessToken, refreshToken } = tokens;
           const dbxAuth = getDropboxAuth();
           dbxAuth.setRefreshToken(refreshToken);
           dbxAuth.setAccessToken(accessToken);
