@@ -1,5 +1,5 @@
 import { createReducer } from "@reduxjs/toolkit";
-import { authSuccess, loggedOut } from "./globalActions";
+import { authSuccess, logOut } from "./globalActions";
 
 export type AuthorizedAuthState = {
   state: "authorized";
@@ -16,7 +16,7 @@ const authReducer = createReducer(
     builder.addCase(authSuccess, () => ({
       state: "authorized",
     }));
-    builder.addCase(loggedOut, () => ({
+    builder.addCase(logOut, () => ({
       state: "not_authorized",
     }));
   }

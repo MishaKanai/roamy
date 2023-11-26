@@ -31,7 +31,7 @@ function doAuth() {
       true
     )
     .then((authUrl) => {
-      window.sessionStorage.clear();
+      // window.sessionStorage.clear(); <- doing this erases our stored 'current collection' info.
       window.sessionStorage.setItem("codeVerifier", dbxAuth.getCodeVerifier());
       window.location.href = authUrl as string;
     })

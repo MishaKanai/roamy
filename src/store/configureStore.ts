@@ -1,7 +1,7 @@
 import { configureStore, isPlain } from "@reduxjs/toolkit";
 import { $CombinedState } from "@reduxjs/toolkit";
 import storageSession from "redux-persist/lib/storage/session";
-import { routerMiddleware } from "connected-react-router";
+import { push, replace, routerMiddleware } from "connected-react-router";
 import createRootReducer from "./createRootReducer";
 import { createBrowserHistory, createHashHistory } from "history";
 import { DropboxAuth, Dropbox, DropboxResponseError } from "dropbox";
@@ -30,14 +30,16 @@ import {
   PURGE,
   REGISTER,
   Persistor,
+  PersistedState,
 } from "redux-persist";
-import { authSuccess, loggedOut } from "../dropbox/store/globalActions";
+import { authSuccess, logOut } from "../dropbox/store/globalActions";
 import { UploadedFiles } from "../UploadedFiles/uploadedFilesSlice";
 import uniq from "lodash/uniq";
 import produce from "immer";
 import { RemoteFiles } from "../RemoteFiles/remoteFilesSlice";
 import isSingleFile from "../util/isSingleFile";
 import TokenManager from "../dropbox/util/storage";
+import createAuthSyncMiddleware from "./middleware/createAuthSyncMiddleware";
 
 /**
  * https://redux-toolkit.js.org/usage/usage-guide#use-with-redux-persist
@@ -153,7 +155,7 @@ const syncDropboxToStore = (
     const collection = state.dbx.collection;
 
     if (!TokenManager.getTokens().present) {
-      store.dispatch(loggedOut());
+      store.dispatch(logOut(false));
       return;
     }
     if (auth.state !== "authorized" || collection.state !== "authorized") {
@@ -401,7 +403,7 @@ const appConfigureStore = () => {
               isSerializable,
               ignoredActions,
             },
-          }).concat(routerMiddleware(history)),
+          }).concat(routerMiddleware(history), createAuthSyncMiddleware()),
       });
 
   let persistor = isSingleFile()
@@ -425,7 +427,7 @@ const appConfigureStore = () => {
                 accessToken,
                 refreshToken,
               });
-              store.dispatch(authSuccess());
+              store.dispatch(authSuccess(true));
 
               syncDropboxToStore(dbxAuth, store);
             })
@@ -442,7 +444,7 @@ const appConfigureStore = () => {
           const tokens = TokenManager.getTokens();
           if (!tokens.present) {
             console.log("Still not authorized.");
-            store.dispatch(loggedOut());
+            store.dispatch(logOut(false));
             return;
           }
           const { accessToken, refreshToken } = tokens;
@@ -451,6 +453,14 @@ const appConfigureStore = () => {
           dbxAuth.setAccessToken(accessToken);
 
           syncDropboxToStore(dbxAuth, store);
+        }
+
+        const currentPath = store.getState().router.location.pathname;
+        const windowPath = window.location.pathname;
+
+        // Only navigate if the current route is different from the persisted route
+        if (currentPath !== windowPath) {
+          store.dispatch(replace(currentPath));
         }
       });
 

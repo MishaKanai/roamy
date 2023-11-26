@@ -45,7 +45,7 @@ const lf = tabId
 if (tabId) {
   localforage.getItem("tabs", (err, val) => {
     let tabList = { [tabId]: true };
-    if (val) {
+    if (val && typeof val === "object") {
       tabList = { ...val, ...tabList };
     }
     localforage.setItem("tabs", tabList);

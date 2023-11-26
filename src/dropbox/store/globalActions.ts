@@ -1,17 +1,27 @@
 import { createAction } from "@reduxjs/toolkit";
 import { Revisions } from "./activeCollectionSlice";
 
-export const authSuccess = createAction("dropbox/authSuccess", () => {
-  return {
-    payload: {},
-  };
-});
+export const authSuccess = createAction(
+  "dropbox/authSuccess",
+  (propagate: boolean = false) => {
+    return {
+      payload: {
+        propagate,
+      },
+    };
+  }
+);
 
-export const loggedOut = createAction("dropbox/loggedOut", () => {
-  return {
-    payload: {},
-  };
-});
+export const logOut = createAction(
+  "dropbox/loggedOut",
+  (clearAllStorage: boolean) => {
+    return {
+      payload: {
+        clearAllStorage,
+      },
+    };
+  }
+);
 
 export const selectFilePath = createAction(
   "dropbox/selectFilePath",

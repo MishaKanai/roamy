@@ -27,7 +27,8 @@ import { useAppSelector } from "../store/hooks";
 import DocTitle from "./EditableTitle";
 import isSingleFile from "../util/isSingleFile";
 import ExportButton from "../Export/components/ExportButton";
-import localforage from "localforage";
+import { useStore } from "react-redux";
+import { logOut } from "../dropbox/store/globalActions";
 
 const drawerWidth = 220;
 
@@ -211,6 +212,7 @@ const ResponsiveDrawer = React.memo((props: ResponsiveDrawerProps) => {
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen);
   };
+  const store = useStore();
 
   const drawer = (
     <div
@@ -286,33 +288,7 @@ const ResponsiveDrawer = React.memo((props: ResponsiveDrawerProps) => {
               dense
               button
               onClick={() => {
-                // dispatch logout event to all other tabs which aren't in 'offline' mode (TODO) ?
-
-                localStorage.clear();
-                sessionStorage.clear();
-                indexedDB
-                  .databases()
-                  .then((dbs) => {
-                    dbs.forEach(
-                      (db) => db.name && indexedDB.deleteDatabase(db.name)
-                    );
-                    return Promise.allSettled(
-                      dbs.flatMap(({ name }) => {
-                        if (!name) return [];
-                        return [
-                          new Promise<void>((res, rej) => {
-                            const DBDeleteRequest =
-                              indexedDB.deleteDatabase(name);
-                            DBDeleteRequest.onerror = (err) => rej(err);
-                            DBDeleteRequest.onsuccess = (event) => res();
-                          }),
-                        ];
-                      })
-                    );
-                  })
-                  .finally(() => {
-                    window.location.href = "/";
-                  });
+                store.dispatch(logOut(true));
               }}
             >
               <ListItemIcon>
