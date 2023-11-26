@@ -29,6 +29,7 @@ import {
   PERSIST,
   PURGE,
   REGISTER,
+  Persistor,
 } from "redux-persist";
 import { authSuccess } from "../dropbox/store/globalActions";
 import { UploadedFiles } from "../UploadedFiles/uploadedFilesSlice";
@@ -91,6 +92,7 @@ const persistedReducer = persistReducer(
   - if a merge conflict occurs, we download the entire remote, and automerge/prompt.
 
 */
+
 const syncDropboxToStore = (
   auth: DropboxAuth,
   store: ReturnType<typeof appConfigureStore>["store"]
@@ -148,7 +150,50 @@ const syncDropboxToStore = (
     const state = store.getState();
     const auth = state.dbx.auth;
     const collection = state.dbx.collection;
-    if (auth.state !== "authorized" || collection.state !== "authorized") {
+
+    const localStorageAuthorized = (() => {
+      // TODO: can memoize this so it doesn't JSON parse every time.
+      /**
+       *
+       * What else:
+       *
+       * 1. Logging out of one tab: Should we log out of all other tabs? YES. that's what logging out means.
+       * 2. What if one tab has unsaved work?
+       *    - When network is lost in regular flow
+       *    - and now we want to log off, and there's unsaved changes.
+       *        + Warn about unsaved changes.
+       *        + (2) Offer to store unsaved changes offline, for recover later.
+       *
+       *
+       *
+       */
+
+      /**
+       * !TODO! (important one.)
+       *
+       * Need to pull auth stuff _out_ of redux state, probably.
+       * We can only be logged into a single site at one time. And that should be pull lazily as possible, so logging into one tab affects
+       * all others.
+       *
+       * Think about how this will affect the architecture.
+       */
+      const auth = localStorage.getItem("persist:auth");
+      if (!auth) {
+        return false;
+      }
+      try {
+        const storedAuth = JSON.parse(auth);
+        return JSON.parse(storedAuth.state) === "authorized";
+      } catch (e) {
+        console.error(e);
+        return false;
+      }
+    })();
+    if (
+      auth.state !== "authorized" ||
+      collection.state !== "authorized" ||
+      !localStorageAuthorized
+    ) {
       return;
     }
 
@@ -205,6 +250,7 @@ const syncDropboxToStore = (
       drawings,
       merge,
     } = store.getState();
+
     if (merge.state === "conflict") {
       // prevent sync here, because we replace documents while the merge is in the conflict state,
       // causing a debounced sync to begin, before we get to change our auth.rev,
@@ -370,31 +416,30 @@ const appConfigureStore = () => {
     value instanceof Error;
 
   const ignoredActions = [FLUSH, REHYDRATE, PAUSE, PERSIST, PURGE, REGISTER];
-  let store =
-    isSingleFile() && singleFileState
-      ? configureStore({
-          devTools,
-          reducer: createRootReducer(history),
-          middleware: (getDefaultMiddleware) =>
-            getDefaultMiddleware({
-              serializableCheck: {
-                isSerializable,
-                ignoredActions,
-              },
-            }).concat(routerMiddleware(history)),
-          preloadedState: singleFileState,
-        })
-      : configureStore({
-          devTools,
-          reducer: persistedReducer,
-          middleware: (getDefaultMiddleware) =>
-            getDefaultMiddleware({
-              serializableCheck: {
-                isSerializable,
-                ignoredActions,
-              },
-            }).concat(routerMiddleware(history)),
-        });
+  let store = isSingleFile()
+    ? configureStore({
+        devTools,
+        reducer: createRootReducer(history),
+        middleware: (getDefaultMiddleware) =>
+          getDefaultMiddleware({
+            serializableCheck: {
+              isSerializable,
+              ignoredActions,
+            },
+          }).concat(routerMiddleware(history)),
+        preloadedState: singleFileState,
+      })
+    : configureStore({
+        devTools,
+        reducer: persistedReducer,
+        middleware: (getDefaultMiddleware) =>
+          getDefaultMiddleware({
+            serializableCheck: {
+              isSerializable,
+              ignoredActions,
+            },
+          }).concat(routerMiddleware(history)),
+      });
 
   let persistor = isSingleFile()
     ? undefined
@@ -435,6 +480,7 @@ const appConfigureStore = () => {
           syncDropboxToStore(dbxAuth, store);
         }
       });
+
   return { store, persistor };
 };
 export default appConfigureStore;

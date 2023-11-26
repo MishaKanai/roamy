@@ -131,18 +131,6 @@ const UploadFileButton = ({ docName }: { docName: string }) => {
               .then(({ width, height, fileIdentifier }) => {
                 insertRemoteFile(editor, fileIdentifier, width, height);
               });
-
-            // const id = uuidv4() as any;
-            // store.dispatch(addPastedFile({
-            //   doc: docName,
-            //   fileData: {
-            //     created: Date.now(),
-            //     dataURL: base64 as any,
-            //     id,
-            //     mimeType: file.type as any
-            //   }
-            // }));
-            // setImmediate(() => insertImage(editor, base64, id))
           };
 
           if (file.type === "image/gif" && window.confirm("Optimize Gif?")) {
@@ -151,6 +139,14 @@ const UploadFileButton = ({ docName }: { docName: string }) => {
             });
             return;
           }
+          /**
+           * TODO
+           *
+           * if file.type === video/mp4 && window.confirm("Optimize video?")
+           *   use global dropdown for confirmation.
+           * optimize/compress mp4 in-browser, scale down to 520p, 720p, 1024p options
+           *
+           */
 
           const reader = new FileReader();
           reader.readAsDataURL(file as Blob);
