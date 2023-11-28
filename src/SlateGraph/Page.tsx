@@ -143,7 +143,13 @@ const ReadOnlyPage: React.FC<PageProps> = (props) => {
     (state) =>
       props.currDoc ?? state.documents[props.docName]?.document ?? initialDoc
   );
-  return <ReadOnlyDoc docName={props.docName} document={currDoc} />;
+  return (
+    <ReadOnlyDoc
+      title={props.title}
+      docName={props.docName}
+      document={currDoc}
+    />
+  );
 };
 
 const Page: React.FC<PageProps> = isSingleFile() ? ReadOnlyPage : EditablePage;
@@ -166,8 +172,6 @@ export const PageRoute = React.memo(() => {
       >
         <DocTitle editable id={docName} type="documents" />
       </b>
-      &nbsp;
-      {/* &nbsp;&nbsp;<SyncStatus />&nbsp; */}
       <span style={{ position: "relative" }}>
         <span style={{ position: "absolute", bottom: 0, whiteSpace: "nowrap" }}>
           <HoverBacklinks key={docName} selectBacklinks={selectBacklinks} />
