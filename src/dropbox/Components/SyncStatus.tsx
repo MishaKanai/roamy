@@ -1,10 +1,9 @@
-import { Box, CircularProgress } from "@mui/material";
+import { CircularProgress } from "@mui/material";
 import { DropboxResponseError } from "dropbox";
 import React from "react";
 import WarnIcon from "@mui/icons-material/Warning";
 import "./TypingIndicator.css";
 import { useAppSelector } from "../../store/hooks";
-import { css } from "@emotion/css";
 
 export const TypingIndicator: React.FC<{}> = () => (
   <div className="typing">
@@ -15,17 +14,17 @@ export const TypingIndicator: React.FC<{}> = () => (
 );
 
 interface SyncStatusProps {
-  spinnerSize: number;
+  spinnerSize?: number;
 }
 const SyncStatus: React.FC<SyncStatusProps> = ({ spinnerSize = 22 }) => {
   const collection = useAppSelector((state) => state.dbx.collection);
   const renderLogin = () => null;
-  const renderDebouncePending = () => <TypingIndicator />;
-  const renderRequestPending = () => (
+  const renderTypingIndicator = () => <TypingIndicator />;
+  const renderSpinner = (opacity: number) => (
     <span style={{ display: "block", margin: "auto", height: spinnerSize }}>
       <CircularProgress
-        style={{ opacity: ".5" }}
-        color="secondary"
+        style={{ opacity: "" + opacity }}
+        color="primary"
         thickness={6}
         size={spinnerSize}
       />
@@ -42,41 +41,13 @@ const SyncStatus: React.FC<SyncStatusProps> = ({ spinnerSize = 22 }) => {
       : !collection.syncing || collection.syncing._type === "initial"
       ? null
       : collection.syncing._type === "debounced_pending"
-      ? renderDebouncePending()
+      ? renderSpinner(0.25) // renderDebouncePending()
       : collection.syncing._type === "request_pending"
-      ? renderRequestPending()
+      ? renderSpinner(0.5)
       : collection.syncing._type === "failure"
       ? renderFailure(collection.syncing.error, collection.syncing.date)
       : renderSuccess(collection.syncing.date);
-  return (
-    <div
-      style={{
-        position: "relative",
-        height: spinnerSize,
-      }}
-    >
-      <div
-        className={css`
-          margin: 0;
-          position: absolute;
-          top: 50%;
-          -ms-transform: translateY(-50%);
-          transform: translateY(-50%);
-        `}
-      >
-        <div
-          style={{
-            width: spinnerSize,
-            display: "flex",
-            flexDirection: "row",
-            justifyContent: "center",
-          }}
-        >
-          <div>{syncElem}</div>
-        </div>
-      </div>
-    </div>
-  );
+  return syncElem;
 };
 
 export default SyncStatus;

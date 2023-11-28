@@ -30,7 +30,6 @@ import ExportButton from "../Export/components/ExportButton";
 import { useStore } from "react-redux";
 import { logOut } from "../dropbox/store/globalActions";
 import SyncStatus from "../dropbox/Components/SyncStatus";
-import { css } from "@emotion/css";
 
 const drawerWidth = 220;
 
@@ -362,7 +361,7 @@ const ResponsiveDrawer = React.memo((props: ResponsiveDrawerProps) => {
         component="main"
         sx={{
           flexGrow: 1,
-          pl: 3,
+          pl: 4,
           width: { xs: "100%", sm: `calc(100% - ${drawerWidth}px)` },
           position: "absolute",
           top: 0,
@@ -370,27 +369,27 @@ const ResponsiveDrawer = React.memo((props: ResponsiveDrawerProps) => {
           right: 0,
         }}
       >
-        <div
-          className={css`
-            position: relative;
-            width: 100%;
-            height: 100%;
-          `}
+        {props.children}
+        <Box
+          sx={{
+            position: "fixed",
+            bottom: 0,
+            left: { xs: 0, sm: drawerWidth },
+            width: "32px",
+            zIndex: 99999999,
+          }}
         >
-          {props.children}
-          <Box
-            sx={{
-              position: "absolute",
-              bottom: "16px",
-              left: "-11px",
-              width: 24,
+          <div
+            style={{
+              width: "100%",
+              textAlign: "center",
+              marginBottom: 4,
+              marginLeft: -1, // looks a bit better if closer to the border
             }}
           >
-            <div>
-              <SyncStatus />
-            </div>
-          </Box>
-        </div>
+            <SyncStatus spinnerSize={20} />
+          </div>
+        </Box>
         {fileLoaded && !atHome && !isSingleFile() && <CreateFab />}
       </Box>
     </Box>

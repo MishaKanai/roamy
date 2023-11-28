@@ -116,7 +116,7 @@ const EditablePage: React.FC<PageProps> = React.memo(
       [docName, dispatch]
     );
     return (
-      <div style={{ margin: ".75em", marginTop: 0 }}>
+      <div style={{ margin: "0px 0.75em 0em 0em" }}>
         {/* backReferenceLinks && backReferenceLinks.length > 0 ? (
           <ul>{backReferenceLinks}</ul>
         ) : null */}
