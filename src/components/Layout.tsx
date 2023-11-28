@@ -29,6 +29,8 @@ import isSingleFile from "../util/isSingleFile";
 import ExportButton from "../Export/components/ExportButton";
 import { useStore } from "react-redux";
 import { logOut } from "../dropbox/store/globalActions";
+import SyncStatus from "../dropbox/Components/SyncStatus";
+import { css } from "@emotion/css";
 
 const drawerWidth = 220;
 
@@ -368,7 +370,27 @@ const ResponsiveDrawer = React.memo((props: ResponsiveDrawerProps) => {
           right: 0,
         }}
       >
-        {props.children}
+        <div
+          className={css`
+            position: relative;
+            width: 100%;
+            height: 100%;
+          `}
+        >
+          {props.children}
+          <Box
+            sx={{
+              position: "absolute",
+              bottom: "16px",
+              left: "-11px",
+              width: 24,
+            }}
+          >
+            <div>
+              <SyncStatus />
+            </div>
+          </Box>
+        </div>
         {fileLoaded && !atHome && !isSingleFile() && <CreateFab />}
       </Box>
     </Box>
