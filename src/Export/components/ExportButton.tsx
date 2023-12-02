@@ -100,7 +100,7 @@ const ExportButton = () => {
       jsonScript
     );
     const file = new File([newIndexHtml], "testfile.html", {
-      type: "text/plain;charset=utf-8",
+      type: "text/html",
     });
     saveAs(file);
   }, []);
