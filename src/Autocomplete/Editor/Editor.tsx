@@ -628,7 +628,7 @@ const isImageUrl = (url?: string) => {
   return ext && imageExtensions.includes(ext);
 };
 
-const isIos = /(iPad|iPhone|iPod)/g.test(navigator.userAgent);
+const isIos = false; // /(iPad|iPhone|iPod)/g.test(navigator.userAgent);
 
 // const Editable = React.memo(_Editable);
 const Editable = _Editable;
