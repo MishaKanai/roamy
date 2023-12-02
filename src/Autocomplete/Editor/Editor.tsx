@@ -61,7 +61,6 @@ import { v4 as uuidv4 } from "uuid";
 import mergeContext from "../../dropbox/resolveMerge/mergeContext";
 import nestedEditorContext from "../nestedEditorContext";
 import useBackgroundColor from "./hooks/useBackgroundColor";
-import UniversalSticky from "./utils/UniversalSticky3";
 import scrollIntoView from "scroll-into-view-if-needed";
 import imageExtensions from "image-extensions";
 import isUrl from "is-url";
@@ -81,6 +80,7 @@ import DocTitle from "../../components/EditableTitle";
 import hash_sum from "hash-sum";
 import { Resizable } from "re-resizable";
 import isSingleFile from "../../util/isSingleFile";
+import Sticky2 from "./utils/Sticky2";
 
 const UploadFileButton = ({ docName }: { docName: string }) => {
   const editor = useSlateStatic();
@@ -628,7 +628,7 @@ const isImageUrl = (url?: string) => {
   return ext && imageExtensions.includes(ext);
 };
 
-const isIos = false; // /(iPad|iPhone|iPod)/g.test(navigator.userAgent);
+const isIos = /(iPad|iPhone|iPod)/g.test(navigator.userAgent);
 
 // const Editable = React.memo(_Editable);
 const Editable = _Editable;
@@ -1150,9 +1150,9 @@ const SlateAutocompleteEditorComponent = <Triggers extends string[]>(
           <b>{title}</b>
         </span>
         {isIos ? (
-          <UniversalSticky isFocused={isFocused} renderToolbar={renderToolbar}>
+          <Sticky2 isFocused={isFocused} Toolbar={renderToolbar()}>
             {editable}
-          </UniversalSticky>
+          </Sticky2>
         ) : (
           <>
             <span

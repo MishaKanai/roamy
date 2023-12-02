@@ -1,8 +1,8 @@
 html {
-  height: 100%;
+  /* height: 100%; */
 }
 body {
-  height: 100%;
+  /* height: 100%; */
   margin: 0;
   font-family: "Courier Prime";
   /* font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen",
@@ -13,7 +13,7 @@ body {
 }
 
 #root {
-  height:100%;
+  /* height: 100%; */
 }
 
 code {
@@ -39,7 +39,6 @@ code {
   display: none !important;
 }
 
-
 .excalidraw .App-bottom-bar > .Island .App-toolbar-content > :first-child {
   visibility: hidden !important;
 }
@@ -52,4 +51,25 @@ a > g > text {
   cursor: pointer;
   text-decoration: underline;
   font-family: unset;
+}
+
+.sticky-toolbar-wrap {
+  position: sticky;
+  top: 0px;
+  width: 100%;
+  height: 100%;
+}
+
+.sticky-toolbar {
+  position: absolute;
+  left: 0px;
+  right: 0px;
+  width: 100%;
+  height: 100%;
+}
+
+.sticky-toolbar.down {
+  transition-property: all;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 500ms;
 }
