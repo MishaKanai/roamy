@@ -16,7 +16,7 @@ import {
 } from "slate";
 import { withHistory } from "slate-history";
 import {
-  Slate,
+  Slate as SL,
   Editable as _Editable,
   ReactEditor,
   withReact,
@@ -82,6 +82,7 @@ import { Resizable } from "re-resizable";
 import isSingleFile from "../../util/isSingleFile";
 import Sticky2 from "./utils/Sticky2";
 
+const Slate: any = SL;
 const UploadFileButton = ({ docName }: { docName: string }) => {
   const editor = useSlateStatic();
   // const store = useStore();

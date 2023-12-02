@@ -1,9 +1,10 @@
 import React, { useCallback } from "react";
 import { Descendant } from "slate";
-import { Slate, Editable } from "slate-react";
+import { Slate as SL, Editable } from "slate-react";
 import DocTitle from "../../components/EditableTitle";
 import { useEditor, Element, Leaf } from "./Editor";
 
+const Slate: any = SL;
 interface ReadOnlyDocProps {
   document: Descendant[];
   docName: string;
