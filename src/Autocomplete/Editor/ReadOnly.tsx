@@ -22,7 +22,12 @@ const ReadOnlyDoc: React.FC<ReadOnlyDocProps> = ({
   );
   const renderLeaf = useCallback((props) => <Leaf {...props} />, []);
   return (
-    <Slate editor={editor} value={document} onChange={(value: any) => null}>
+    <Slate
+      editor={editor}
+      initialValue={document}
+      value={document}
+      onChange={(value: any) => null}
+    >
       <div style={{ fontSize: "large", padding: "5px 2px 2px" }}>
         <b>{title ?? <DocTitle id={docName} type="documents" />}</b>
       </div>
