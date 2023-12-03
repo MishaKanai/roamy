@@ -20,14 +20,11 @@ const getOptions = (theme: Theme) => {
     nodes: {
       shape: "dot",
       color: {
-        background:
-          theme.palette.mode === "dark"
-            ? "rgba(255,255,255,.2)"
-            : "rgba(0,0,0,.2)", // nodeColor,
-        border: "transparent",
+        border: "white",
+        background: theme.palette.background.paper,
         highlight: {
-          border: "transparent",
-          background: theme.palette.action.selected,
+          border: "white",
+          background: theme.palette.background.paper,
         },
       },
       font: {
