@@ -1,10 +1,9 @@
 import React, { useCallback } from "react";
 import { Descendant } from "slate";
-import { Slate as SL, Editable } from "slate-react";
+import { Slate, Editable } from "slate-react";
 import DocTitle from "../../components/EditableTitle";
 import { useEditor, Element, Leaf } from "./Editor";
 
-const Slate: any = SL;
 interface ReadOnlyDocProps {
   document: Descendant[];
   docName: string;
@@ -25,7 +24,6 @@ const ReadOnlyDoc: React.FC<ReadOnlyDocProps> = ({
     <Slate
       editor={editor}
       initialValue={document}
-      value={document}
       onChange={(value: any) => null}
     >
       <div style={{ fontSize: "large", padding: "5px 2px 2px" }}>

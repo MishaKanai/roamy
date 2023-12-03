@@ -16,7 +16,7 @@ import {
 } from "slate";
 import { withHistory } from "slate-history";
 import {
-  Slate as SL,
+  Slate,
   Editable as _Editable,
   ReactEditor,
   withReact,
@@ -82,7 +82,6 @@ import { Resizable } from "re-resizable";
 import isSingleFile from "../../util/isSingleFile";
 import Sticky2 from "./utils/Sticky2";
 
-const Slate: any = SL;
 const UploadFileButton = ({ docName }: { docName: string }) => {
   const editor = useSlateStatic();
   // const store = useStore();
@@ -1135,7 +1134,7 @@ const SlateAutocompleteEditorComponent = <Triggers extends string[]>(
 
   return (
     <div style={{ position: "relative" }}>
-      <Slate editor={editor} value={value} onChange={_handleChange}>
+      <Slate editor={editor} initialValue={value} onChange={_handleChange}>
         <span
           style={{
             display: isFocused ? "none" : undefined,
