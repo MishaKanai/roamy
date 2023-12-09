@@ -22,5 +22,8 @@ export default defineConfig(() => {
       outDir,
     },
     plugins,
+    optimizeDeps: {
+      exclude: ["@ffmpeg/ffmpeg", "@ffmpeg/util"],
+    },
   };
 });

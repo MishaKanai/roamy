@@ -12,6 +12,7 @@ import Demo from "./GraphVis/Demo";
 import Home from "./components/Home";
 import CollectionSettings from "./dropbox/Components/CollectionSettings";
 import MasonrySearch from "./Search/components/Masonry";
+import CompressFileDialog from "./RemoteFiles/utli/CompressMp4Dialog/Dialog";
 
 const Docs = React.memo(() => {
   const match = useRouteMatch();
@@ -69,6 +70,7 @@ export const getApp = (history: History) => {
                   <Home />
                 </Route>
               </Switch>
+              <CompressFileDialog />
             </div>
           </AccessControlledPage>
         </ConnectedRouter>
