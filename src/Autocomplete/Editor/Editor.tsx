@@ -81,6 +81,8 @@ import hash_sum from "hash-sum";
 import { Resizable } from "re-resizable";
 import isSingleFile from "../../util/isSingleFile";
 import Sticky2 from "./utils/Sticky2";
+import { dialogController } from "../../RemoteFiles/util/CompressMp4Dialog/Controller";
+import { getVideoMetadata } from "../../RemoteFiles/util/getVideoMetadata";
 
 const UploadFileButton = ({ docName }: { docName: string }) => {
   const editor = useSlateStatic();
@@ -114,18 +116,33 @@ const UploadFileButton = ({ docName }: { docName: string }) => {
                   width?: string | number;
                   fileIdentifier: string;
                 }>((resolve, reject) => {
-                  const img = new Image();
+                  if (file.type === "video/mp4") {
+                    getVideoMetadata(base64)
+                      .then((videoMetadata) => {
+                        resolve({
+                          fileIdentifier,
+                          width: videoMetadata.videoWidth,
+                          height: videoMetadata.videoHeight,
+                        });
+                      })
+                      .catch((e) => {
+                        console.error(e);
+                        resolve({ fileIdentifier });
+                      });
+                  } else {
+                    const img = new Image();
 
-                  img.onload = () => {
-                    resolve({
-                      fileIdentifier,
-                      width: img.width,
-                      height: img.height,
-                    });
-                  };
-                  img.onerror = () => resolve({ fileIdentifier });
+                    img.onload = () => {
+                      resolve({
+                        fileIdentifier,
+                        width: img.width,
+                        height: img.height,
+                      });
+                    };
+                    img.onerror = () => resolve({ fileIdentifier });
 
-                  img.src = base64;
+                    img.src = base64;
+                  }
                 });
               })
               .then(({ width, height, fileIdentifier }) => {
@@ -147,21 +164,34 @@ const UploadFileButton = ({ docName }: { docName: string }) => {
            * optimize/compress mp4 in-browser, scale down to 520p, 720p, 1024p options
            *
            */
+          const upload = () => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file as Blob);
+            reader.onload = () => {
+              const base64 = reader.result as string;
+              if (!base64) {
+                return;
+              }
+              addFileB64(base64);
+            };
+            reader.onerror = (err) => {
+              console.error(err);
+            };
 
-          const reader = new FileReader();
-          reader.readAsDataURL(file as Blob);
-          reader.onload = () => {
-            const base64 = reader.result as string;
-            if (!base64) {
-              return;
-            }
-            addFileB64(base64);
-          };
-          reader.onerror = (err) => {
-            console.error(err);
+            inputRef.current!.value = "";
           };
 
-          inputRef.current!.value = "";
+          if (file.type === "video/mp4") {
+            dialogController.open({
+              file,
+              ifNo: upload,
+              onTranscoded: (b64) => {
+                addFileB64(b64);
+              },
+            });
+            return;
+          }
+          upload();
         }}
       />
     </>
@@ -236,9 +266,6 @@ const withImages =
     editor.insertData = (data: DataTransfer) => {
       const text = data.getData("text/plain");
       const { files } = data;
-      console.log("insertData", data, {
-        text,
-      });
 
       if (files && files.length > 0) {
         for (const file of Array.from(files)) {
@@ -388,9 +415,6 @@ const RemoteFile = ({
   useEffect(() => {
     const download = () =>
       remoteFileApi.downloadFile(element.fileIdentifier).then(({ base64 }) => {
-        console.log({
-          base64,
-        });
         setState({
           type: "loaded",
           base64,
