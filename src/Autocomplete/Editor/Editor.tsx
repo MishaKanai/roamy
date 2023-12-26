@@ -13,6 +13,8 @@ import {
   createEditor,
   Element as SlateElement,
   Descendant,
+  Node,
+  Location,
 } from "slate";
 import { withHistory } from "slate-history";
 import {
@@ -49,6 +51,7 @@ import {
   ReferenceElement,
   ImageElement,
   RemoteFileElement,
+  TranscodingPlaceholderElement,
 } from "../../SlateGraph/slate.d";
 import Link from "../../components/Link";
 import deepEqual from "fast-deep-equal";
@@ -57,7 +60,7 @@ import DrawingPage from "../../Excalidraw/Page";
 import EditIcon from "@mui/icons-material/Edit";
 import { drawingOptionsContext } from "../../extension/drawingOptionsContext";
 import { withNodeId } from "@udecode/plate-node-id";
-import { v4 as uuidv4 } from "uuid";
+import { v4 as uuidv4, v4 } from "uuid";
 import mergeContext from "../../dropbox/resolveMerge/mergeContext";
 import nestedEditorContext from "../nestedEditorContext";
 import useBackgroundColor from "./hooks/useBackgroundColor";
@@ -70,7 +73,7 @@ import { Store } from "redux";
 import { useStore } from "react-redux";
 import { traverseTransformNodes } from "./utils/traverseTransformNodes";
 import { useAppSelector } from "../../store/hooks";
-import { Clear, Image as ImageIcon } from "@mui/icons-material";
+import { Clear, Image as ImageIcon, Mode } from "@mui/icons-material";
 import { RootState } from "../../store/configureStore";
 import gifsicle from "gifsicle-wasm-browser";
 import { remoteFilesApiContext } from "../../RemoteFiles/remoteFiles";
@@ -83,6 +86,8 @@ import isSingleFile from "../../util/isSingleFile";
 import Sticky2 from "./utils/Sticky2";
 import { dialogController } from "../../RemoteFiles/util/CompressMp4Dialog/Controller";
 import { getVideoMetadata } from "../../RemoteFiles/util/getVideoMetadata";
+import { transcodingQueue } from "../../RemoteFiles/transcodeQueue/TranscodingQueue";
+import TranscodingJobTracker from "../../RemoteFiles/transcodeQueue/TranscodingJobTracker";
 
 const UploadFileButton = ({ docName }: { docName: string }) => {
   const editor = useSlateStatic();
@@ -100,10 +105,11 @@ const UploadFileButton = ({ docName }: { docName: string }) => {
         style={{ display: "none" }}
         onChange={(e) => {
           const file = e.target.files?.[0];
+          e.target.value = "";
           if (!file) {
             return;
           }
-          const addFileB64 = (base64: string) => {
+          const addFileB64 = (base64: string, at?: Location) => {
             remoteFiles
               .uploadFile({
                 type: "b64",
@@ -146,7 +152,7 @@ const UploadFileButton = ({ docName }: { docName: string }) => {
                 });
               })
               .then(({ width, height, fileIdentifier }) => {
-                insertRemoteFile(editor, fileIdentifier, width, height);
+                insertRemoteFile(editor, fileIdentifier, width, height, at);
               });
           };
 
@@ -182,13 +188,61 @@ const UploadFileButton = ({ docName }: { docName: string }) => {
           };
 
           if (file.type === "video/mp4") {
-            dialogController.open({
-              file,
-              ifNo: upload,
-              onTranscoded: (b64) => {
-                addFileB64(b64);
-              },
-            });
+            const id = v4();
+            (async () => {
+              const { duration } = await getVideoMetadata(file);
+              // TODO: await on response from dialog with size to transcode to (or cancel, or original size)
+              insertTranscodingPlaceholder(editor, id, {
+                width: 960,
+                height: 540,
+                duration,
+                filename: file.name,
+              });
+              const findPlaceholder = () => {
+                let path = null;
+                [...Node.descendants(editor, { reverse: true })].forEach(
+                  ([node, currentPath]) => {
+                    const customNode = node as CustomElement;
+                    if (
+                      customNode.type === "transcoding_placeholder" &&
+                      customNode.jobId === id
+                    ) {
+                      path = currentPath;
+                    }
+                  }
+                );
+                return path;
+              };
+
+              transcodingQueue.addJob({
+                id,
+                file,
+                resolution: "540p",
+                onSuccess: (transcodedB64) => {
+                  console.log("SUCCESS");
+                  const placeholderLocation = findPlaceholder();
+                  if (placeholderLocation) {
+                    Transforms.removeNodes(editor, {
+                      at: placeholderLocation,
+                    });
+                  }
+                  addFileB64(transcodedB64, placeholderLocation || undefined);
+                },
+                onCancel: () => {
+                  const placeholderLocation = findPlaceholder();
+                  if (placeholderLocation) {
+                    Transforms.removeNodes(editor, {
+                      at: placeholderLocation,
+                    });
+                  }
+                },
+                onError(err) {
+                  console.log("ERROR");
+                  console.error(err);
+                },
+              });
+            })();
+
             return;
           }
           upload();
@@ -252,13 +306,17 @@ const withImages =
     const { insertData, isVoid, isInline } = editor;
 
     editor.isInline = (element: CustomElement) => {
-      return element.type === "image" || element.type === "remotefile"
+      return element.type === "image" ||
+        element.type === "remotefile" ||
+        element.type === "transcoding_placeholder"
         ? true
         : isInline(element);
     };
 
     editor.isVoid = (element: CustomElement) => {
-      return element.type === "image" || element.type === "remotefile"
+      return element.type === "image" ||
+        element.type === "remotefile" ||
+        element.type === "transcoding_placeholder"
         ? true
         : isVoid(element);
     };
@@ -1254,11 +1312,39 @@ export const Leaf: React.FC<RenderLeafProps> = React.memo(
   }
 );
 
+const insertTranscodingPlaceholder = (
+  editor: CustomEditor,
+  jobId: string,
+  meta?: {
+    width?: number | string;
+    height?: number | string;
+    duration?: number;
+    filename?: string;
+  }
+) => {
+  const { width, height, duration, filename } = meta ?? {};
+  const transcodingPlaceholder: TranscodingPlaceholderElement = {
+    type: "transcoding_placeholder",
+    jobId,
+    width,
+    height,
+    duration,
+    filename,
+    children: [{ text: jobId }],
+  };
+  Transforms.insertNodes(editor, [
+    transcodingPlaceholder,
+    { type: "paragraph", children: [{ text: "" }] } as any,
+  ]);
+  Transforms.move(editor);
+};
+
 const insertRemoteFile = (
   editor: CustomEditor,
   fileIdentifier: string,
   width?: number | string,
-  height?: number | string
+  height?: number | string,
+  at?: Location
 ) => {
   const remoteFile: RemoteFileElement = {
     type: "remotefile",
@@ -1267,11 +1353,14 @@ const insertRemoteFile = (
     height,
     children: [{ text: fileIdentifier }],
   };
-  Transforms.insertNodes(editor, [
-    remoteFile,
-    { type: "paragraph", children: [{ text: "" }] } as any,
-  ]);
-  Transforms.move(editor);
+  Transforms.insertNodes(
+    editor,
+    [remoteFile, { type: "paragraph", children: [{ text: "" }] } as any],
+    {
+      at,
+    }
+  );
+  !at && Transforms.move(editor); // only move the cursor afterwards if we are inserting at the current cursor.
 };
 
 const insertImage = (editor: CustomEditor, url: string, imageId?: string) => {
@@ -1534,6 +1623,35 @@ export const Element: React.FC<RenderElementProps & { parentDoc: string }> = (
       );
     case "remotefile":
       return <RemoteFile {...props} />;
+    case "transcoding_placeholder":
+      return (
+        <div
+          style={{
+            height: element.height,
+            width: element.width,
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center", // Centers content vertically
+            position: "relative",
+          }}
+        >
+          <Skeleton
+            variant="rectangular"
+            style={{ height: "100%", width: "100%" }}
+          />
+          <div
+            style={{
+              position: "absolute",
+            }}
+          >
+            <TranscodingJobTracker
+              jobId={element.jobId}
+              duration={element.duration}
+              filename={element.filename}
+            />
+          </div>
+        </div>
+      );
     case "image":
       return <InlineImageOrVideo {...props} />;
     case "bulleted-list":

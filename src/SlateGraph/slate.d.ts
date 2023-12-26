@@ -1,33 +1,33 @@
 // This example is for an Editor with `ReactEditor` and `HistoryEditor`
-import { BaseEditor } from 'slate'
-import { ReactEditor } from 'slate-react'
-import { HistoryEditor } from 'slate-history'
+import { BaseEditor } from "slate";
+import { ReactEditor } from "slate-react";
+import { HistoryEditor } from "slate-history";
 
-export type CustomEditor = BaseEditor & ReactEditor & HistoryEditor
+export type CustomEditor = BaseEditor & ReactEditor & HistoryEditor;
 
 export type ListItemElement = {
   id?: string;
-  type: 'list-item'
-  children: CustomText[]
-}
+  type: "list-item";
+  children: CustomText[];
+};
 
 export type ParagraphElement = {
   id?: string;
-  type: 'paragraph'
-  children: CustomText[]
-}
+  type: "paragraph";
+  children: CustomText[];
+};
 
 export type HeadingOneElement = {
   id?: string;
-  type: 'heading-one'
-  children: CustomText[]
-}
+  type: "heading-one";
+  children: CustomText[];
+};
 
 export type HeadingTwoElement = {
   id?: string;
-  type: 'heading-two'
-  children: CustomText[]
-}
+  type: "heading-two";
+  children: CustomText[];
+};
 
 export type ReferenceElement = {
   id?: string;
@@ -48,8 +48,8 @@ export type BulletedListElement = {
   type: "bulleted-list";
   children: {
     id?: string;
-    type: 'list-item'
-    children: CustomElement[]
+    type: "list-item";
+    children: CustomElement[];
   }[];
 };
 
@@ -58,38 +58,50 @@ export type NumberedListElement = {
   type: "numbered-list";
   children: {
     id?: string;
-    type: 'list-item'
-    children: CustomElement[]
+    type: "list-item";
+    children: CustomElement[];
   }[];
 };
-
 
 export type DrawingElement = {
   id?: string;
   type: "drawing";
   drawingReference: string;
   children: CustomText[];
-}
+};
 
 export type ImageElement = {
-  type: 'image';
+  type: "image";
   children: CustomText[];
-} & ({
-  variant: 'url';
-  url: string;
-  imageId?: string;
-} | {
-  variant: 'id-link';
-  imageId: string;
-})
+} & (
+  | {
+      variant: "url";
+      url: string;
+      imageId?: string;
+    }
+  | {
+      variant: "id-link";
+      imageId: string;
+    }
+);
 
 export type RemoteFileElement = {
-  type: 'remotefile';
+  type: "remotefile";
   children: CustomText[];
   fileIdentifier: string;
   width?: string | number; // for placeholder size - set this on file add/upload
   height?: string | number; // for placeholder size - set this on file add/upload
-}
+};
+
+export type TranscodingPlaceholderElement = {
+  type: "transcoding_placeholder";
+  children: CustomText[];
+  jobId: string;
+  width?: string | number; // for placeholder size - set this on file add/upload
+  height?: string | number; // for placeholder size - set this on file add/upload
+  duration?: number;
+  filename?: string;
+};
 
 export type CustomElement =
   | RemoteFileElement
@@ -103,15 +115,22 @@ export type CustomElement =
   | BulletedListElement
   | NumberedListElement
   | DrawingElement
+  | TranscodingPlaceholderElement;
 
-export type FormattedText = { id?: string; text: string; bold?: true, italic?: true, underline?: true }
+export type FormattedText = {
+  id?: string;
+  text: string;
+  bold?: true;
+  italic?: true;
+  underline?: true;
+};
 
-export type CustomText = FormattedText
+export type CustomText = FormattedText;
 
-declare module 'slate' {
+declare module "slate" {
   interface CustomTypes {
-    Editor: CustomEditor
-    Element: CustomElement
-    Text: CustomText
+    Editor: CustomEditor;
+    Element: CustomElement;
+    Text: CustomText;
   }
 }
