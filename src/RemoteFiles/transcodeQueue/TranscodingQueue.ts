@@ -95,6 +95,10 @@ class TranscodingQueue {
     }
   }
 
+  containsJob(jobId: string) {
+    return this.queue.some((job) => job.id === jobId);
+  }
+
   subscribeToJob(jobId: string, cb: (msg: { logMsg: string }) => void) {
     const job = this.queue.find((job) => job.id === jobId);
     if (!job || !cb) {

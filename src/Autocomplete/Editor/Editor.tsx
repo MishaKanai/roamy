@@ -87,7 +87,8 @@ import Sticky2 from "./utils/Sticky2";
 import { dialogController } from "../../RemoteFiles/util/CompressMp4Dialog/Controller";
 import { getVideoMetadata } from "../../RemoteFiles/util/getVideoMetadata";
 import { transcodingQueue } from "../../RemoteFiles/transcodeQueue/TranscodingQueue";
-import TranscodingJobTracker from "../../RemoteFiles/transcodeQueue/TranscodingJobTracker";
+import TranscodingJobTracker from "../../RemoteFiles/transcodeQueue/components/TranscodingJobTracker";
+import VideoTranscodingPlaceholder from "../../RemoteFiles/transcodeQueue/components/VideoTranscodingPlaceholder";
 
 const UploadFileButton = ({ docName }: { docName: string }) => {
   const editor = useSlateStatic();
@@ -1625,32 +1626,13 @@ export const Element: React.FC<RenderElementProps & { parentDoc: string }> = (
       return <RemoteFile {...props} />;
     case "transcoding_placeholder":
       return (
-        <div
-          style={{
-            height: element.height,
-            width: element.width,
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center", // Centers content vertically
-            position: "relative",
-          }}
-        >
-          <Skeleton
-            variant="rectangular"
-            style={{ height: "100%", width: "100%" }}
-          />
-          <div
-            style={{
-              position: "absolute",
-            }}
-          >
-            <TranscodingJobTracker
-              jobId={element.jobId}
-              duration={element.duration}
-              filename={element.filename}
-            />
-          </div>
-        </div>
+        <VideoTranscodingPlaceholder
+          height={element.height}
+          width={element.width}
+          jobId={element.jobId}
+          duration={element.duration}
+          filename={element.filename}
+        />
       );
     case "image":
       return <InlineImageOrVideo {...props} />;

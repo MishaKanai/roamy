@@ -1,8 +1,20 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { transcodingQueue } from "./TranscodingQueue";
-import parseDurationString from "../util/parseDurationString";
-import CircularProgressWithLabel from "../util/CircularProgressWithLabel";
+import { transcodingQueue } from "../TranscodingQueue";
+import parseDurationString from "../../util/parseDurationString";
+import CircularProgressWithLabel from "../../util/CircularProgressWithLabel";
 import { Button, Typography } from "@mui/material";
+
+// const useJobStarted = (jobId: string) => {
+//   const [jobStarted, setJobStarted] = useState(false);
+//   useEffect(() => {
+//     return transcodingQueue.subscribeToJob(jobId, ({ logMsg }) => {
+//       if (logMsg) {
+//         setJobStarted(true);
+//       }
+//     });
+//   }, [jobId]);
+//   return jobStarted;
+// };
 
 const TranscodingJobTracker = ({
   filename,
@@ -13,7 +25,7 @@ const TranscodingJobTracker = ({
   jobId: string;
   duration?: number;
 }) => {
-  const [logMsg, setLogMsg] = useState<string>();
+  const [logMsg, setLogMsg] = useState<string>("");
   useEffect(() => {
     const unsubscribe = transcodingQueue.subscribeToJob(jobId, ({ logMsg }) =>
       setLogMsg(logMsg)
@@ -53,15 +65,31 @@ const TranscodingJobTracker = ({
           <Typography variant="body1">{filename}</Typography>
         </div>
       )}
+
       <div
         style={{
           textAlign: "center",
           visibility: typeof donePercent !== "number" ? "hidden" : undefined,
+          position: "relative",
         }}
       >
         <CircularProgressWithLabel value={donePercent ?? 0} />
+        {typeof donePercent !== "number" && (
+          <div
+            style={{
+              opacity: ".8",
+              visibility: "visible",
+              position: "absolute",
+              top: ".5em",
+              left: 0,
+              right: 0,
+              zIndex: 1000,
+            }}
+          >
+            Waiting in processing queue...
+          </div>
+        )}
       </div>
-
       <div
         style={{
           display: "flex",
@@ -71,9 +99,11 @@ const TranscodingJobTracker = ({
       >
         <Button
           size="small"
-          variant="outlined"
+          variant="contained"
           color="secondary"
-          onClick={() => transcodingQueue.cancelJob(jobId)}
+          onClick={() => {
+            transcodingQueue.cancelJob(jobId);
+          }}
         >
           Cancel
         </Button>
