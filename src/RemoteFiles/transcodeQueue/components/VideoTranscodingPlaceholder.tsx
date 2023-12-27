@@ -55,6 +55,7 @@ const VideoTranscodingPlaceholder = ({
             <div
               style={{
                 textAlign: "center",
+                opacity: ".8",
               }}
             >
               <Typography variant="body1">

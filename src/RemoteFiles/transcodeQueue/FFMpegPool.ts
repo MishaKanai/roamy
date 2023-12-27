@@ -29,9 +29,12 @@ class FFmpegPool {
     }
   }
 
-  releaseInstance(ffmpeg: FFmpeg): void {
+  releaseInstance(ffmpeg: FFmpeg, resetInstance: boolean): void {
     const index = this.pool.indexOf(ffmpeg);
     if (index !== -1) {
+      if (resetInstance) {
+        this.pool[index] = new FFmpeg();
+      }
       // Check if there are any pending requests waiting for an instance
       if (this.waitingResolvers.length > 0) {
         const resolve = this.waitingResolvers.shift()!;

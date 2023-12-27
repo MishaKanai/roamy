@@ -15,6 +15,7 @@ import {
   Descendant,
   Node,
   Location,
+  Path,
 } from "slate";
 import { withHistory } from "slate-history";
 import {
@@ -84,10 +85,8 @@ import hash_sum from "hash-sum";
 import { Resizable } from "re-resizable";
 import isSingleFile from "../../util/isSingleFile";
 import Sticky2 from "./utils/Sticky2";
-import { dialogController } from "../../RemoteFiles/util/CompressMp4Dialog/Controller";
 import { getVideoMetadata } from "../../RemoteFiles/util/getVideoMetadata";
 import { transcodingQueue } from "../../RemoteFiles/transcodeQueue/TranscodingQueue";
-import TranscodingJobTracker from "../../RemoteFiles/transcodeQueue/components/TranscodingJobTracker";
 import VideoTranscodingPlaceholder from "../../RemoteFiles/transcodeQueue/components/VideoTranscodingPlaceholder";
 
 const UploadFileButton = ({ docName }: { docName: string }) => {
@@ -199,7 +198,7 @@ const UploadFileButton = ({ docName }: { docName: string }) => {
                 duration,
                 filename: file.name,
               });
-              const findPlaceholder = () => {
+              const findPlaceholder = (): Path | null => {
                 let path = null;
                 [...Node.descendants(editor, { reverse: true })].forEach(
                   ([node, currentPath]) => {
@@ -215,31 +214,33 @@ const UploadFileButton = ({ docName }: { docName: string }) => {
                 return path;
               };
 
+              const removePlaceholder = (): Path | null => {
+                let placeholderLocation = null;
+                while ((placeholderLocation = findPlaceholder())) {
+                  if (placeholderLocation) {
+                    Transforms.removeNodes(editor, {
+                      at: placeholderLocation,
+                    });
+                  }
+                }
+                return placeholderLocation;
+              };
+
               transcodingQueue.addJob({
                 id,
                 file,
                 resolution: "540p",
                 onSuccess: (transcodedB64) => {
-                  console.log("SUCCESS");
-                  const placeholderLocation = findPlaceholder();
-                  if (placeholderLocation) {
-                    Transforms.removeNodes(editor, {
-                      at: placeholderLocation,
-                    });
-                  }
+                  const placeholderLocation = removePlaceholder();
                   addFileB64(transcodedB64, placeholderLocation || undefined);
                 },
                 onCancel: () => {
-                  const placeholderLocation = findPlaceholder();
-                  if (placeholderLocation) {
-                    Transforms.removeNodes(editor, {
-                      at: placeholderLocation,
-                    });
-                  }
+                  removePlaceholder();
                 },
                 onError(err) {
                   console.log("ERROR");
                   console.error(err);
+                  // TODO I don't think errors are handled in the placeholder component.
                 },
               });
             })();

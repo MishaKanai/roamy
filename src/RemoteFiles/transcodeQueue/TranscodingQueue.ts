@@ -23,31 +23,51 @@ interface TranscodingJob {
 
 class TranscodingQueue {
   private queue: TranscodingJob[] = [];
-  private isProcessing = false;
+
+  private processingJobs: TranscodingJob[] = []; // List of currently processing jobs
+  private readonly maxConcurrentJobs = 2; // Maximum number of concurrent jobs
 
   private ffmpegPool: FFmpegPool = new FFmpegPool(2);
 
-  addJob(job: TranscodingJob) {
+  addJob = (job: TranscodingJob) => {
     this.queue.push(job);
-    if (!this.isProcessing) {
-      this.processQueue();
-    }
-  }
+    this.tryStartingNextJobs();
+  };
 
-  private async processQueue(): Promise<void> {
-    this.isProcessing = true;
-    while (this.queue.length > 0) {
-      const job = this.queue[0]; // keep it in the queue so it's discoverable and cancellable.
-      if (job) {
-        await this.processJob(job);
+  private tryStartingNextJobs = (): void => {
+    while (
+      this.processingJobs.length < this.maxConcurrentJobs &&
+      this.queue.length > 0
+    ) {
+      const jobToProcess = this.queue.shift();
+      if (jobToProcess) {
+        this.processingJobs.push(jobToProcess);
+        this.processJob(jobToProcess).finally(() => {
+          this.removeJobFromProcessing(jobToProcess);
+          this.tryStartingNextJobs(); // Check if more jobs can be started after one finishes
+        });
       }
-      this.queue.shift();
     }
-    this.isProcessing = false;
-  }
-  private async processJob(job: TranscodingJob): Promise<void> {
+  };
+
+  private removeJobFromProcessing = (job: TranscodingJob): void => {
+    const index = this.processingJobs.indexOf(job);
+    if (index > -1) {
+      this.processingJobs.splice(index, 1);
+    } else {
+      console.error("NOT FOUND ?", JSON.parse(JSON.stringify(job)));
+    }
+  };
+
+  private processJob = async (job: TranscodingJob): Promise<void> => {
     try {
       job.ffmpeg = await this.ffmpegPool.getAvailableInstance();
+
+      await job.ffmpeg.load({
+        coreURL: `${baseURL}/ffmpeg-core.js`,
+        wasmURL: `${baseURL}/ffmpeg-core.wasm`,
+      });
+
       const onLog = job.onLog;
       if (onLog) {
         const ffmpeg = job.ffmpeg;
@@ -58,10 +78,6 @@ class TranscodingQueue {
           };
         }
       }
-      await job.ffmpeg.load({
-        coreURL: `${baseURL}/ffmpeg-core.js`,
-        wasmURL: `${baseURL}/ffmpeg-core.wasm`,
-      });
 
       const { file, resolution } = job;
       const inFileName = `${uuidv4()}_${file.name}`;
@@ -78,29 +94,33 @@ class TranscodingQueue {
       ]);
 
       const data = await job.ffmpeg.readFile(outputFileName);
+
       const base64 = await getBlobBase64(
         new Blob([data], { type: "video/mp4" })
       );
+
       job.onSuccess(base64);
 
       job.ffmpeg.deleteFile(inFileName);
       job.ffmpeg.deleteFile(outputFileName);
+
+      this.ffmpegPool.releaseInstance(job.ffmpeg, false);
     } catch (error) {
       console.error(error);
       job.onError?.(error);
-    } finally {
+
       if (job.ffmpeg) {
-        this.ffmpegPool.releaseInstance(job.ffmpeg);
+        this.ffmpegPool.releaseInstance(job.ffmpeg, true);
       }
     }
-  }
+  };
 
-  containsJob(jobId: string) {
-    return this.queue.some((job) => job.id === jobId);
-  }
+  containsJob = (jobId: string) => {
+    return this.getAllJobs().some((job) => job.id === jobId);
+  };
 
-  subscribeToJob(jobId: string, cb: (msg: { logMsg: string }) => void) {
-    const job = this.queue.find((job) => job.id === jobId);
+  subscribeToJob = (jobId: string, cb: (msg: { logMsg: string }) => void) => {
+    const job = this.getAllJobs().find((job) => job.id === jobId);
     if (!job || !cb) {
       return;
     }
@@ -118,23 +138,27 @@ class TranscodingQueue {
       job.ffmpeg?.on("log", onLog);
       return () => job.ffmpeg?.off("log", onLog);
     }
-  }
+  };
 
-  cancelJob(jobId: string): void {
-    const jobIndex = this.queue.findIndex((job) => job.id === jobId);
-    if (jobIndex !== -1) {
-      const foundJob = this.queue[jobIndex];
+  private getAllJobs = () => {
+    return [...this.queue, ...this.processingJobs];
+  };
+
+  cancelJob = (jobId: string): void => {
+    const allJobs = this.getAllJobs();
+    const foundJob = allJobs.find((job) => job.id === jobId);
+    if (foundJob) {
       const ffmpeg = foundJob.ffmpeg;
       if (ffmpeg) {
-        ffmpeg.terminate();
-        this.ffmpegPool.releaseInstance(ffmpeg);
+        ffmpeg.terminate(); // will throw an error in 'processJob', and trigger this.ffmpegPool.releaseInstance(ffmpeg, true) in catch block
+        // this.ffmpegPool.releaseInstance(ffmpeg, true);
       }
       // instead of doing:
       // this.queue.splice(jobIndex, 1);
       // we make it error and let 'processQueue' call unshift when the promise returned by this.processJob returns.
       foundJob?.onCancel?.();
     }
-  }
+  };
 }
 
 const transcodingQueue = new TranscodingQueue();
