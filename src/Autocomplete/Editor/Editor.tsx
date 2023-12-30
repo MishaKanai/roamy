@@ -190,11 +190,26 @@ const UploadFileButton = ({ docName }: { docName: string }) => {
           if (file.type === "video/mp4") {
             const id = v4();
             (async () => {
-              const { duration } = await getVideoMetadata(file);
+              const { duration, videoHeight, videoWidth } =
+                await getVideoMetadata(file);
+
+              // await transcode here as well.
+              // Either prevent navigation, or prevent memory leak
+              if (videoWidth <= 960 || !videoHeight || !videoWidth) {
+                // ok, Let's not transcode by default.
+                upload();
+                return;
+              }
+
               // TODO: await on response from dialog with size to transcode to (or cancel, or original size)
+              const GET_HEIGHT_RATIO = videoHeight / videoWidth;
+              const newWidth = 960;
+
+              const newHeight = newWidth * GET_HEIGHT_RATIO;
+
               insertTranscodingPlaceholder(editor, id, {
-                width: 960,
-                height: 540,
+                width: newWidth,
+                height: newHeight,
                 duration,
                 filename: file.name,
               });
@@ -229,7 +244,7 @@ const UploadFileButton = ({ docName }: { docName: string }) => {
               transcodingQueue.addJob({
                 id,
                 file,
-                resolution: "540p",
+                resolution: [newWidth, newHeight],
                 onSuccess: (transcodedB64) => {
                   const placeholderLocation = removePlaceholder();
                   addFileB64(transcodedB64, placeholderLocation || undefined);

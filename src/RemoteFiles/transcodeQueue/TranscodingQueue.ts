@@ -10,7 +10,7 @@ const baseURL = "https://unpkg.com/@ffmpeg/core@0.12.4/dist/esm";
 interface TranscodingJob {
   id: string;
   file: File;
-  resolution: "720p" | "540p";
+  resolution: [number, number]; // e.g. [1280, 720] or [960, 540]
   ffmpeg?: FFmpeg;
   onSuccess: (transcodedFileB64: string) => void;
   onError?: (error: any) => void;
@@ -83,13 +83,13 @@ class TranscodingQueue {
       const inFileName = `${uuidv4()}_${file.name}`;
       await job.ffmpeg.writeFile(inFileName, await fetchFile(file));
       const outputFileName =
-        inFileName.replace(/\..+$/, "") + `_${resolution}.mp4`;
+        inFileName.replace(/\..+$/, "") + `_${resolution.join("x")}.mp4`;
 
       await job.ffmpeg.exec([
         "-i",
         inFileName,
         "-vf",
-        `scale=${resolution === "720p" ? "1280x720" : "960x540"}`,
+        `scale=${resolution.join("x")}`,
         outputFileName,
       ]);
 
