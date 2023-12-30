@@ -3,7 +3,7 @@ function parseDurationString(durationStr: string) {
   const match = durationStr.match(regex);
 
   if (!match) {
-    throw new Error("Invalid duration format");
+    throw new Error("Invalid duration format: " + JSON.stringify(durationStr));
   }
 
   const hours = parseInt(match[1], 10);

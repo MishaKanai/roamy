@@ -54,7 +54,8 @@ const CompressProgress = ({
     const match = logMsg.match(regex);
 
     if (match) {
-      return parseDurationString(match[1]);
+      const time = match[1]?.trim();
+      if (time && !time.startsWith("-")) return parseDurationString(time);
     }
     return null;
   }, [logMsg]);
