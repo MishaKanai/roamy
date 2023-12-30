@@ -68,6 +68,20 @@ const ResolutionDialog: React.FC<{
       ),
     [originalWidth, originalHeight]
   );
+
+  const MIN_WIDTH = 600;
+
+  const minResolutionAboveMin = possibleResolutions
+    .filter(({ width }) => width >= MIN_WIDTH)
+    .reduce(
+      (prev, curr) => {
+        if (curr.width < prev.width) {
+          return curr;
+        }
+        return prev;
+      },
+      { height: originalHeight, width: originalWidth }
+    );
   const marks = possibleResolutions.map((r) => {
     return {
       value: r.width,
@@ -87,10 +101,10 @@ const ResolutionDialog: React.FC<{
           currently <code>{sizeKb.toFixed(0)}KB</code>
         </DialogContentText>
         {`${width} x ${height}`}
-        <div style={{ margin: "0 2em" }}>
+        <div style={{ margin: "0 3em" }}>
           <Slider
             valueLabelFormat={valueLabelFormat}
-            min={640}
+            min={minResolutionAboveMin.width}
             value={width}
             max={originalWidth}
             onChange={(event, newValue) => setWidth(newValue as number)}
