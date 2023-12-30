@@ -74,7 +74,7 @@ import { Store } from "redux";
 import { useStore } from "react-redux";
 import { traverseTransformNodes } from "./utils/traverseTransformNodes";
 import { useAppSelector } from "../../store/hooks";
-import { Clear, Image as ImageIcon, Mode } from "@mui/icons-material";
+import { Clear, Image as ImageIcon } from "@mui/icons-material";
 import { RootState } from "../../store/configureStore";
 import gifsicle from "gifsicle-wasm-browser";
 import { remoteFilesApiContext } from "../../RemoteFiles/remoteFiles";
@@ -88,14 +88,44 @@ import Sticky2 from "./utils/Sticky2";
 import { getVideoMetadata } from "../../RemoteFiles/util/getVideoMetadata";
 import { transcodingQueue } from "../../RemoteFiles/transcodeQueue/TranscodingQueue";
 import VideoTranscodingPlaceholder from "../../RemoteFiles/transcodeQueue/components/VideoTranscodingPlaceholder";
+import ResolutionDialog from "../../RemoteFiles/util/CompressMp4Dialog/ResolutionDialog";
+import getBlobBase64 from "../../RemoteFiles/util/getBlobBase64";
 
 const UploadFileButton = ({ docName }: { docName: string }) => {
   const editor = useSlateStatic();
   // const store = useStore();
   const inputRef = useRef<HTMLInputElement>(null);
   const remoteFiles = useContext(remoteFilesApiContext);
+  const [transcodingDialogState, setTranscodingDialogState] = useState<
+    | {
+        type: "open";
+        videoMetaData: {
+          videoHeight: number;
+          videoWidth: number;
+          sizeKb: number;
+        };
+        resolve: (resolution: [width: number, height: number]) => void;
+      }
+    | {
+        type: "closed";
+      }
+  >();
   return (
     <>
+      {transcodingDialogState?.type === "open" && (
+        <ResolutionDialog
+          onSubmit={([w, h]) => {
+            transcodingDialogState.resolve([w, h]);
+            setTranscodingDialogState({ type: "closed" });
+          }}
+          sizeKb={transcodingDialogState.videoMetaData.sizeKb}
+          HeightToWidthRatio={
+            transcodingDialogState.videoMetaData.videoHeight /
+            transcodingDialogState.videoMetaData.videoWidth
+          }
+          originalWidth={transcodingDialogState.videoMetaData.videoWidth}
+        />
+      )}
       <IconButton onClick={() => inputRef.current?.click()}>
         <ImageIcon />
       </IconButton>
@@ -200,12 +230,20 @@ const UploadFileButton = ({ docName }: { docName: string }) => {
                 upload();
                 return;
               }
-
-              // TODO: await on response from dialog with size to transcode to (or cancel, or original size)
-              const GET_HEIGHT_RATIO = videoHeight / videoWidth;
-              const newWidth = 960;
-
-              const newHeight = newWidth * GET_HEIGHT_RATIO;
+              const _b64 = await getBlobBase64(file);
+              const [newWidth, newHeight] = await new Promise<
+                [width: number, height: number]
+              >((resolve) => {
+                setTranscodingDialogState({
+                  type: "open",
+                  resolve,
+                  videoMetaData: {
+                    videoWidth,
+                    videoHeight,
+                    sizeKb: getImageSize(_b64),
+                  },
+                });
+              });
 
               insertTranscodingPlaceholder(editor, id, {
                 width: newWidth,
@@ -574,19 +612,21 @@ const RemoteFile = ({
             <p>File type not supported.</p>
           )}
 
-          {selected && focused && state.type === "loaded" && (
-            <span
-              className={css`
-                position: absolute;
-                top: 0.5em;
-                left: 0.5em;
-                background-color: ${theme.palette.background.paper};
-              `}
-            >
-              {state.base64 && getImageSize(state.base64).toFixed(0)}
-              {" KB"}
-            </span>
-          )}
+          {
+            /*selected && focused && */ state.type === "loaded" && (
+              <span
+                className={css`
+                  position: absolute;
+                  top: 0.5em;
+                  left: 0.5em;
+                  background-color: ${theme.palette.background.paper};
+                `}
+              >
+                {state.base64 && getImageSize(state.base64).toFixed(0)}
+                {" KB"}
+              </span>
+            )
+          }
           {selected && focused && (
             <span
               className={css`
