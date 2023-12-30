@@ -43,13 +43,6 @@ function findResolutions(
   return resolutions;
 }
 
-// Example usage
-const originalWidth = 1920; // Replace with your video's width
-const originalHeight = 1080; // Replace with your video's height
-const possibleResolutions = findResolutions(originalWidth, originalHeight);
-
-console.log("Possible Resolutions:", possibleResolutions);
-
 const ResolutionDialog: React.FC<{
   onSubmit: (resolution: [number, number]) => void;
   HeightToWidthRatio: number;
