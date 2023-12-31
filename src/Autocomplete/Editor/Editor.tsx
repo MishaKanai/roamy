@@ -1232,6 +1232,7 @@ const SlateAutocompleteEditorComponent = <Triggers extends string[]>(
     editor,
     EditableElement: (
       <Editable
+        style={{ outline: "none" }}
         scrollSelectionIntoView={(editor, domRange) => {
           /**
            * default implementation,
