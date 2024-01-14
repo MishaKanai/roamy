@@ -704,7 +704,8 @@ const InlineImageOrVideo = ({
       >
         {element.variant === "id-link" ? (
           <IdLinkImage imageId={element.imageId} className={imageClassName} />
-        ) : element.url?.startsWith?.("data:video/mp4") ? (
+        ) : element.url?.startsWith?.("data:video/mp4") ||
+          element.url?.endsWith(".mp4") ? (
           <video style={{ width: "100%" }} controls>
             <source src={element.url} type="video/mp4" />
           </video>

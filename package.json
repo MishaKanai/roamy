@@ -44,6 +44,7 @@
     "is-hotkey": "^0.2.0",
     "is-url": "^1.2.4",
     "json-stable-stringify": "^1.0.1",
+    "jszip": "^3.10.1",
     "localforage": "^1.10.0",
     "lodash": "^4.17.21",
     "mime": "^3.0.0",

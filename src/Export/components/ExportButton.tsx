@@ -12,6 +12,8 @@ import {
 } from "../../Autocomplete/Editor/utils/traverseTransformNodes";
 import produce from "immer";
 import set from "lodash/set";
+import { createZipWithVideos } from "./createExportZip";
+import { getDisplayTextFromIndexFilePath } from "../../dropbox/Components/SelectedFileAutocomplete";
 
 const ExportButton = () => {
   const store = useStore();
@@ -61,6 +63,15 @@ const ExportButton = () => {
       return prev;
     }, {} as { [id: string]: { id: string; base64: string } });
 
+    const zip = await createZipWithVideos(
+      Object.entries(remoteDataById).map(([id, { base64 }]) => {
+        return {
+          filename: id,
+          base64,
+        };
+      })
+    );
+
     const newState = produce(currentState, (draftState) => {
       Object.entries(currentState.documents).forEach(([k, doc]) => {
         traverseTransformNodes((node, path) => {
@@ -77,7 +88,7 @@ const ExportButton = () => {
               type: "image",
               variant: "url",
               imageId: node.fileIdentifier,
-              url: entry.base64,
+              url: `/static/${node.fileIdentifier}`, // For inline files: entry.base64,
               children: [{ text: "" }],
             };
             set(draftState.documents[k].document, path, image);
@@ -99,10 +110,22 @@ const ExportButton = () => {
       "<!--SINGLEFILE_TEMPLATE_MARKER-->",
       jsonScript
     );
-    const file = new File([newIndexHtml], "testfile.html", {
+
+    const indexFile = new File([newIndexHtml], "index.html", {
       type: "text/html",
     });
-    saveAs(file);
+
+    zip.file("index.html", indexFile);
+    const blob = await zip.generateAsync({ type: "blob" });
+
+    const zipArchiveName =
+      currentState.dbx.collection.state === "authorized" &&
+      currentState.dbx.collection.selectedFilePath
+        ? getDisplayTextFromIndexFilePath(
+            currentState.dbx.collection.selectedFilePath
+          )
+        : "Rhyzoam export";
+    saveAs(blob, zipArchiveName);
   }, []);
   return (
     <Button
