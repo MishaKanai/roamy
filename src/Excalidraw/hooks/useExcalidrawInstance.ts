@@ -14,8 +14,8 @@ const useExcalidrawInstance = () => {
     if (!excalidrawInstance) {
       return;
     }
-    let to1: number | null = null;
-    let to2: number | null = null;
+    let to1: ReturnType<typeof setTimeout> | null = null;
+    let to2: ReturnType<typeof setTimeout> | null = null;
     excalidrawInstance.readyPromise.then((instance) => {
       /**
        * for some reason, with multiple exalidraw instances of the same image, they frequently don't appear until we force refresh, and the timing needed for that is very inconsistent
