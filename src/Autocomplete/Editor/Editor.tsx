@@ -91,221 +91,213 @@ import VideoTranscodingPlaceholder from "../../RemoteFiles/transcodeQueue/compon
 import ResolutionDialog from "../../RemoteFiles/util/CompressMp4Dialog/ResolutionDialog";
 import getBlobBase64 from "../../RemoteFiles/util/getBlobBase64";
 
-const UploadFileButton = ({ docName }: { docName: string }) => {
-  const editor = useSlateStatic();
-  // const store = useStore();
-  const inputRef = useRef<HTMLInputElement>(null);
-  const remoteFiles = useContext(remoteFilesApiContext);
-  const [transcodingDialogState, setTranscodingDialogState] = useState<
-    | {
-        type: "open";
-        videoMetaData: {
-          videoHeight: number;
-          videoWidth: number;
-          sizeKb: number;
-        };
-        resolve: (resolution: [width: number, height: number]) => void;
-      }
-    | {
-        type: "closed";
-      }
-  >();
-  return (
-    <>
-      {transcodingDialogState?.type === "open" && (
-        <ResolutionDialog
-          onSubmit={([w, h]) => {
-            transcodingDialogState.resolve([w, h]);
-            setTranscodingDialogState({ type: "closed" });
-          }}
-          sizeKb={transcodingDialogState.videoMetaData.sizeKb}
-          HeightToWidthRatio={
-            transcodingDialogState.videoMetaData.videoHeight /
-            transcodingDialogState.videoMetaData.videoWidth
-          }
-          originalWidth={transcodingDialogState.videoMetaData.videoWidth}
-        />
-      )}
-      <IconButton onClick={() => inputRef.current?.click()}>
-        <ImageIcon />
-      </IconButton>
-      <input
-        ref={inputRef}
-        type="file"
-        style={{ display: "none" }}
-        onChange={(e) => {
-          const file = e.target.files?.[0];
-          e.target.value = "";
-          if (!file) {
-            return;
-          }
-          const addFileB64 = (base64: string, at?: Location) => {
-            remoteFiles
-              .uploadFile({
-                type: "b64",
-                base64,
-                mimeType: file.type,
-              })
-              .then(({ id: fileIdentifier }) => {
-                return new Promise<{
-                  height?: string | number;
-                  width?: string | number;
-                  fileIdentifier: string;
-                }>((resolve, reject) => {
-                  if (file.type === "video/mp4") {
-                    getVideoMetadata(base64)
-                      .then((videoMetadata) => {
+type TranscodingDialogState =
+  | {
+      type: "open";
+      videoMetaData: {
+        videoHeight: number;
+        videoWidth: number;
+        sizeKb: number;
+      };
+      resolve: (resolution: [width: number, height: number]) => void;
+    }
+  | {
+      type: "closed";
+    };
+const UploadFileButton = React.memo(
+  ({
+    docName,
+    setTranscodingDialogState,
+  }: {
+    docName: string;
+    setTranscodingDialogState: (state: TranscodingDialogState) => void;
+  }) => {
+    const editor = useSlateStatic();
+    const inputRef = useRef<HTMLInputElement>(null);
+    const remoteFiles = useContext(remoteFilesApiContext);
+    return (
+      <>
+        <IconButton
+          onClick={() => inputRef.current?.click()}
+          onMouseDown={(e) => e.preventDefault()}
+        >
+          <ImageIcon />
+        </IconButton>
+        <input
+          ref={inputRef}
+          type="file"
+          style={{ display: "none" }}
+          onChange={(e) => {
+            const file = e.target.files?.[0];
+            e.target.value = "";
+            if (!file) {
+              return;
+            }
+            const addFileB64 = (base64: string, at?: Location) => {
+              remoteFiles
+                .uploadFile({
+                  type: "b64",
+                  base64,
+                  mimeType: file.type,
+                })
+                .then(({ id: fileIdentifier }) => {
+                  return new Promise<{
+                    height?: string | number;
+                    width?: string | number;
+                    fileIdentifier: string;
+                  }>((resolve, reject) => {
+                    if (file.type === "video/mp4") {
+                      getVideoMetadata(base64)
+                        .then((videoMetadata) => {
+                          resolve({
+                            fileIdentifier,
+                            width: videoMetadata.videoWidth,
+                            height: videoMetadata.videoHeight,
+                          });
+                        })
+                        .catch((e) => {
+                          console.error(e);
+                          resolve({ fileIdentifier });
+                        });
+                    } else {
+                      const img = new Image();
+
+                      img.onload = () => {
                         resolve({
                           fileIdentifier,
-                          width: videoMetadata.videoWidth,
-                          height: videoMetadata.videoHeight,
+                          width: img.width,
+                          height: img.height,
                         });
-                      })
-                      .catch((e) => {
-                        console.error(e);
-                        resolve({ fileIdentifier });
-                      });
-                  } else {
-                    const img = new Image();
+                      };
+                      img.onerror = () => resolve({ fileIdentifier });
 
-                    img.onload = () => {
-                      resolve({
-                        fileIdentifier,
-                        width: img.width,
-                        height: img.height,
-                      });
-                    };
-                    img.onerror = () => resolve({ fileIdentifier });
-
-                    img.src = base64;
-                  }
+                      img.src = base64;
+                    }
+                  });
+                })
+                .then(({ width, height, fileIdentifier }) => {
+                  insertRemoteFile(editor, fileIdentifier, width, height, at);
                 });
-              })
-              .then(({ width, height, fileIdentifier }) => {
-                insertRemoteFile(editor, fileIdentifier, width, height, at);
-              });
-          };
-
-          if (file.type === "image/gif" && window.confirm("Optimize Gif?")) {
-            loadGif(file).then((base64) => {
-              addFileB64(base64);
-            });
-            return;
-          }
-          /**
-           * TODO
-           *
-           * if file.type === video/mp4 && window.confirm("Optimize video?")
-           *   use global dropdown for confirmation.
-           * optimize/compress mp4 in-browser, scale down to 520p, 720p, 1024p options
-           *
-           */
-          const upload = () => {
-            const reader = new FileReader();
-            reader.readAsDataURL(file as Blob);
-            reader.onload = () => {
-              const base64 = reader.result as string;
-              if (!base64) {
-                return;
-              }
-              addFileB64(base64);
-            };
-            reader.onerror = (err) => {
-              console.error(err);
             };
 
-            inputRef.current!.value = "";
-          };
+            if (file.type === "image/gif" && window.confirm("Optimize Gif?")) {
+              loadGif(file).then((base64) => {
+                addFileB64(base64);
+              });
+              return;
+            }
 
-          if (file.type === "video/mp4") {
-            const id = v4();
-            (async () => {
-              const { duration, videoHeight, videoWidth } =
-                await getVideoMetadata(file);
+            const upload = () => {
+              const reader = new FileReader();
+              reader.readAsDataURL(file as Blob);
+              reader.onload = () => {
+                const base64 = reader.result as string;
+                if (!base64) {
+                  return;
+                }
+                addFileB64(base64);
+              };
+              reader.onerror = (err) => {
+                console.error(err);
+              };
 
-              // await transcode here as well.
-              // Either prevent navigation, or prevent memory leak
-              if (videoWidth <= 960 || !videoHeight || !videoWidth) {
-                // ok, Let's not transcode by default.
-                upload();
-                return;
-              }
-              const _b64 = await getBlobBase64(file);
-              const [newWidth, newHeight] = await new Promise<
-                [width: number, height: number]
-              >((resolve) => {
-                setTranscodingDialogState({
-                  type: "open",
-                  resolve,
-                  videoMetaData: {
-                    videoWidth,
-                    videoHeight,
-                    sizeKb: getImageSize(_b64),
-                  },
+              inputRef.current!.value = "";
+            };
+            if (file.type === "video/mp4" || file.type === "video/quicktime") {
+              const id = v4();
+              (async () => {
+                const { duration, videoHeight, videoWidth } =
+                  await getVideoMetadata(file);
+
+                // await transcode here as well.
+                // Either prevent navigation, or prevent memory leak
+                if (videoWidth <= 960 || !videoHeight || !videoWidth) {
+                  // ok, Let's not transcode by default.
+                  upload();
+                  return;
+                }
+                const _b64 = await getBlobBase64(file);
+                const [newWidth, newHeight] = await new Promise<
+                  [width: number, height: number]
+                >((resolve) => {
+                  const sizeKb = getImageSize(_b64, file.type);
+                  setTranscodingDialogState({
+                    type: "open",
+                    resolve,
+                    videoMetaData: {
+                      videoWidth,
+                      videoHeight,
+                      sizeKb,
+                    },
+                  });
                 });
-              });
+                if (newWidth === videoWidth) {
+                  upload();
+                  return;
+                }
+                insertTranscodingPlaceholder(editor, id, {
+                  width: newWidth,
+                  height: newHeight,
+                  duration,
+                  filename: file.name,
+                });
+                const findPlaceholder = (): Path | null => {
+                  let path = null;
+                  [...Node.descendants(editor, { reverse: true })].forEach(
+                    ([node, currentPath]) => {
+                      const customNode = node as CustomElement;
+                      if (
+                        customNode.type === "transcoding_placeholder" &&
+                        customNode.jobId === id
+                      ) {
+                        path = currentPath;
+                      }
+                    }
+                  );
+                  return path;
+                };
 
-              insertTranscodingPlaceholder(editor, id, {
-                width: newWidth,
-                height: newHeight,
-                duration,
-                filename: file.name,
-              });
-              const findPlaceholder = (): Path | null => {
-                let path = null;
-                [...Node.descendants(editor, { reverse: true })].forEach(
-                  ([node, currentPath]) => {
-                    const customNode = node as CustomElement;
-                    if (
-                      customNode.type === "transcoding_placeholder" &&
-                      customNode.jobId === id
-                    ) {
-                      path = currentPath;
+                const removePlaceholder = (): Path | null => {
+                  let placeholderLocation = null;
+                  while ((placeholderLocation = findPlaceholder())) {
+                    if (placeholderLocation) {
+                      Transforms.removeNodes(editor, {
+                        at: placeholderLocation,
+                      });
                     }
                   }
-                );
-                return path;
-              };
+                  return placeholderLocation;
+                };
 
-              const removePlaceholder = (): Path | null => {
-                let placeholderLocation = null;
-                while ((placeholderLocation = findPlaceholder())) {
-                  if (placeholderLocation) {
-                    Transforms.removeNodes(editor, {
-                      at: placeholderLocation,
-                    });
-                  }
-                }
-                return placeholderLocation;
-              };
+                transcodingQueue.addJob({
+                  id,
+                  file,
+                  resolution: [newWidth, newHeight],
+                  onSuccess: (transcodedB64) => {
+                    const placeholderLocation = removePlaceholder();
+                    addFileB64(transcodedB64, placeholderLocation || undefined);
+                  },
+                  onCancel: () => {
+                    removePlaceholder();
+                  },
+                  onError(err) {
+                    console.log("ERROR");
+                    console.error(err);
+                    // TODO I don't think errors are handled in the placeholder component.
+                  },
+                });
+              })();
 
-              transcodingQueue.addJob({
-                id,
-                file,
-                resolution: [newWidth, newHeight],
-                onSuccess: (transcodedB64) => {
-                  const placeholderLocation = removePlaceholder();
-                  addFileB64(transcodedB64, placeholderLocation || undefined);
-                },
-                onCancel: () => {
-                  removePlaceholder();
-                },
-                onError(err) {
-                  console.log("ERROR");
-                  console.error(err);
-                  // TODO I don't think errors are handled in the placeholder component.
-                },
-              });
-            })();
+              return;
+            }
 
-            return;
-          }
-          upload();
-        }}
-      />
-    </>
-  );
-};
+            upload();
+          }}
+        />
+      </>
+    );
+  }
+);
 
 function loadGif(intFiles: any): Promise<string> {
   return gifsicle
@@ -344,8 +336,8 @@ function loadGif(intFiles: any): Promise<string> {
     });
 }
 
-const getImageSize = (url: string) => {
-  const stringLength = url.length - "data:image/gif;base64,".length;
+const getImageSize = (url: string, mimeType: string = "image/gif") => {
+  const stringLength = url.length - `data:${mimeType};base64,`.length;
   const sizeInBytes = 4 * Math.ceil(stringLength / 3) * 0.5624896334383812;
   const sizeInKb = sizeInBytes / 1000;
   return sizeInKb;
@@ -953,7 +945,17 @@ const getToolbarStyle = (backgroundColor: string) =>
   } as const);
 
 const Toolbar = React.memo(
-  ({ title, doc }: { title: React.ReactNode; doc: string }) => {
+  ({
+    title,
+    doc,
+    setTranscodingDialogState,
+  }: {
+    title: React.ReactNode;
+    doc: string;
+    setTranscodingDialogState: (
+      ranscodingDialogState: TranscodingDialogState
+    ) => void;
+  }) => {
     const backgroundColor = useBackgroundColor();
     const toolbarStyle = useMemo(
       () => getToolbarStyle(backgroundColor),
@@ -981,7 +983,10 @@ const Toolbar = React.memo(
             format="bulleted-list"
             icon={<FormatListBulletedIcon />}
           />
-          <UploadFileButton docName={doc} />
+          <UploadFileButton
+            docName={doc}
+            setTranscodingDialogState={setTranscodingDialogState}
+          />
         </div>
       </div>
     );
@@ -1224,9 +1229,29 @@ const SlateAutocompleteEditorComponent = <Triggers extends string[]>(
     () => getToolbarStyle(backgroundColor),
     [backgroundColor]
   );
+  const [transcodingDialogState, setTranscodingDialogState] = useState<
+    | {
+        type: "open";
+        videoMetaData: {
+          videoHeight: number;
+          videoWidth: number;
+          sizeKb: number;
+        };
+        resolve: (resolution: [width: number, height: number]) => void;
+      }
+    | {
+        type: "closed";
+      }
+  >();
   const renderToolbar = useCallback(
-    () => <Toolbar title={title} doc={docName} />,
-    [title, docName]
+    () => (
+      <Toolbar
+        title={title}
+        doc={docName}
+        setTranscodingDialogState={setTranscodingDialogState}
+      />
+    ),
+    [title, docName, setTranscodingDialogState]
   );
 
   const editable = props.renderEditableRegion({
@@ -1349,6 +1374,20 @@ const SlateAutocompleteEditorComponent = <Triggers extends string[]>(
           </Portal>
         )}
       </Slate>
+      {transcodingDialogState?.type === "open" && (
+        <ResolutionDialog
+          onSubmit={([w, h]) => {
+            transcodingDialogState.resolve([w, h]);
+            setTranscodingDialogState({ type: "closed" });
+          }}
+          sizeKb={transcodingDialogState.videoMetaData.sizeKb}
+          HeightToWidthRatio={
+            transcodingDialogState.videoMetaData.videoHeight /
+            transcodingDialogState.videoMetaData.videoWidth
+          }
+          originalWidth={transcodingDialogState.videoMetaData.videoWidth}
+        />
+      )}
     </div>
   );
 };
