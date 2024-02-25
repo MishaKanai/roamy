@@ -451,13 +451,7 @@ const IdLinkImage = (props: { imageId: string; className: string }) => {
   }
   if (image.fileData.mimeType.startsWith("video")) {
     return (
-      <video controls style={{ width: "100%" }}>
-        <source
-          src={image.fileData.dataURL}
-          type={image.fileData.mimeType}
-        ></source>
-        Your browser does not support the video tag.
-      </video>
+      <Video src={image.fileData.dataURL} type={image.fileData.mimeType} />
     );
   }
   return (
@@ -488,6 +482,19 @@ const useStyles = makeStyles((theme: any) => ({
     left: 0,
   },
 }));
+
+const Video = ({ src, type }: { src: string; type: string }) => {
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  useEffect(() => {
+    videoRef.current?.load();
+  }, []);
+  return (
+    <video ref={videoRef} controls style={{ width: "100%" }}>
+      <source src={src} type={type}></source>
+      Your browser does not support the video tag.
+    </video>
+  );
+};
 const RemoteFile = ({
   attributes,
   children,
@@ -596,10 +603,7 @@ const RemoteFile = ({
               className={imageClassName}
             />
           ) : state.mimeType.startsWith("video") ? (
-            <video controls style={{ width: "100%" }}>
-              <source src={state.base64} type={state.mimeType}></source>
-              Your browser does not support the video tag.
-            </video>
+            <Video src={state.base64} type={state.mimeType} />
           ) : (
             <p>File type not supported.</p>
           )}
@@ -698,9 +702,7 @@ const InlineImageOrVideo = ({
           <IdLinkImage imageId={element.imageId} className={imageClassName} />
         ) : element.url?.startsWith?.("data:video/mp4") ||
           element.url?.endsWith(".mp4") ? (
-          <video style={{ width: "100%" }} controls>
-            <source src={element.url} type="video/mp4" />
-          </video>
+          <Video src={element.url} type="video/mp4" />
         ) : (
           <img
             alt="user uploaded"
