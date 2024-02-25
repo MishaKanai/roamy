@@ -9,7 +9,7 @@ import {
   DialogTitle,
 } from "@mui/material";
 import CompressProgress from "../CompressProgress";
-import { useVideoMetadata } from "../getVideoMetadata";
+import { useVideoMetadata } from "../videometadata/getVideoMetadata";
 import { css } from "@emotion/css";
 
 const toHHMMSS = (seconds: number) =>

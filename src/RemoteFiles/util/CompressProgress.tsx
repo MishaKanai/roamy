@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { getFFMpegStore } from "./FFMpeg";
-import { getVideoMetadata } from "./getVideoMetadata";
+import { getVideoMetadata } from "./videometadata/getVideoMetadata";
 import parseDurationString from "./parseDurationString";
 import CircularProgressWithLabel from "./CircularProgressWithLabel";
 import { DialogContentText } from "@mui/material";

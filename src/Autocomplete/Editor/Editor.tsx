@@ -85,7 +85,7 @@ import hash_sum from "hash-sum";
 import { Resizable } from "re-resizable";
 import isSingleFile from "../../util/isSingleFile";
 import Sticky2 from "./utils/Sticky2";
-import { getVideoMetadata } from "../../RemoteFiles/util/getVideoMetadata";
+import { getVideoMetadata } from "../../RemoteFiles/util/videometadata/getVideoMetadata";
 import { transcodingQueue } from "../../RemoteFiles/transcodeQueue/TranscodingQueue";
 import VideoTranscodingPlaceholder from "../../RemoteFiles/transcodeQueue/components/VideoTranscodingPlaceholder";
 import ResolutionDialog from "../../RemoteFiles/util/CompressMp4Dialog/ResolutionDialog";
