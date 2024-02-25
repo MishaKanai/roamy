@@ -211,7 +211,7 @@ const UploadFileButton = React.memo(
 
                 // await transcode here as well.
                 // Either prevent navigation, or prevent memory leak
-                if (videoWidth <= 960 || !videoHeight || !videoWidth) {
+                if (videoWidth <= 400 || !videoHeight || !videoWidth) {
                   // ok, Let's not transcode by default.
                   upload();
                   return;
