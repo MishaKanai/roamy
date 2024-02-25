@@ -485,9 +485,14 @@ const useStyles = makeStyles((theme: any) => ({
 
 const Video = ({ src, type }: { src: string; type: string }) => {
   const videoRef = useRef<HTMLVideoElement | null>(null);
-  useEffect(() => {
-    videoRef.current?.load();
-  }, []);
+  // useEffect(() => {
+  // This really impacts page load when there's a lot of videos on the page.
+  // disabling this for now.
+  // I added it in order to get thumbnails to show
+  // Instead, I'll probably have to extract the image and set as a poster
+  // after storing it in dbx separately
+  // videoRef.current?.load();
+  // }, []);
   return (
     <video ref={videoRef} controls style={{ width: "100%" }}>
       <source src={src} type={type}></source>
