@@ -86,6 +86,13 @@ class FFmpegStore {
             file.name,
             "-vf",
             `scale=${scale}`,
+            "-preset",
+            "veryfast", // TODO: change this according to user device
+            "-b:v",
+            "400k", // TODO: adjust this as needed.
+            "-movflags",
+            "faststart", // optimize for web streaming
+            "-an", // Removes audio. TODO: make optional
             "output.mp4",
           ]);
           const data = await this.ffmpeg.readFile("output.mp4");
