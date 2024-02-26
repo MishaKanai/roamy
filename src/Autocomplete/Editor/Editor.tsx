@@ -494,7 +494,7 @@ const Video = ({ src, type }: { src: string; type: string }) => {
   // videoRef.current?.load();
   // }, []);
   return (
-    <video ref={videoRef} controls style={{ width: "100%" }}>
+    <video playsInline ref={videoRef} controls style={{ width: "100%" }}>
       <source src={src} type={type}></source>
       Your browser does not support the video tag.
     </video>
