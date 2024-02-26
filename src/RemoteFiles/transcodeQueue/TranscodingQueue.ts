@@ -90,6 +90,13 @@ class TranscodingQueue {
         inFileName,
         "-vf",
         `scale=${resolution.join("x")}`,
+        "-preset",
+        "veryfast", // TODO: change this according to user device
+        "-b:v",
+        "400k", // TODO: adjust this as needed.
+        "-movflags",
+        "faststart", // optimize for web streaming
+        "-an", // Removes audio. TODO: make optional
         outputFileName,
       ]);
 
