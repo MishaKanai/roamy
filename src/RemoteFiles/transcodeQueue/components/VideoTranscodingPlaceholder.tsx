@@ -22,6 +22,7 @@ const VideoTranscodingPlaceholder = ({
   );
   return (
     <div
+      contentEditable={false}
       style={{
         height,
         width,

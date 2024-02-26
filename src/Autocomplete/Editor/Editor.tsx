@@ -494,10 +494,12 @@ const Video = ({ src, type }: { src: string; type: string }) => {
   // videoRef.current?.load();
   // }, []);
   return (
-    <video playsInline ref={videoRef} controls style={{ width: "100%" }}>
-      <source src={src} type={type}></source>
-      Your browser does not support the video tag.
-    </video>
+    <span contentEditable={false}>
+      <video playsInline ref={videoRef} controls style={{ width: "100%" }}>
+        <source src={src} type={type}></source>
+        Your browser does not support the video tag.
+      </video>
+    </span>
   );
 };
 const RemoteFile = ({
