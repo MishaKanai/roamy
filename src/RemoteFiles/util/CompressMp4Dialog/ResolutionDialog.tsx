@@ -34,9 +34,11 @@ function findResolutions(
     reducedHeight * factor <= originalHeight;
     factor++
   ) {
+    const width = Math.round(reducedWidth * factor);
+    const height = Math.round(reducedHeight * factor);
     resolutions.push({
-      width: reducedWidth * factor,
-      height: reducedHeight * factor,
+      width,
+      height,
     });
   }
 
