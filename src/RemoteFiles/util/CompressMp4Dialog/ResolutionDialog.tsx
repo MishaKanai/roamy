@@ -50,10 +50,17 @@ const ResolutionDialog: React.FC<{
   HeightToWidthRatio: number;
   sizeKb: number;
   originalWidth: number;
-}> = ({ onSubmit, HeightToWidthRatio, originalWidth, sizeKb }) => {
+}> = ({
+  onSubmit,
+  HeightToWidthRatio,
+  originalWidth: _originalWidth,
+  sizeKb,
+}) => {
+  const originalWidth = Math.round(_originalWidth);
+
   const [width, setWidth] = useState(originalWidth);
-  const height = HeightToWidthRatio * width;
-  const originalHeight = HeightToWidthRatio * originalWidth;
+  const height = Math.round(HeightToWidthRatio * width);
+  const originalHeight = Math.round(HeightToWidthRatio * originalWidth);
 
   const possibleResolutions = useMemo(
     () =>
@@ -84,7 +91,7 @@ const ResolutionDialog: React.FC<{
   });
 
   function valueLabelFormat(width: number) {
-    return `${Math.round(width)} x ${Math.round(width * HeightToWidthRatio)}`;
+    return `${width} x ${Math.round(width * HeightToWidthRatio)}`;
   }
 
   return (
