@@ -75,7 +75,7 @@ const ResolutionDialog: React.FC<{
         }
         return prev;
       },
-      { height: originalHeight, width: originalWidth }
+      { height: Math.round(originalHeight), width: Math.round(originalWidth) }
     );
   const marks = possibleResolutions.map((r) => {
     return {
@@ -84,7 +84,7 @@ const ResolutionDialog: React.FC<{
   });
 
   function valueLabelFormat(width: number) {
-    return `${width} x ${width * HeightToWidthRatio}`;
+    return `${Math.round(width)} x ${Math.round(width * HeightToWidthRatio)}`;
   }
 
   return (
