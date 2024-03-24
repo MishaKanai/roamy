@@ -231,10 +231,11 @@ const UploadFileButton = React.memo(
                     },
                   });
                 });
-                if (newWidth === videoWidth) {
-                  upload();
-                  return;
-                }
+                // Let's always compress
+                // if (newWidth === videoWidth) {
+                //   upload();
+                //   return;
+                // }
                 insertTranscodingPlaceholder(editor, id, {
                   width: newWidth,
                   height: newHeight,
