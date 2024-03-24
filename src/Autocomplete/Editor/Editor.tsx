@@ -580,7 +580,7 @@ const RemoteFile = ({
         <Resizable
           lockAspectRatio
           defaultSize={{
-            width: element.width!,
+            width: element.width ?? 200,
             height: "auto",
           }}
           onResizeStop={(e, direction, ref, d) => {
