@@ -71,7 +71,7 @@ const ResolutionDialog: React.FC<{
     [originalWidth, originalHeight]
   );
 
-  const MIN_WIDTH = 600;
+  const MIN_WIDTH = 480;
 
   const minResolutionAboveMin = possibleResolutions
     .filter(({ width }) => width >= MIN_WIDTH)
