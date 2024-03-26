@@ -41,25 +41,31 @@ function parseMediaInfo(output: string): VideoInfo | null {
   const heightMatch = output.match(/Height\s*:\s*([\d\s]+)pixels/);
   const rotationMatch = output.match(/Rotation\s*:\s*([\d\s]+)/);
 
-  // This regular expression captures the duration in seconds and milliseconds
-  const durationMatch = output.match(/Duration\s*:\s*(\d+)\s*s\s*(\d+)\s*ms/);
+  // This regular expression captures the duration in minutes (optional), seconds (optional), and milliseconds (optional)
+  const durationMatch = output.match(
+    /Duration\s*:\s*(?:(\d+)\s*min\s*)?(?:(\d+)\s*s)?(?:\s*(\d+)\s*ms)?/
+  );
 
   if (!widthMatch || !heightMatch || !durationMatch) {
     console.error("Failed to parse media info");
     return null;
   }
-  if (!rotationMatch) {
-    console.error("failed to parse rotation");
-    return null;
-  }
-  const rotationNumber = parseInt(rotationMatch[1].replace(/\s/g, ""), 10);
+  const rotationNumber = !rotationMatch
+    ? 0
+    : parseInt(rotationMatch[1].replace(/\s/g, ""), 10);
   // Remove spaces before parsing to integers
   const videoWidth = parseInt(widthMatch[1].replace(/\s/g, ""), 10);
   const videoHeight = parseInt(heightMatch[1].replace(/\s/g, ""), 10);
   // Convert captured duration into total seconds
-  const seconds = parseInt(durationMatch[1], 10);
-  const milliseconds = parseInt(durationMatch[2], 10);
-  const duration = seconds + milliseconds / 1000;
+  const minutes = parseInt(durationMatch[1] ?? 0, 10) ?? 0;
+  const seconds = parseInt(durationMatch[2] ?? 0, 10) ?? 0;
+  const milliseconds = parseInt(durationMatch[3] ?? 0, 10) ?? 0;
+  console.log({
+    minutes,
+    seconds,
+    milliseconds,
+  });
+  const duration = minutes * 60 + seconds + milliseconds / 1000;
 
   if (rotationNumber % 180) {
     return {
