@@ -1700,12 +1700,12 @@ export const Element: React.FC<RenderElementProps & { parentDoc: string }> = (
                   <Page
                     title={
                       <div style={{ display: "flex", flexDirection: "row" }}>
-                        <Link to={`/docs/${(element as any).portalReference}`}>
-                          <DocTitle
-                            id={(element as any).portalReference}
-                            type="documents"
-                          />
-                        </Link>
+                        <DocTitle
+                          to={`/docs/${(element as any).portalReference}`}
+                          editable
+                          id={(element as any).portalReference}
+                          type="documents"
+                        />
                         <span style={{ marginLeft: ".25em" }}>
                           <HoverBacklinks
                             selectBacklinks={(state) =>

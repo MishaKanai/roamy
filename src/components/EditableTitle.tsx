@@ -14,6 +14,7 @@ import { useAppSelector } from "../store/hooks";
 import { setTitle } from "../SlateGraph/store/slateDocumentsSlice";
 import { setDrawingTitle } from "../Excalidraw/store/drawingsSlice";
 import isSingleFile from "../util/isSingleFile";
+import Link from "./Link";
 
 const EditTitleForm = ({
   initialTitle,
@@ -69,19 +70,25 @@ const useDisplayTitle = (id: string, type: "documents" | "drawings") => {
 const EditableTitle = ({
   id,
   type,
+  to,
 }: {
   id: string;
   type: "documents" | "drawings";
+  to?: string;
 }) => {
   const displayTitle = useDisplayTitle(id, type);
   const dispatch = useDispatch();
   const [hovered, setHovered] = React.useState(false);
+
+  const TitleElement = displayTitle ?? (
+    <span style={{ opacity: ".5" }}>{id}</span>
+  );
   return (
     <span
       onMouseLeave={() => setHovered(false)}
       onMouseEnter={() => setHovered(true)}
     >
-      {displayTitle ?? <span style={{ opacity: ".5" }}>{id}</span>}
+      {to ? <Link to={to}>{TitleElement}</Link> : TitleElement}
       <Popup
         ComponentProps={{
           "aria-labelledby": "rename-title-dialog",
@@ -133,14 +140,16 @@ const DocTitle = ({
   id,
   editable,
   type,
+  to,
 }: {
   type: "documents" | "drawings";
   id: string;
   editable?: boolean;
+  to?: string;
 }) => {
   const displayTitle = useDisplayTitle(id, type);
   if (editable && !isSingleFile()) {
-    return <EditableTitle type={type} id={id} />;
+    return <EditableTitle type={type} id={id} to={to} />;
   }
   if (!displayTitle) {
     return <span style={{ opacity: ".5" }}>{id}</span>;
