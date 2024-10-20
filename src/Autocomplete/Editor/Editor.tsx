@@ -39,6 +39,7 @@ import {
   useMediaQuery,
   Skeleton,
   Button,
+  Tooltip,
 } from "@mui/material";
 import FormatBoldIcon from "@mui/icons-material/FormatBold";
 import FormatUnderlinedIcon from "@mui/icons-material/FormatUnderlined";
@@ -990,9 +991,11 @@ const ReplaceSelectionButton: React.FC<{
   }, [theme]);
 
   return (
-    <IconButton style={style} size="small" onMouseDown={handleMouseDown}>
-      {icon}
-    </IconButton>
+    <Tooltip title={`Create ${type}`}>
+      <IconButton style={style} size="small" onMouseDown={handleMouseDown}>
+        {icon}
+      </IconButton>
+    </Tooltip>
   );
 });
 
