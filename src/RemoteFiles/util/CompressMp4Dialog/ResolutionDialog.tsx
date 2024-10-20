@@ -102,31 +102,34 @@ const ResolutionDialog: React.FC<{
           You may want to reduce the size of this video before uploading. It is
           currently <code>{sizeKb.toFixed(0)}KB</code>
         </DialogContentText>
-        {`${width} x ${height}`}
-        <div style={{ margin: "0 3em" }}>
-          <Slider
-            valueLabelFormat={valueLabelFormat}
-            min={minResolutionAboveMin.width}
-            value={width}
-            max={originalWidth}
-            onChange={(event, newValue) => setWidth(newValue as number)}
-            marks={marks}
-            step={null}
-            aria-label="Video Width"
-            defaultValue={originalWidth}
-            valueLabelDisplay="auto"
-          />
-        </div>
+        {minResolutionAboveMin.width < originalWidth && (
+          <>
+            {`${width} x ${height}`}
+            <div style={{ margin: "0 3em" }}>
+              <Slider
+                valueLabelFormat={valueLabelFormat}
+                min={minResolutionAboveMin.width}
+                value={width}
+                max={originalWidth}
+                onChange={(event, newValue) => setWidth(newValue as number)}
+                marks={marks}
+                step={null}
+                aria-label="Video Width"
+                defaultValue={originalWidth}
+                valueLabelDisplay="auto"
+              />
+            </div>
+          </>
+        )}
       </DialogContent>
       <DialogActions>
         <Button onClick={() => onSubmit([originalWidth, originalHeight])}>
           Upload As-is
         </Button>
-        {originalWidth > width && (
-          <Button onClick={() => onSubmit([width, height])}>
-            Compress to {`${width} x ${height}`}
-          </Button>
-        )}
+        <Button variant="contained" onClick={() => onSubmit([width, height])}>
+          Compress
+          {originalWidth > width && <span> to {`${width} x ${height}`}</span>}
+        </Button>
       </DialogActions>
     </Dialog>
   );
