@@ -99,6 +99,62 @@ import ResolutionDialog from "../../RemoteFiles/util/CompressMp4Dialog/Resolutio
 import getBlobBase64 from "../../RemoteFiles/util/getBlobBase64";
 import { createDoc } from "../../SlateGraph/store/globalActions";
 
+export const videoToImage = (
+  videoB64: string,
+  options: {
+    frameTimeInSeconds?: number;
+  } = {
+    frameTimeInSeconds: 0.5,
+  }
+): Promise<string> => {
+  return new Promise<string>((resolve) => {
+    const canvas = document.createElement("canvas");
+    const video = document.createElement("video");
+    const source = document.createElement("source");
+    const context = canvas.getContext("2d");
+
+    video.style.display = "none";
+    canvas.style.display = "none";
+
+    source.setAttribute("src", videoB64);
+    video.setAttribute("crossorigin", "anonymous");
+    video.setAttribute("preload", "metadata");
+
+    video.appendChild(source);
+    document.body.appendChild(canvas);
+    document.body.appendChild(video);
+
+    if (!context) {
+      return;
+    }
+
+    video.currentTime = options.frameTimeInSeconds!;
+    video.load();
+
+    video.addEventListener("loadedmetadata", function () {
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+    });
+
+    video.addEventListener("loadeddata", function () {
+      setTimeout(() => {
+        context.drawImage(video, 0, 0, video.videoWidth, video.videoHeight);
+
+        const imagePngBase64 = canvas.toDataURL();
+
+        video.remove();
+        canvas.remove();
+        resolve(imagePngBase64);
+      });
+    });
+  });
+};
+
+const getThumbnailFileIdentifier = (fileIdentifier: string) =>
+  fileIdentifier.split(".").slice(0, -1).join(".") +
+  "__thumbnail." +
+  fileIdentifier.split(".").pop();
+
 type TranscodingDialogState =
   | {
       type: "open";
@@ -155,6 +211,18 @@ const UploadFileButton = React.memo(
                     fileIdentifier: string;
                   }>((resolve, reject) => {
                     if (file.type === "video/mp4") {
+                      // start thumbnail
+                      videoToImage(base64).then((base64) => {
+                        remoteFiles.uploadFile({
+                          type: "b64",
+                          base64,
+                          mimeType: "image/png",
+                          forceFileIdentifier:
+                            getThumbnailFileIdentifier(fileIdentifier),
+                        });
+                      });
+                      // end thumbnail
+
                       getVideoMetadata(base64)
                         .then((videoMetadata) => {
                           resolve({
@@ -492,7 +560,15 @@ const useStyles = makeStyles((theme: any) => ({
   },
 }));
 
-const Video = ({ src, type }: { src: string; type: string }) => {
+const Video = ({
+  src,
+  type,
+  fileIdentifier,
+}: {
+  src: string;
+  type: string;
+  fileIdentifier?: string;
+}) => {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   // useEffect(() => {
   // This really impacts page load when there's a lot of videos on the page.
@@ -502,14 +578,70 @@ const Video = ({ src, type }: { src: string; type: string }) => {
   // after storing it in dbx separately
   // videoRef.current?.load();
   // }, []);
+
+  const thumnbailB64 = useFetchThumbnail(fileIdentifier);
+
   return (
     <span contentEditable={false}>
-      <video playsInline ref={videoRef} controls style={{ width: "100%" }}>
+      <video
+        playsInline
+        ref={videoRef}
+        controls
+        style={{ width: "100%" }}
+        poster={thumnbailB64}
+      >
         <source src={src} type={type}></source>
         Your browser does not support the video tag.
       </video>
     </span>
   );
+};
+
+const useFetchThumbnail = (fileIdentifier?: string) => {
+  const thumbnailFileIdentifier = useMemo(
+    () => fileIdentifier && getThumbnailFileIdentifier(fileIdentifier),
+    [fileIdentifier]
+  );
+  const state = useFetchRemoteFile(thumbnailFileIdentifier);
+  return state.type === "loaded" ? state.base64 : undefined;
+};
+
+const useFetchRemoteFile = (fileIdentifier: string | null | undefined) => {
+  const remoteFileApi = useContext(remoteFilesApiContext);
+  const [state, setState] = useState<
+    | {
+        type: "initial";
+      }
+    | {
+        type: "loaded";
+        base64: string;
+        mimeType: string;
+      }
+  >({ type: "initial" });
+
+  useEffect(() => {
+    if (!fileIdentifier) {
+      return;
+    }
+    const download = () =>
+      remoteFileApi.downloadFile(fileIdentifier).then(({ base64 }) => {
+        setState({
+          type: "loaded",
+          base64,
+          mimeType: base64.split(";base64")[0]?.slice("data:".length),
+        });
+      });
+    download().catch((err) => {
+      if (err.status === 409) {
+        // lets try to recover the file if we deleted it
+        remoteFileApi?.recoverFile?.(fileIdentifier).then(() => {
+          // file was successfuylly recovered:
+          download();
+        });
+      }
+    });
+  }, [fileIdentifier, remoteFileApi]);
+  return state;
 };
 const RemoteFile = ({
   attributes,
@@ -528,37 +660,7 @@ const RemoteFile = ({
     ratioStr: `${((element.height as number) / (element.width as any)) * 100}%`,
   });
 
-  const remoteFileApi = useContext(remoteFilesApiContext);
-  const [state, setState] = useState<
-    | {
-        type: "initial";
-      }
-    | {
-        type: "loaded";
-        base64: string;
-        mimeType: string;
-      }
-  >({ type: "initial" });
-
-  useEffect(() => {
-    const download = () =>
-      remoteFileApi.downloadFile(element.fileIdentifier).then(({ base64 }) => {
-        setState({
-          type: "loaded",
-          base64,
-          mimeType: base64.split(";base64")[0]?.slice("data:".length),
-        });
-      });
-    download().catch((err) => {
-      if (err.status === 409) {
-        // lets try to recover the file if we deleted it
-        remoteFileApi?.recoverFile?.(element.fileIdentifier).then(() => {
-          // file was successfuylly recovered:
-          download();
-        });
-      }
-    });
-  }, [element.fileIdentifier, remoteFileApi]);
+  const state = useFetchRemoteFile(element.fileIdentifier);
 
   const imageClassName = css`
     display: block;
@@ -619,7 +721,11 @@ const RemoteFile = ({
               className={imageClassName}
             />
           ) : state.mimeType.startsWith("video") ? (
-            <Video src={state.base64} type={state.mimeType} />
+            <Video
+              src={state.base64}
+              type={state.mimeType}
+              fileIdentifier={element.fileIdentifier}
+            />
           ) : (
             <p>File type not supported.</p>
           )}

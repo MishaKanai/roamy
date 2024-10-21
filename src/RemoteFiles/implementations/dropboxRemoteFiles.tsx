@@ -49,11 +49,9 @@ export const useDropboxRemoteFiles = (): RemoteFilesApi => {
                     }
                 }
             }
-            const filename = data.type === 'file' ? uuid + '--' + data.file.name : uuid + '.' + mime.getExtension(data.mimeType);
+            const filename = data.type === 'file' ? uuid + '--' + data.file.name : (data.forceFileIdentifier || (uuid + '.' + mime.getExtension(data.mimeType)));
             const response = await dbx?.filesUpload({ path: getIndexFilePath() + filename, contents: data.type === 'file' ? data.file : data.base64 })
-            console.log({
-                response
-            })
+
             return {
                 id: filename
             };

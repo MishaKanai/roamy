@@ -6,6 +6,7 @@ export type RemoteFilesApi = {
         type: 'b64',
         base64: string,
         mimeType: string,
+        forceFileIdentifier?: string,
     }): Promise<{
         id: string
     }>
