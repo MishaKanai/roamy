@@ -66,7 +66,7 @@ export const history = isSingleFile()
 const persistConfig = {
   key: "root",
   storage: storageSession,
-  blacklist: ["dbx", "files"],
+  blacklist: ["dbx", "files", "router"],
 };
 
 /**
