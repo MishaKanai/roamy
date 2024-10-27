@@ -1,4 +1,4 @@
-import React, { useContext } from "react";
+import React, { useContext, useEffect } from "react";
 import { DropboxAuth } from "dropbox";
 import { CircularProgress, Typography } from "@mui/material";
 import MergeEditorWrap from "../resolveMerge/components/MergePopup";
@@ -13,6 +13,7 @@ import ErrorOutline from "@mui/icons-material/ErrorOutline";
 import { useAppSelector } from "../../store/hooks";
 import { CLIENT_ID } from "../config";
 import isSingleFile from "../../util/isSingleFile";
+import { hasRedirectedFromAuth } from "../util/parseQueryString";
 // var REDIRECT_URI = 'http://localhost:8080/pkce-browser';
 const REDIRECT_URI = window.location.protocol + "//" + window.location.host;
 var dbxAuth = new DropboxAuth({
@@ -72,6 +73,41 @@ const FileSelectPendingWrapper: React.FC<{}> = (props) => {
   );
 };
 
+const DelayDisplay: React.FC<{ when: boolean; amount: number }> = ({
+  when,
+  amount,
+  children,
+}) => {
+  const [show, setShow] = React.useState(!when);
+
+  useEffect(() => {
+    if (show) {
+      return; // once shown, never hide.
+    }
+    if (!when) {
+      // no longer when we want to delay rendering. Immediately show.
+      setShow(true);
+      return;
+    }
+    if (!show) {
+      const to = setTimeout(() => setShow(true), amount);
+      return () => clearTimeout(to);
+    }
+  }, [when, show, amount]);
+  if (!show) {
+    return (
+      <div style={{ display: "grid", placeItems: "center", height: "100vh" }}>
+        <div style={{ textAlign: "center" }}>
+          <div>
+            <CircularProgress size={48} />
+          </div>
+        </div>
+      </div>
+    );
+  }
+  return <>{children}</>;
+};
+
 const AccessControlledPage: React.FC<AccessControlledPageProps> = (props) => {
   const collection = useAppSelector((state) => state.dbx.collection);
   const auth = useAppSelector((state) => state.dbx.auth);
@@ -83,7 +119,14 @@ const AccessControlledPage: React.FC<AccessControlledPageProps> = (props) => {
     (state) => state.merge.state === "resolved"
   );
   if (!isAuthorized && !isSingleFile()) {
-    return <LandingPage dbxAuth={doAuth}>Authorize</LandingPage>;
+    return (
+      // If we redirected from the auth page, this will flash unless we deliberately hide it while loading.
+      // One simple way to do this is if we detect through the URL that we are redirected, add delay before showing.
+      // Inside the component it should cleanup (call clearTimeout) in the useEffect when 'when' changes, to prevent memory leak
+      <DelayDisplay when={hasRedirectedFromAuth()} amount={2000}>
+        <LandingPage dbxAuth={doAuth}>Authorize</LandingPage>
+      </DelayDisplay>
+    );
   }
   const content = (
     <FileSelectPendingWrapper key={mergeResolvedKey + ""}>

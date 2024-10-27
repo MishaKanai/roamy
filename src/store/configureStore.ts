@@ -1,11 +1,14 @@
 import { configureStore, isPlain } from "@reduxjs/toolkit";
 import { $CombinedState } from "@reduxjs/toolkit";
 import storageSession from "redux-persist/lib/storage/session";
-import { push, replace, routerMiddleware } from "connected-react-router";
+import { replace, routerMiddleware } from "connected-react-router";
 import createRootReducer from "./createRootReducer";
 import { createBrowserHistory, createHashHistory } from "history";
 import { DropboxAuth, Dropbox, DropboxResponseError } from "dropbox";
-import parseQueryString from "../dropbox/util/parseQueryString";
+import {
+  getCodeFromUrl,
+  hasRedirectedFromAuth,
+} from "../dropbox/util/parseQueryString";
 import debounce from "lodash/debounce";
 import { DrawingDocuments } from "../Excalidraw/store/drawingsSlice";
 import { SlateDocuments } from "../SlateGraph/store/slateDocumentsSlice";
@@ -29,8 +32,6 @@ import {
   PERSIST,
   PURGE,
   REGISTER,
-  Persistor,
-  PersistedState,
 } from "redux-persist";
 import { authSuccess, logOut } from "../dropbox/store/globalActions";
 import { UploadedFiles } from "../UploadedFiles/uploadedFilesSlice";
@@ -47,17 +48,6 @@ import createAuthSyncMiddleware from "./middleware/createAuthSyncMiddleware";
 
 const REDIRECT_URI = window.location.protocol + "//" + window.location.host;
 const dbxAuth = getDropboxAuth();
-
-// Parses the url and gets the access token if it is in the urls hash
-function getCodeFromUrl() {
-  return parseQueryString(window.location.search).code;
-}
-
-// If the user was just redirected from authenticating, the urls hash will
-// contain the access token.
-function hasRedirectedFromAuth() {
-  return !!getCodeFromUrl();
-}
 
 export const history = isSingleFile()
   ? createHashHistory()
