@@ -164,7 +164,12 @@ const DrawingPage: React.FC<DrawingPageProps> = React.memo(
           onMouseUp={handleMouseUp}
           onBlur={handleKeyUp}
         >
-          <div style={{ position: "relative" }}>
+          <div
+            style={{
+              position: "relative",
+              paddingTop: viewedFromParentDoc ? undefined : "1em",
+            }}
+          >
             <div
               style={{
                 position: "absolute",
@@ -233,18 +238,12 @@ export const DrawingPageRoute = React.memo(() => {
 
   const { renderDrawingOptions } = useContext(drawingOptionsContext);
   const title = (
-    <div style={{ display: "flex", flexDirection: "row" }}>
+    <div style={{ display: "flex", flexDirection: "column" }}>
       <b style={{ fontSize: "x-large", marginBottom: 0 }}>
         <DocTitle id={drawingName} type="drawings" editable />
       </b>
-      &nbsp;
       {renderDrawingOptions?.({ drawingId: drawingName })}
-      &nbsp;
-      <span style={{ position: "relative" }}>
-        <span style={{ position: "absolute", bottom: 0, whiteSpace: "nowrap" }}>
-          <HoverBacklinks key={drawingName} selectBacklinks={selectBacklinks} />
-        </span>
-      </span>
+      <HoverBacklinks key={drawingName} selectBacklinks={selectBacklinks} />
     </div>
   );
   return (

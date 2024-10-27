@@ -161,7 +161,7 @@ export const PageRoute = React.memo(() => {
     [docName]
   );
   const title = (
-    <div style={{ display: "flex", flexDirection: "row" }}>
+    <div style={{ display: "flex", flexDirection: "column" }}>
       <b
         style={{
           marginTop: "-1px",
@@ -172,11 +172,7 @@ export const PageRoute = React.memo(() => {
       >
         <DocTitle editable id={docName} type="documents" />
       </b>
-      <span style={{ position: "relative" }}>
-        <span style={{ position: "absolute", bottom: 0, whiteSpace: "nowrap" }}>
-          <HoverBacklinks key={docName} selectBacklinks={selectBacklinks} />
-        </span>
-      </span>
+      <HoverBacklinks key={docName} selectBacklinks={selectBacklinks} />
     </div>
   );
   return (

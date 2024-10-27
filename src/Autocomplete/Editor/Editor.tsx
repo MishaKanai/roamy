@@ -180,8 +180,9 @@ const UploadFileButton = React.memo(
     const inputRef = useRef<HTMLInputElement>(null);
     const remoteFiles = useContext(remoteFilesApiContext);
     return (
-      <>
+      <span style={{ display: "unset" }}>
         <IconButton
+          size="small"
           onClick={() => inputRef.current?.click()}
           onMouseDown={(e) => e.preventDefault()}
         >
@@ -371,7 +372,7 @@ const UploadFileButton = React.memo(
             upload();
           }}
         />
-      </>
+      </span>
     );
   }
 );
@@ -1015,16 +1016,18 @@ const BlockButton: React.FC<{ format: BlockFormat; icon: JSX.Element }> = ({
 }) => {
   const editor = useSlate();
   return (
-    <IconButton
-      style={isBlockActive(editor, format) ? { color: "black" } : undefined}
-      size="small"
-      onMouseDown={(event: React.MouseEvent<HTMLButtonElement>) => {
-        event.preventDefault();
-        toggleBlock(editor, format);
-      }}
-    >
-      {icon}
-    </IconButton>
+    <span style={{ display: "unset" }}>
+      <IconButton
+        style={isBlockActive(editor, format) ? { color: "black" } : undefined}
+        size="small"
+        onMouseDown={(event: React.MouseEvent<HTMLButtonElement>) => {
+          event.preventDefault();
+          toggleBlock(editor, format);
+        }}
+      >
+        {icon}
+      </IconButton>
+    </span>
   );
 };
 
@@ -1052,9 +1055,11 @@ const MarkButton: React.FC<{ format: HotKeyFormat; icon: JSX.Element }> =
     }, [markIsActive, theme]);
 
     return (
-      <IconButton style={style} size="small" onMouseDown={handleMouseDown}>
-        {icon}
-      </IconButton>
+      <span style={{ display: "unset" }}>
+        <IconButton style={style} size="small" onMouseDown={handleMouseDown}>
+          {icon}
+        </IconButton>
+      </span>
     );
   });
 
@@ -1097,11 +1102,13 @@ const ReplaceSelectionButton: React.FC<{
   }, [theme]);
 
   return (
-    <Tooltip title={`Create ${type}`}>
-      <IconButton style={style} size="small" onMouseDown={handleMouseDown}>
-        {icon}
-      </IconButton>
-    </Tooltip>
+    <span style={{ display: "unset" }}>
+      <Tooltip title={`Create ${type}`}>
+        <IconButton style={style} size="small" onMouseDown={handleMouseDown}>
+          {icon}
+        </IconButton>
+      </Tooltip>
+    </span>
   );
 });
 
@@ -1787,25 +1794,32 @@ export const Element: React.FC<RenderElementProps & { parentDoc: string }> = (
                                   flexDirection: "row",
                                 }}
                               >
-                                <Link
-                                  to={`/drawings/${
-                                    (element as any).drawingReference
-                                  }`}
+                                <div
+                                  style={{
+                                    display: "flex",
+                                    flexDirection: "column",
+                                  }}
                                 >
-                                  <DocTitle
-                                    id={(element as any).drawingReference}
-                                    type="drawings"
-                                  />
-                                </Link>
-                                <span style={{ marginLeft: ".25em" }}>
-                                  <HoverBacklinks
-                                    selectBacklinks={(state) =>
-                                      state.drawings[drawingName]
-                                        ?.backReferences
-                                    }
-                                    dontInclude={[props.parentDoc]}
-                                  />
-                                </span>
+                                  <Link
+                                    to={`/drawings/${
+                                      (element as any).drawingReference
+                                    }`}
+                                  >
+                                    <DocTitle
+                                      id={(element as any).drawingReference}
+                                      type="drawings"
+                                    />
+                                  </Link>
+                                  <div style={{ marginLeft: ".25em" }}>
+                                    <HoverBacklinks
+                                      selectBacklinks={(state) =>
+                                        state.drawings[drawingName]
+                                          ?.backReferences
+                                      }
+                                      dontInclude={[props.parentDoc]}
+                                    />
+                                  </div>
+                                </div>
                                 {(isSmall && props.parentDoc) ||
                                 isSingleFile() ? null : (
                                   <span
@@ -1875,21 +1889,21 @@ export const Element: React.FC<RenderElementProps & { parentDoc: string }> = (
                 ) : (
                   <Page
                     title={
-                      <div style={{ display: "flex", flexDirection: "row" }}>
+                      <div style={{ display: "flex", flexDirection: "column" }}>
                         <DocTitle
                           to={`/docs/${(element as any).portalReference}`}
                           editable
                           id={(element as any).portalReference}
                           type="documents"
                         />
-                        <span style={{ marginLeft: ".25em" }}>
+                        <div style={{ marginLeft: ".25em" }}>
                           <HoverBacklinks
                             selectBacklinks={(state) =>
                               state.documents[docName]?.backReferences
                             }
                             dontInclude={[props.parentDoc]}
                           />
-                        </span>
+                        </div>
                       </div>
                     }
                     viewedFromParentDoc={props.parentDoc}
