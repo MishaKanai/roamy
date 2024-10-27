@@ -1153,7 +1153,7 @@ const Toolbar = React.memo(
             flexDirection: "row",
           }}
         >
-          {editor.selection && Editor.string(editor, editor.selection) && (
+          {editor.selection && !Range.isCollapsed(editor.selection) && (
             <>
               <ReplaceSelectionButton
                 type="reference"
