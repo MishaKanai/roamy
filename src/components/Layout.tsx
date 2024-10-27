@@ -11,15 +11,11 @@ import ListItemText from "@mui/material/ListItemText";
 import MenuIcon from "@mui/icons-material/Menu";
 import LogoutIcon from "@mui/icons-material/Logout";
 import SelectedFileAutocomplete from "../dropbox/Components/SelectedFileAutocomplete";
-import HomeIcon from "@mui/icons-material/Home";
-import SettingsIcon from "@mui/icons-material/Settings";
+import HomeIcon from "@mui/icons-material/HomeOutlined";
+import SettingsIcon from "@mui/icons-material/SettingsOutlined";
 import { ListItemButton, ListSubheader } from "@mui/material";
 import { useLocation } from "react-router";
 import useFileSelected from "../dropbox/hooks/useFileSelected";
-import NetworkIcon from "../icons/NetworkIcon";
-import TableIcon from "../icons/TableIcon";
-import PenTipIcon from "../icons/PenTip";
-import DocumentIcon from "../icons/DocumentIcon";
 import { parsePath } from "../RecentlyOpened/store/recentlyOpenedSlice";
 import { useDebounce } from "use-debounce";
 import CreateFab from "./FabArea";
@@ -30,6 +26,12 @@ import ExportButton from "../Export/components/ExportButton";
 import { useStore } from "react-redux";
 import { logOut } from "../dropbox/store/globalActions";
 import SyncStatus from "../dropbox/Components/SyncStatus";
+import {
+  ArticleOutlined,
+  GestureOutlined,
+  GridViewOutlined,
+  HubOutlined,
+} from "@mui/icons-material";
 
 const drawerWidth = 220;
 
@@ -113,7 +115,7 @@ const RecentlyUpdatedList = () => {
                 to={`/docs/${d.name}`}
               >
                 <ListItemIcon>
-                  <DocumentIcon />
+                  <ArticleOutlined color="primary" />
                 </ListItemIcon>
                 <ListItemText primary={d.name} />
               </ListItem>
@@ -128,7 +130,7 @@ const RecentlyUpdatedList = () => {
               to={`/drawings/${d.name}`}
             >
               <ListItemIcon>
-                <PenTipIcon />
+                <GestureOutlined color="primary" />
               </ListItemIcon>
               <ListItemText primary={d.name} />
             </ListItem>
@@ -163,7 +165,7 @@ const RecentlyOpenedList = () => {
                 to={`/docs/${d.name}`}
               >
                 <ListItemIcon>
-                  <DocumentIcon />
+                  <ArticleOutlined color="primary" />
                 </ListItemIcon>
                 <ListItemText
                   primary={
@@ -182,7 +184,7 @@ const RecentlyOpenedList = () => {
               to={`/drawings/${d.name}`}
             >
               <ListItemIcon>
-                <PenTipIcon />
+                <GestureOutlined color="primary" />
               </ListItemIcon>
               <ListItemText
                 primary={
@@ -241,13 +243,13 @@ const ResponsiveDrawer = React.memo((props: ResponsiveDrawerProps) => {
               <List dense>
                 <ListItem dense button component={Link} to="/docs">
                   <ListItemIcon>
-                    <TableIcon />
+                    <GridViewOutlined color="primary" />
                   </ListItemIcon>
                   <ListItemText primary="Concepts" />
                 </ListItem>
                 <ListItem dense button component={Link} to="/graph">
                   <ListItemIcon>
-                    <NetworkIcon />
+                    <HubOutlined color="primary" />
                   </ListItemIcon>
                   <ListItemText primary="Graph View" />
                 </ListItem>
@@ -274,14 +276,14 @@ const ResponsiveDrawer = React.memo((props: ResponsiveDrawerProps) => {
             {!atHome && (
               <ListItem dense button component={Link} to="/">
                 <ListItemIcon>
-                  <HomeIcon />
+                  <HomeIcon color="primary" />
                 </ListItemIcon>
                 <ListItemText primary="Home" />
               </ListItem>
             )}
             <ListItem dense button component={Link} to="/settings">
               <ListItemIcon>
-                <SettingsIcon />
+                <SettingsIcon color="primary" />
               </ListItemIcon>
               <ListItemText primary="Settings" />
             </ListItem>
@@ -293,7 +295,7 @@ const ResponsiveDrawer = React.memo((props: ResponsiveDrawerProps) => {
               }}
             >
               <ListItemIcon>
-                <LogoutIcon />
+                <LogoutIcon color="primary" />
               </ListItemIcon>
               <ListItemText primary="Logout" />
             </ListItem>
