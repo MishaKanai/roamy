@@ -32,6 +32,7 @@ import {
   GridViewOutlined,
   HubOutlined,
 } from "@mui/icons-material";
+import { push } from "connected-react-router";
 
 const drawerWidth = 220;
 
@@ -291,6 +292,7 @@ const ResponsiveDrawer = React.memo((props: ResponsiveDrawerProps) => {
               dense
               button
               onClick={() => {
+                store.dispatch(push("/"));
                 store.dispatch(logOut(true));
               }}
             >
