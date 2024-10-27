@@ -20,10 +20,10 @@ const getOptions = (theme: Theme) => {
     nodes: {
       shape: "dot",
       color: {
-        border: "white",
+        border: theme.palette.getContrastText(theme.palette.background.paper),
         background: theme.palette.background.paper,
         highlight: {
-          border: "white",
+          border: theme.palette.getContrastText(theme.palette.background.paper),
           background: theme.palette.background.paper,
         },
       },
