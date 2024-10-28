@@ -34,6 +34,7 @@ import {
 } from "@mui/icons-material";
 import { push } from "connected-react-router";
 import { TogglePaletteMode } from "../util/theme";
+import SpaceUsage from "../dropbox/Components/SpaceUsage";
 
 const drawerWidth = 220;
 
@@ -276,6 +277,9 @@ const ResponsiveDrawer = React.memo((props: ResponsiveDrawerProps) => {
       {!isSingleFile() && (
         <div>
           <List dense>
+            <ListItem>
+              <SpaceUsage />
+            </ListItem>
             <ListItem>
               <TogglePaletteMode />
             </ListItem>
