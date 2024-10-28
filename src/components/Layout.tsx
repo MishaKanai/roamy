@@ -33,6 +33,7 @@ import {
   HubOutlined,
 } from "@mui/icons-material";
 import { push } from "connected-react-router";
+import { TogglePaletteMode } from "../util/theme";
 
 const drawerWidth = 220;
 
@@ -269,6 +270,9 @@ const ResponsiveDrawer = React.memo((props: ResponsiveDrawerProps) => {
       {!isSingleFile() && (
         <div>
           <List dense>
+            <ListItem>
+              <TogglePaletteMode />
+            </ListItem>
             {fileLoaded && (
               <ListItem>
                 <ExportButton />

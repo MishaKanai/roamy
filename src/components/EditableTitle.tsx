@@ -6,6 +6,7 @@ import {
   DialogTitle,
   IconButton,
   TextField,
+  useTheme,
 } from "@mui/material";
 import React from "react";
 import { useDispatch } from "react-redux";
@@ -79,9 +80,18 @@ const EditableTitle = ({
   const displayTitle = useDisplayTitle(id, type);
   const dispatch = useDispatch();
   const [hovered, setHovered] = React.useState(false);
-
+  const theme = useTheme();
   const TitleElement = displayTitle ?? (
-    <span style={{ opacity: ".5" }}>{id}</span>
+    <span
+      style={{
+        opacity: ".5",
+        fontWeight: "lighter",
+        fontSize: theme.typography.fontSize - 1,
+        color: theme.palette.getContrastText(theme.palette.background.default),
+      }}
+    >
+      {id}
+    </span>
   );
   return (
     <span
@@ -147,12 +157,26 @@ const DocTitle = ({
   editable?: boolean;
   to?: string;
 }) => {
+  const theme = useTheme();
   const displayTitle = useDisplayTitle(id, type);
   if (editable && !isSingleFile()) {
     return <EditableTitle type={type} id={id} to={to} />;
   }
   if (!displayTitle) {
-    return <span style={{ opacity: ".5" }}>{id}</span>;
+    return (
+      <span
+        style={{
+          opacity: ".5",
+          fontWeight: "lighter",
+          fontSize: theme.typography.fontSize - 1,
+          color: theme.palette.getContrastText(
+            theme.palette.background.default
+          ),
+        }}
+      >
+        {id}
+      </span>
+    );
   }
   return <>{displayTitle ?? id}</>;
 };
