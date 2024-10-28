@@ -175,51 +175,61 @@ const AppGraph = ({ filterNode }: AppGraphProps) => {
         cancel();
       });
     };
-
-    // OLD VERSION: THIS WILL MEMORY LEAK.
-    // DO THIS OUTSIDE THE COMPONENT.
-    // const promises: Promise<string | null>[] = []
-    // _nodes.forEach(n => {
-    //   if (n.type === 'drawing') {
-    //     const id = n.id.slice('drawing:'.length);
-    //     promises.push(getDrawingSvgB64(store, id, theme.palette.mode === 'dark'))
-    //   } else {
-    //     promises.push(Promise.resolve(null))
-    //   }
-    // })
-    // Promise.allSettled(promises).then(results => {
-    //   results.forEach(r => console.log(r))
-    //   // console.log(results)
-    //   setNewNodes(_nodes.map((n, i) => {
-
-    //     const r: PromiseSettledResult<string | null> = results[i]
-    //     if (!r || r.status === 'rejected' || !r.value) {
-    //       return n;
-    //     }
-    //     return ({ ...n, shape: 'image', image: {
-    //       selected: r.value,
-    //       unselected: r.value
-    //    } })
-    //   }))
-    // })
   }, [_nodes, store, isDark]);
 
+  const [selectedNode, setSelectedNode] = useState<string | null>(null); // State to track selected node
+  const handleNodeClick = (event: { nodes: string[] }) => {
+    const clickedNodeId = event.nodes[0];
+    setSelectedNode((prev) => (prev === clickedNodeId ? null : clickedNodeId)); // Toggle selection
+  };
   const { graph, events } = useMemo(() => {
+    const directChildren = new Set<string>();
+    const directParents = new Set<string>();
+    if (selectedNode) {
+      edges.forEach((edge) => {
+        if (edge.from === selectedNode) {
+          directChildren.add(edge.to); // Nodes connected *from* selectedNode are children
+        }
+        if (edge.to === selectedNode) {
+          directParents.add(edge.from); // Nodes connected *to* selectedNode are parents
+        }
+      });
+    }
     return {
       graph: {
-        nodes,
+        nodes: nodes.map((node) => {
+          const isDirectChild = directChildren.has(node.id);
+          const isDirectParent = directParents.has(node.id);
+          const showLabel =
+            !selectedNode ||
+            selectedNode === node.id ||
+            isDirectChild ||
+            isDirectParent;
+          return {
+            ...node,
+            label: showLabel ? node.label : "", // Hide labels based on selection
+            font: {
+              color: !selectedNode
+                ? theme.palette.text.secondary
+                : selectedNode === node.id
+                ? theme.palette.text.primary // Regular color for selected node
+                : isDirectChild
+                ? theme.palette.primary.main // Grayed-out color for direct children
+                : isDirectParent
+                ? theme.palette.secondary.main
+                : "transparent", // Hide other labels
+            },
+          };
+        }),
         edges,
       },
       events: {
-        select: ({ nodes, edges }: { nodes: unknown; edges: unknown }) => {
-          console.log("Selected nodes:");
-          console.log(nodes);
-          console.log("Selected edges:");
-          console.log(edges);
+        select: ({ nodes, edges }: { nodes: string[]; edges: unknown }) => {
+          handleNodeClick({ nodes });
         },
       },
     };
-  }, [nodes, edges]);
+  }, [nodes, edges, selectedNode]);
 
   let filteredGraph = useMemo(() => {
     const { nodes, edges } = graph;
