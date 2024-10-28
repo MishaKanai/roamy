@@ -142,7 +142,7 @@ export default function SelectedFileAutocomplete() {
             <TextField
               {...params}
               size="small"
-              label="Document"
+              label="Collection"
               variant="outlined"
             />
           )}
