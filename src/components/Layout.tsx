@@ -13,7 +13,7 @@ import LogoutIcon from "@mui/icons-material/Logout";
 import SelectedFileAutocomplete from "../dropbox/Components/SelectedFileAutocomplete";
 import HomeIcon from "@mui/icons-material/HomeOutlined";
 import SettingsIcon from "@mui/icons-material/SettingsOutlined";
-import { ListItemButton, ListSubheader } from "@mui/material";
+import { Card, ListItemButton, ListSubheader, useTheme } from "@mui/material";
 import { useLocation } from "react-router";
 import useFileSelected from "../dropbox/hooks/useFileSelected";
 import { parsePath } from "../RecentlyOpened/store/recentlyOpenedSlice";
@@ -150,7 +150,11 @@ const RecentlyOpenedList = () => {
       <List
         dense
         subheader={
-          <ListSubheader component="div" id="recentlyopened-list-subheader">
+          <ListSubheader
+            style={{ backgroundColor: undefined }}
+            component="div"
+            id="recentlyopened-list-subheader"
+          >
             Recently Opened
           </ListSubheader>
         }
@@ -218,10 +222,12 @@ const ResponsiveDrawer = React.memo((props: ResponsiveDrawerProps) => {
     setMobileOpen(!mobileOpen);
   };
   const store = useStore();
+  const theme = useTheme();
 
   const drawer = (
-    <div
+    <Card
       style={{
+        borderRadius: 0,
         display: "flex",
         flexDirection: "column",
         height: "100%",
@@ -308,7 +314,7 @@ const ResponsiveDrawer = React.memo((props: ResponsiveDrawerProps) => {
           </List>
         </div>
       )}
-    </div>
+    </Card>
   );
 
   return (
