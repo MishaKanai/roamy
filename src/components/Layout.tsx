@@ -151,7 +151,7 @@ const RecentlyOpenedList = () => {
         dense
         subheader={
           <ListSubheader
-            style={{ backgroundColor: undefined }}
+            style={{ backgroundColor: "transparent" }}
             component="div"
             id="recentlyopened-list-subheader"
           >
