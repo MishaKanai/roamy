@@ -98,6 +98,7 @@ import VideoTranscodingPlaceholder from "../../RemoteFiles/transcodeQueue/compon
 import ResolutionDialog from "../../RemoteFiles/util/CompressMp4Dialog/ResolutionDialog";
 import getBlobBase64 from "../../RemoteFiles/util/getBlobBase64";
 import { createDoc } from "../../SlateGraph/store/globalActions";
+import imageCompression from "browser-image-compression";
 
 export const videoToImage = (
   videoB64: string,
@@ -506,7 +507,13 @@ const withImages =
               reader.addEventListener("load", () => {
                 dispatchNewDoc(reader.result as any);
               });
-              reader.readAsDataURL(file);
+              imageCompression(file, {
+                maxSizeMB: 0.2,
+                useWebWorker: true,
+                fileType: "image/jpeg",
+              }).then((compressedFile) => {
+                reader.readAsDataURL(compressedFile);
+              });
             }
           }
         }
