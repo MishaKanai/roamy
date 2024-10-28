@@ -78,6 +78,7 @@ export default function HoverBacklinks({
           transition
           style={{ zIndex: 999999 }}
           disablePortal={true}
+          placement="bottom-end"
         >
           {({ TransitionProps, placement }) => (
             <Grow
