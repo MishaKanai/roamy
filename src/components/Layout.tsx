@@ -354,6 +354,7 @@ const ResponsiveDrawer = React.memo((props: ResponsiveDrawerProps) => {
             "& .MuiDrawer-paper": {
               boxSizing: "border-box",
               width: drawerWidth,
+              zIndex: 0,
             },
           }}
           open
