@@ -40,6 +40,7 @@ import {
   Skeleton,
   Button,
   Tooltip,
+  Chip,
 } from "@mui/material";
 import FormatBoldIcon from "@mui/icons-material/FormatBold";
 import FormatUnderlinedIcon from "@mui/icons-material/FormatUnderlined";
@@ -1758,6 +1759,7 @@ export const Element: React.FC<RenderElementProps & { parentDoc: string }> = (
   const colorOfPortal = useBackgroundColor(1);
   const theme = useTheme();
   const isSmall = useMediaQuery("(max-width:599px)");
+  const currentNestingContext = useContext(nestedEditorContext);
   switch (element.type) {
     case "reference":
       return <Reference {...props} />;
@@ -1871,6 +1873,24 @@ export const Element: React.FC<RenderElementProps & { parentDoc: string }> = (
       );
     case "portal":
       const docName = (props.element as any).portalReference as string;
+      if (currentNestingContext.includes(docName)) {
+        return (
+          <div {...attributes}>
+            <div
+              contentEditable={false}
+              style={{
+                userSelect: "none",
+                verticalAlign: "baseline",
+                display: "inline-block",
+                fontSize: "0.9em",
+              }}
+            >
+              <Chip label={<DocTitle id={docName} type="documents" />} />
+              {children}
+            </div>
+          </div>
+        );
+      }
       return (
         <div {...attributes}>
           <div
