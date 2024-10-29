@@ -149,7 +149,7 @@ const EditableTitle = ({
         }}
       />
 
-      {nestedDepth.length === 1 && !backlinks.length ? (
+      {nestedDepth.length === 1 && !backlinks?.length ? (
         <CreateOrDeleteDocumentsDialog>
           {({ setOpen }) => (
             <IconButton
