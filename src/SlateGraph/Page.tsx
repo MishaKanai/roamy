@@ -20,6 +20,8 @@ import { createDoc, deleteDoc, updateDoc } from "./store/globalActions";
 import DocTitle from "../components/EditableTitle";
 import ReadOnlyDoc from "../Autocomplete/Editor/ReadOnly";
 import isSingleFile from "../util/isSingleFile";
+import { IconButton } from "@mui/material";
+import { DeleteOutline } from "@mui/icons-material";
 
 export const useRoamyDispatch = (): ((action: RootAction) => void) => {
   const mergeCtxt = useContext(mergeContext);

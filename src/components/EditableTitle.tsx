@@ -1,4 +1,4 @@
-import { Edit } from "@mui/icons-material";
+import { DeleteOutline, Edit } from "@mui/icons-material";
 import {
   Button,
   DialogActions,
@@ -16,6 +16,8 @@ import { setTitle } from "../SlateGraph/store/slateDocumentsSlice";
 import { setDrawingTitle } from "../Excalidraw/store/drawingsSlice";
 import isSingleFile from "../util/isSingleFile";
 import Link from "./Link";
+import CreateOrDeleteDocumentsDialog from "./CreateOrDeleteDocumentDialog";
+import nestedEditorContext from "../Autocomplete/nestedEditorContext";
 
 const EditTitleForm = ({
   initialTitle,
@@ -93,6 +95,10 @@ const EditableTitle = ({
       {id}
     </span>
   );
+  const nestedDepth = React.useContext(nestedEditorContext);
+  const backlinks = useAppSelector(
+    (state) => state.documents[id]?.backReferences
+  );
   return (
     <span
       onMouseLeave={() => setHovered(false)}
@@ -142,6 +148,27 @@ const EditableTitle = ({
           );
         }}
       />
+
+      {nestedDepth.length === 1 && !backlinks.length ? (
+        <CreateOrDeleteDocumentsDialog>
+          {({ setOpen }) => (
+            <IconButton
+              onClick={() =>
+                setOpen({
+                  _t: "delete",
+                  name: id,
+                  docType: type === "documents" ? "doc" : "drawing",
+                })
+              }
+              color="error"
+              size="small"
+              style={!hovered ? { visibility: "hidden" } : undefined}
+            >
+              <DeleteOutline />
+            </IconButton>
+          )}
+        </CreateOrDeleteDocumentsDialog>
+      ) : null}
     </span>
   );
 };

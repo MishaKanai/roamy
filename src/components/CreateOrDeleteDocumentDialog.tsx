@@ -11,7 +11,6 @@ import {
 } from "@mui/material";
 import { push } from "connected-react-router";
 import capitalize from "lodash/capitalize";
-import { useLocation } from "react-router";
 import Radio from "@mui/material/Radio";
 import RadioGroup from "@mui/material/RadioGroup";
 import FormControlLabel from "@mui/material/FormControlLabel";
@@ -21,6 +20,7 @@ import hash_sum from "hash-sum";
 import { useAppDispatch } from "../store/hooks";
 import { deleteDoc } from "../SlateGraph/store/globalActions";
 import { deleteDrawing } from "../Excalidraw/store/drawingsSlice";
+import { useLocation } from "react-router";
 
 function DocTypeRadioGroup(props: {
   onChange: (value: "doc" | "drawing") => void;
@@ -115,15 +115,18 @@ const DeleteDialog: React.FC<{
 }> = ({ open, handleClose, docType, name }) => {
   const typeDisplayText = docType === "doc" ? "concept" : "drawing";
   const dispatch = useAppDispatch();
+  const location = useLocation();
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    dispatch(push("/"));
+    setImmediate(() => handleClose());
+    if (location.pathname === `/docs/${name}`) {
+      dispatch(push("/docs"));
+    }
     if (docType === "drawing") {
       dispatch(deleteDrawing(name));
     } else {
       dispatch(deleteDoc(name));
     }
-    handleClose();
   };
   return (
     <Dialog
@@ -154,43 +157,31 @@ const DeleteDialog: React.FC<{
   );
 };
 
-const DRAWROUTE = "/drawings/";
-const DOCROUTE = "/docs/";
+type DialogOpenState =
+  | { _t: "none" }
+  | { _t: "create" }
+  | { _t: "delete"; docType: "drawing" | "doc"; name: string };
+const initial: DialogOpenState = { _t: "none" };
 
-type DialogOpenState = "none" | "create" | "delete";
 const CreateOrDeleteDocumentsDialog: React.FC<{
   children: (props: {
     setOpen: (state: DialogOpenState) => void;
-    showDelete: boolean;
   }) => JSX.Element;
 }> = React.memo((props) => {
-  const [open, setOpen] = React.useState<DialogOpenState>("none");
-  const { pathname } = useLocation();
-  const onDrawingPage = pathname?.includes(DRAWROUTE);
-  const onDocsPage = pathname?.includes(DOCROUTE);
-  const name = React.useMemo(() => {
-    if (onDrawingPage) {
-      return pathname.slice(DRAWROUTE.length);
-    }
-    if (onDocsPage) {
-      return pathname.slice(DOCROUTE.length);
-    }
-  }, [onDrawingPage, onDocsPage, pathname]);
-  const showDelete = Boolean((onDrawingPage || onDocsPage) && name);
+  const [open, setOpen] = React.useState<DialogOpenState>(initial);
   return (
     <>
-      {open === "create" ? (
-        <CreateDialog open handleClose={() => setOpen("none")} />
-      ) : open === "delete" && name ? (
+      {open._t === "create" ? (
+        <CreateDialog open handleClose={() => setOpen(initial)} />
+      ) : open._t === "delete" && open.name ? (
         <DeleteDialog
           open
-          name={name}
-          docType={onDrawingPage ? "drawing" : "doc"}
-          handleClose={() => setOpen("none")}
+          name={open.name}
+          docType={open.docType}
+          handleClose={() => setOpen(initial)}
         />
       ) : null}
       {props.children({
-        showDelete,
         setOpen,
       })}
     </>
