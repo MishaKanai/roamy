@@ -279,7 +279,7 @@ const ResponsiveDrawer = React.memo((props: ResponsiveDrawerProps) => {
                           variant="contained"
                           fullWidth
                           endIcon={<Add />}
-                          onClick={() => setOpen("create")}
+                          onClick={() => setOpen({ _t: "create" })}
                         >
                           Create
                         </Button>
