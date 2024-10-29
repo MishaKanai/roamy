@@ -131,7 +131,7 @@ const ExportButton = () => {
     <Button
       fullWidth
       onClick={handleClick}
-      variant="contained"
+      variant="outlined"
       color="primary"
       size="small"
       endIcon={<Share fontSize="small" />}

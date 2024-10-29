@@ -13,12 +13,17 @@ import LogoutIcon from "@mui/icons-material/Logout";
 import SelectedFileAutocomplete from "../dropbox/Components/SelectedFileAutocomplete";
 import HomeIcon from "@mui/icons-material/HomeOutlined";
 import SettingsIcon from "@mui/icons-material/SettingsOutlined";
-import { Card, ListItemButton, ListSubheader, useTheme } from "@mui/material";
+import {
+  Button,
+  Card,
+  ListItemButton,
+  ListSubheader,
+  useTheme,
+} from "@mui/material";
 import { useLocation } from "react-router";
 import useFileSelected from "../dropbox/hooks/useFileSelected";
 import { parsePath } from "../RecentlyOpened/store/recentlyOpenedSlice";
 import { useDebounce } from "use-debounce";
-import CreateFab from "./FabArea";
 import { useAppSelector } from "../store/hooks";
 import DocTitle from "./EditableTitle";
 import isSingleFile from "../util/isSingleFile";
@@ -27,6 +32,7 @@ import { useStore } from "react-redux";
 import { logOut } from "../dropbox/store/globalActions";
 import SyncStatus from "../dropbox/Components/SyncStatus";
 import {
+  Add,
   ArticleOutlined,
   GestureOutlined,
   GridViewOutlined,
@@ -35,6 +41,7 @@ import {
 import { push } from "connected-react-router";
 import { TogglePaletteMode } from "../util/theme";
 import SpaceUsage from "../dropbox/Components/SpaceUsage";
+import CreateOrDeleteDocumentsDialog from "./CreateOrDeleteDocumentDialog";
 
 const drawerWidth = 220;
 
@@ -146,6 +153,7 @@ const RecentlyUpdatedList = () => {
 
 const RecentlyOpenedList = () => {
   const recentlyOpened = useRecentlyOpened();
+  if (!recentlyOpened.length) return null;
   return (
     <div style={{ overflow: "auto" }}>
       <List
@@ -262,6 +270,23 @@ const ResponsiveDrawer = React.memo((props: ResponsiveDrawerProps) => {
                   </ListItemIcon>
                   <ListItemText primary="Graph View" />
                 </ListItem>
+                {fileLoaded && !atHome && !isSingleFile() && (
+                  <CreateOrDeleteDocumentsDialog>
+                    {({ setOpen }) => (
+                      <ListItem dense>
+                        <Button
+                          size="small"
+                          variant="contained"
+                          fullWidth
+                          endIcon={<Add />}
+                          onClick={() => setOpen("create")}
+                        >
+                          Create
+                        </Button>
+                      </ListItem>
+                    )}
+                  </CreateOrDeleteDocumentsDialog>
+                )}
               </List>
             </div>
           )}
@@ -409,7 +434,6 @@ const ResponsiveDrawer = React.memo((props: ResponsiveDrawerProps) => {
             <SyncStatus spinnerSize={20} />
           </div>
         </Box>
-        {fileLoaded && !atHome && !isSingleFile() && <CreateFab />}
       </Box>
     </Box>
   );
