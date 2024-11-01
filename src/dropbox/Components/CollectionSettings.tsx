@@ -149,14 +149,14 @@ const CollectionSettings: React.FC<CollectionSettingsProps> = ({
         <div>
           <CardHeader title={collectionName} />
           <RenameCollectionForm collectionName={collectionName} />
-          <List>
+          {/* <List>
             <ListItem>
               <Button variant="outlined">Export Collection</Button>
             </ListItem>
             <ListItem>
               <Button variant="outlined">Duplicate Collection</Button>
             </ListItem>
-          </List>
+          </List> */}
         </div>
       </TabPanel>
       <TabPanel value={value} index={1}>
