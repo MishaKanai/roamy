@@ -207,19 +207,33 @@ export const useDbxEntries = () => {
 };
 
 export const useRenameCollection = () => {
-  const dbx = useDbx();
+  const { dbx, loadExistingCollection } = useDbxEntries();
+  const currentCollectionPath = useAppSelector(
+    (state) =>
+      state.dbx.collection.state === "authorized" &&
+      state.dbx.collection.selectedFilePath
+  );
+  const currentCollectionFolder =
+    currentCollectionPath &&
+    currentCollectionPath.slice(0, currentCollectionPath.lastIndexOf("/"));
   const fetchCollections = useFetchCollections(dbx);
   const rename = useCallback(
     async (from: string, to: string) => {
       if (!dbx) {
         throw new Error("Dbx not instantiated");
       }
+      const from_path = "/" + from;
+      const to_path = "/" + to;
       await dbx.filesMoveV2({
-        from_path: "/" + from,
-        to_path: "/" + to,
+        from_path,
+        to_path,
       });
 
       await fetchCollections();
+
+      if (currentCollectionFolder === from_path) {
+        loadExistingCollection(to_path + "/index.json");
+      }
 
       // also if the renamed collection is currently open, refetch the collection or at least change that name.
     },
