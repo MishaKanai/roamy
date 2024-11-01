@@ -46,6 +46,7 @@ const RenameCollectionForm = (props: { collectionName: string }) => {
             disabled={
               pending ||
               collectionName === props.collectionName ||
+              !collectionName.trim() ||
               collectionName.trim() !== collectionName
             }
             endIcon={pending ? <CircularProgress size={20} /> : undefined}

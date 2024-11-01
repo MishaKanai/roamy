@@ -128,6 +128,10 @@ const CollectionSettings: React.FC<CollectionSettingsProps> = ({
   if (!collectionFile) {
     return null;
   }
+  const collectionName = collectionFile.slice(
+    1,
+    collectionFile.lastIndexOf("/")
+  );
   return (
     <Box sx={{ flexGrow: 1, bgcolor: "background.paper", display: "flex" }}>
       <Tabs
@@ -143,13 +147,8 @@ const CollectionSettings: React.FC<CollectionSettingsProps> = ({
       </Tabs>
       <TabPanel value={value} index={0}>
         <div>
-          <CardHeader title={collectionFile} />
-          <RenameCollectionForm
-            collectionName={collectionFile.slice(
-              1,
-              collectionFile.lastIndexOf("/")
-            )}
-          />
+          <CardHeader title={collectionName} />
+          <RenameCollectionForm collectionName={collectionName} />
           <List>
             <ListItem>
               <Button variant="outlined">Export Collection</Button>
@@ -161,7 +160,7 @@ const CollectionSettings: React.FC<CollectionSettingsProps> = ({
         </div>
       </TabPanel>
       <TabPanel value={value} index={1}>
-        <CardHeader title={`Delete Collection "${collectionFile}"?`} />
+        <CardHeader title={`Delete Collection "${collectionName}"?`} />
         <CardContent>This action is not reversible</CardContent>
         <CardActions>
           <DeleteButton onDelete={onDelete} filename={collectionFile} />
