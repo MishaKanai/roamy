@@ -109,46 +109,66 @@ export const videoToImage = (
     frameTimeInSeconds: 0.5,
   }
 ): Promise<string> => {
-  return new Promise<string>((resolve) => {
+  return new Promise<string>((resolve, reject) => {
     const canvas = document.createElement("canvas");
     const video = document.createElement("video");
-    const source = document.createElement("source");
     const context = canvas.getContext("2d");
+
+    if (!context) {
+      reject("Canvas context could not be created.");
+      return;
+    }
 
     video.style.display = "none";
     canvas.style.display = "none";
 
-    source.setAttribute("src", videoB64);
+    video.src = videoB64;
     video.setAttribute("crossorigin", "anonymous");
     video.setAttribute("preload", "metadata");
-
-    video.appendChild(source);
-    document.body.appendChild(canvas);
     document.body.appendChild(video);
+    document.body.appendChild(canvas);
 
-    if (!context) {
-      return;
-    }
-
-    video.currentTime = options.frameTimeInSeconds!;
-    video.load();
-
-    video.addEventListener("loadedmetadata", function () {
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
+    // Error handler for debugging
+    video.addEventListener("error", (e) => {
+      console.error("Video loading error", e);
+      reject("Error loading video");
+      video.remove();
+      canvas.remove();
     });
 
+    // When metadata is loaded, set dimensions and set currentTime
+    video.addEventListener("loadedmetadata", function () {
+      console.log("Metadata loaded");
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      console.log("Video dimensions:", video.videoWidth, video.videoHeight);
+      video.currentTime = options.frameTimeInSeconds!;
+    });
+
+    // Once data is loaded, draw the frame
     video.addEventListener("loadeddata", function () {
+      console.log("Video frame loaded at time:", video.currentTime);
       setTimeout(() => {
         context.drawImage(video, 0, 0, video.videoWidth, video.videoHeight);
-
         const imagePngBase64 = canvas.toDataURL();
+
+        // Log canvas dimensions and base64 length for debugging
+        console.log("Canvas dimensions:", canvas.width, canvas.height);
+        console.log("Generated image base64 length:", imagePngBase64.length);
+
+        if (imagePngBase64.length < 100) {
+          console.error("Generated image is likely empty");
+          reject("Generated image is empty.");
+        } else {
+          resolve(imagePngBase64);
+        }
 
         video.remove();
         canvas.remove();
-        resolve(imagePngBase64);
-      });
+      }, 100); // slight delay for rendering on Safari
     });
+
+    video.load();
   });
 };
 
