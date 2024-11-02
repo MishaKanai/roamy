@@ -100,8 +100,12 @@ import ResolutionDialog from "../../RemoteFiles/util/CompressMp4Dialog/Resolutio
 import getBlobBase64 from "../../RemoteFiles/util/getBlobBase64";
 import { createDoc } from "../../SlateGraph/store/globalActions";
 import imageCompression from "browser-image-compression";
+import FFmpegPool from "../../RemoteFiles/transcodeQueue/FFMpegPool";
+import { fetchFile } from "@ffmpeg/util";
 
-export const videoToImage = (
+const ffmpegPool = new FFmpegPool(3); // Adjust the pool size as needed
+
+export const videoToImage = async (
   videoB64: string,
   options: {
     frameTimeInSeconds?: number;
@@ -109,67 +113,49 @@ export const videoToImage = (
     frameTimeInSeconds: 0.5,
   }
 ): Promise<string> => {
-  return new Promise<string>((resolve, reject) => {
-    const canvas = document.createElement("canvas");
-    const video = document.createElement("video");
-    const context = canvas.getContext("2d");
+  const baseURL = "https://unpkg.com/@ffmpeg/core@0.12.4/dist/esm";
+  const ffmpeg = await ffmpegPool.getAvailableInstance();
 
-    if (!context) {
-      reject("Canvas context could not be created.");
-      return;
-    }
-
-    video.style.display = "none";
-    canvas.style.display = "none";
-
-    video.src = videoB64;
-    video.setAttribute("crossorigin", "anonymous");
-    video.setAttribute("preload", "metadata");
-    document.body.appendChild(video);
-    document.body.appendChild(canvas);
-
-    // Error handler for debugging
-    video.addEventListener("error", (e) => {
-      console.error("Video loading error", e);
-      reject("Error loading video");
-      video.remove();
-      canvas.remove();
+  try {
+    await ffmpeg.load({
+      coreURL: `${baseURL}/ffmpeg-core.js`,
+      wasmURL: `${baseURL}/ffmpeg-core.wasm`,
     });
 
-    // When metadata is loaded, set dimensions and set currentTime
-    video.addEventListener("loadedmetadata", function () {
-      console.log("Metadata loaded");
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
-      console.log("Video dimensions:", video.videoWidth, video.videoHeight);
-      video.currentTime = options.frameTimeInSeconds!;
-    });
+    // Convert base64 to Blob and load into FFmpeg's filesystem
+    const videoBlob = await (await fetch(videoB64)).blob();
+    const inFileName = `input_${Date.now()}.mp4`;
+    await ffmpeg.writeFile(inFileName, await fetchFile(videoBlob));
 
-    // Once data is loaded, draw the frame
-    video.addEventListener("loadeddata", function () {
-      console.log("Video frame loaded at time:", video.currentTime);
-      setTimeout(() => {
-        context.drawImage(video, 0, 0, video.videoWidth, video.videoHeight);
-        const imagePngBase64 = canvas.toDataURL();
+    // Set the output filename
+    const outputFileName = `frame_${Date.now()}.png`;
 
-        // Log canvas dimensions and base64 length for debugging
-        console.log("Canvas dimensions:", canvas.width, canvas.height);
-        console.log("Generated image base64 length:", imagePngBase64.length);
+    // Execute FFmpeg command to extract a single frame at the specified time
+    await ffmpeg.exec([
+      "-i",
+      inFileName,
+      "-ss",
+      `${options.frameTimeInSeconds}`, // Seek to the specified time
+      "-frames:v",
+      "1", // Capture a single frame
+      outputFileName,
+    ]);
 
-        if (imagePngBase64.length < 100) {
-          console.error("Generated image is likely empty");
-          reject("Generated image is empty.");
-        } else {
-          resolve(imagePngBase64);
-        }
+    // Read the output frame file and convert it to a base64 string
+    const data = await ffmpeg.readFile(outputFileName);
+    const base64Image = `data:image/png;base64,${Buffer.from(data).toString(
+      "base64"
+    )}`;
 
-        video.remove();
-        canvas.remove();
-      }, 100); // slight delay for rendering on Safari
-    });
+    // Clean up files in FFmpeg's filesystem
+    ffmpeg.deleteFile(inFileName);
+    ffmpeg.deleteFile(outputFileName);
 
-    video.load();
-  });
+    return base64Image;
+  } finally {
+    // Release the FFmpeg instance back to the pool
+    ffmpegPool.releaseInstance(ffmpeg, true);
+  }
 };
 
 const getThumbnailFileIdentifier = (fileIdentifier: string) => {
