@@ -152,10 +152,14 @@ export const videoToImage = (
   });
 };
 
-const getThumbnailFileIdentifier = (fileIdentifier: string) =>
-  fileIdentifier.split(".").slice(0, -1).join(".") +
-  "__thumbnail." +
-  fileIdentifier.split(".").pop();
+const getThumbnailFileIdentifier = (fileIdentifier: string) => {
+  const r =
+    fileIdentifier.split(".").slice(0, -1).join(".") +
+    "__thumbnail." +
+    fileIdentifier.split(".").pop() +
+    ".png";
+  return r;
+};
 
 type TranscodingDialogState =
   | {
@@ -537,7 +541,11 @@ const IdLinkImage = (props: { imageId: string; className: string }) => {
   }
   if (image.fileData.mimeType.startsWith("video")) {
     return (
-      <Video src={image.fileData.dataURL} type={image.fileData.mimeType} />
+      <Video
+        src={image.fileData.dataURL}
+        type={image.fileData.mimeType}
+        fileIdentifier={props.imageId}
+      />
     );
   }
   return (
@@ -833,7 +841,11 @@ const InlineImageOrVideo = ({
           <IdLinkImage imageId={element.imageId} className={imageClassName} />
         ) : element.url?.startsWith?.("data:video/mp4") ||
           element.url?.endsWith(".mp4") ? (
-          <Video src={element.url} type="video/mp4" />
+          <Video
+            src={element.url}
+            type="video/mp4"
+            fileIdentifier={element.imageId}
+          />
         ) : (
           <img
             alt="user uploaded"
