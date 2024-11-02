@@ -223,6 +223,7 @@ const UploadFileButton = React.memo(
                     width?: string | number;
                     fileIdentifier: string;
                   }>((resolve, reject) => {
+                    console.log("fileType", file.type);
                     if (file.type === "video/mp4") {
                       // start thumbnail
                       videoToImage(base64).then((base64) => {
