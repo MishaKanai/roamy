@@ -224,7 +224,7 @@ const UploadFileButton = React.memo(
                     fileIdentifier: string;
                   }>((resolve, reject) => {
                     console.log("fileType", file.type);
-                    if (file.type === "video/mp4") {
+                    if (file.type.startsWith("video/")) {
                       // start thumbnail
                       videoToImage(base64).then((base64) => {
                         remoteFiles.uploadFile({
