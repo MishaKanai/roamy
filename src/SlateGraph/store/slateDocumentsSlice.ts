@@ -115,6 +115,7 @@ const slateDocumentsSlice = createSlice({
             backReferencesHash: hashSum(backReferences),
             createdDate: state[docName]?.createdDate ?? updatedDate,
             lastUpdatedDate: updatedDate,
+            categoryId: state[docName].categoryId,
           };
         }
       )
