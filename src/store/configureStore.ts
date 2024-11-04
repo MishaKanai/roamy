@@ -261,7 +261,8 @@ const syncDropboxToStore = (
               doc.documentHash !== prevDocuments[docName]?.documentHash ||
               doc.backReferencesHash !==
                 prevDocuments[docName]?.backReferencesHash ||
-              doc.displayName !== prevDocuments[docName]?.displayName
+              doc.displayName !== prevDocuments[docName]?.displayName ||
+              doc.categoryId !== prevDocuments[docName]?.categoryId
             );
           })
           .map(([docName]) => docName);
