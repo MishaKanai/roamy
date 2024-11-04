@@ -22,6 +22,8 @@ import ReadOnlyDoc from "../Autocomplete/Editor/ReadOnly";
 import isSingleFile from "../util/isSingleFile";
 import { IconButton } from "@mui/material";
 import { DeleteOutline } from "@mui/icons-material";
+import CategorySelect from "../Category/Components/CategorySelect";
+import { setCategoryId } from "./store/slateDocumentsSlice";
 
 export const useRoamyDispatch = (): ((action: RootAction) => void) => {
   const mergeCtxt = useContext(mergeContext);
@@ -117,6 +119,9 @@ const EditablePage: React.FC<PageProps> = React.memo(
       },
       [docName, dispatch]
     );
+    const currentCategoryId = useAppSelector(
+      (state) => state.documents[docName]?.categoryId ?? null
+    );
     return (
       <div style={{ margin: "0px 0.75em 0em 0em" }}>
         {/* backReferenceLinks && backReferenceLinks.length > 0 ? (
@@ -131,7 +136,22 @@ const EditablePage: React.FC<PageProps> = React.memo(
           renderEditableRegion={
             viewedFromParentDoc
               ? defaultRenderEditableRegion
-              : renderEditableRegionExtraPadding
+              : ({ EditableElement, editor }) => (
+                  <div style={{ paddingTop: 6 }}>
+                    <CategorySelect
+                      value={currentCategoryId}
+                      onChange={(id) =>
+                        dispatch(
+                          setCategoryId({ name: docName, categoryId: id })
+                        )
+                      }
+                    />
+                    {renderEditableRegionExtraPadding({
+                      EditableElement,
+                      editor,
+                    })}
+                  </div>
+                )
           }
         />
       </div>
@@ -174,7 +194,9 @@ export const PageRoute = React.memo(() => {
       >
         <DocTitle editable id={docName} type="documents" />
       </b>
-      <HoverBacklinks key={docName} selectBacklinks={selectBacklinks} />
+      <div>
+        <HoverBacklinks key={docName} selectBacklinks={selectBacklinks} />
+      </div>
     </div>
   );
   return (

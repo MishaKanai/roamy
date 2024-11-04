@@ -66,6 +66,13 @@ const EditTitleForm = ({
   );
 };
 
+export const useCategoryColor = (docId: string) => {
+  const categoryColor = useAppSelector((state) => {
+    const categoryId = state.documents[docId]?.categoryId;
+    return (categoryId && state.categories[categoryId]?.color) ?? null;
+  });
+  return categoryColor;
+};
 const useDisplayTitle = (id: string, type: "documents" | "drawings") => {
   return useAppSelector((state) => state[type][id]?.displayName);
 };
@@ -83,13 +90,16 @@ const EditableTitle = ({
   const dispatch = useDispatch();
   const [hovered, setHovered] = React.useState(false);
   const theme = useTheme();
+  const categoryColor = useCategoryColor(id);
   const TitleElement = displayTitle ?? (
     <span
       style={{
         opacity: ".5",
         fontWeight: "lighter",
         fontSize: theme.typography.fontSize - 1,
-        color: theme.palette.getContrastText(theme.palette.background.default),
+        color:
+          categoryColor ??
+          theme.palette.getContrastText(theme.palette.background.default),
       }}
     >
       {id}
@@ -186,6 +196,7 @@ const DocTitle = ({
 }) => {
   const theme = useTheme();
   const displayTitle = useDisplayTitle(id, type);
+  const categoryColor = useCategoryColor(id);
   if (editable && !isSingleFile()) {
     return <EditableTitle type={type} id={id} to={to} />;
   }
@@ -196,16 +207,20 @@ const DocTitle = ({
           opacity: ".5",
           fontWeight: "lighter",
           fontSize: theme.typography.fontSize - 1,
-          color: theme.palette.getContrastText(
-            theme.palette.background.default
-          ),
+          color:
+            categoryColor ??
+            theme.palette.getContrastText(theme.palette.background.default),
         }}
       >
         {id}
       </span>
     );
   }
-  return <>{displayTitle ?? id}</>;
+  return (
+    <span style={{ color: categoryColor ?? undefined }}>
+      {displayTitle ?? id}
+    </span>
+  );
 };
 
 export default DocTitle;

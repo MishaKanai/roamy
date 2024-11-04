@@ -88,7 +88,7 @@ import gifsicle from "gifsicle-wasm-browser";
 import { remoteFilesApiContext } from "../../RemoteFiles/remoteFiles";
 import { RemoteFilesApi } from "../../RemoteFiles/api";
 import { makeStyles } from "@mui/styles";
-import DocTitle from "../../components/EditableTitle";
+import DocTitle, { useCategoryColor } from "../../components/EditableTitle";
 import hash_sum from "hash-sum";
 import { Resizable } from "re-resizable";
 import isSingleFile from "../../util/isSingleFile";
@@ -1166,11 +1166,17 @@ const Toolbar = React.memo(
       () => getToolbarStyle(backgroundColor),
       [backgroundColor]
     );
+    const color = useCategoryColor(doc) ?? undefined;
     const editor = useSlate();
     return (
       <div style={toolbarStyle}>
-        <div style={{ fontSize: "large", padding: "2px" }}>
-          <b>{title}</b>
+        <div
+          style={{
+            fontSize: "large",
+            padding: "2px",
+          }}
+        >
+          <b style={{ color }}>{title}</b>
         </div>
         <div
           style={{
@@ -1518,6 +1524,8 @@ const SlateAutocompleteEditorComponent = <Triggers extends string[]>(
     ),
   });
 
+  const color = useCategoryColor(docName) ?? undefined;
+
   return (
     <div style={{ position: "relative" }}>
       <Slate editor={editor} initialValue={value} onChange={_handleChange}>
@@ -1533,7 +1541,7 @@ const SlateAutocompleteEditorComponent = <Triggers extends string[]>(
             width: "100%",
           }}
         >
-          <b>{title}</b>
+          <b style={{ color }}>{title}</b>
         </span>
         {isIos ? (
           <Sticky2 isFocused={isFocused} Toolbar={renderToolbar()}>

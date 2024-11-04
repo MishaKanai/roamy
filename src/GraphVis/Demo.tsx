@@ -21,10 +21,9 @@ const getOptions = (theme: Theme) => {
       shape: "dot",
       color: {
         border: theme.palette.getContrastText(theme.palette.background.paper),
-        background: theme.palette.background.paper,
+        background: theme.palette.primary.light,
         highlight: {
           border: theme.palette.getContrastText(theme.palette.background.paper),
-          background: theme.palette.background.paper,
         },
       },
       font: {
@@ -61,19 +60,32 @@ const createGraphSelector = () =>
   createSelector(
     (state: RootState) => state.documents,
     (state: RootState) => state.drawings,
-    (documents, drawings): GraphDescription => {
+    (state: RootState) => state.categories,
+    (documents, drawings, categories): GraphDescription => {
       const nodes: GraphNode[] = [];
       const edges: { from: string; to: string; toType?: NodeType }[] = [];
       Object.values(documents).forEach((doc) => {
+        const background =
+          (doc.categoryId && categories[doc.categoryId]?.color) ?? undefined;
         nodes.push({
           id: doc.name,
           label: doc?.displayName ?? doc?.name,
           type: "document",
-          font: !doc?.displayName
+          font: background
+            ? {
+                color: background,
+              }
+            : !doc?.displayName
             ? {
                 color: "grey",
               }
             : undefined,
+          color: {
+            background,
+            highlight: {
+              background,
+            },
+          },
         });
         doc.references.forEach((ref) => {
           edges.push({
@@ -210,7 +222,7 @@ const AppGraph = ({ filterNode }: AppGraphProps) => {
             label: showLabel ? node.label : "", // Hide labels based on selection
             font: {
               color: !selectedNode
-                ? theme.palette.text.secondary
+                ? node?.font?.color
                 : selectedNode === node.id
                 ? theme.palette.text.primary // Regular color for selected node
                 : isDirectChild
@@ -251,12 +263,20 @@ const AppGraph = ({ filterNode }: AppGraphProps) => {
     debounce listener to window resize, and remount when finished.
   */
   return (
-    <Graph
-      graph={filteredGraph}
-      options={getOptions(theme)}
-      events={events}
-      style={{ height: "640px" }}
-    />
+    <div
+      style={{
+        height: "calc(100vh - calc(40px + 1em))",
+        width: "100%",
+        overflow: "hidden",
+      }}
+    >
+      <Graph
+        graph={filteredGraph}
+        options={getOptions(theme)}
+        events={events}
+        style={{ height: "100vh" }}
+      />
+    </div>
   );
 };
 const ProvideFilterNode: React.FunctionComponent<{
