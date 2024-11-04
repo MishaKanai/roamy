@@ -14,6 +14,7 @@ import attemptMerge from "../util/attemptMerge";
 import MergeDrawings from "./MergeDrawings";
 import { UploadedFiles } from "../../../UploadedFiles/uploadedFilesSlice";
 import MergeTitle from "./MergeTitle";
+import { Categories } from "../../../Category/store/categoriesSlice";
 
 const mergeReducer = combineReducers({
   documents: slateDocumentsReducer,
@@ -29,6 +30,7 @@ const ResolveConflicts: React.FC<{
   leftDrawings: DrawingDocuments;
   rightDrawings: DrawingDocuments;
   combinedFiles: UploadedFiles;
+  combinedCategories: Categories;
 }> = ({
   left,
   right,
@@ -38,6 +40,7 @@ const ResolveConflicts: React.FC<{
   leftDrawings,
   rightDrawings,
   combinedFiles,
+  combinedCategories,
 }) => {
   const submitMerge = useSubmitMergedDoc();
   const [initialState, docsNeedingMerge, drawingsNeedingMerge] = useMemo((): [
@@ -113,7 +116,8 @@ const ResolveConflicts: React.FC<{
                 mergedState.documents,
                 mergedState.drawings,
                 combinedFiles,
-                remoteRev
+                remoteRev,
+                combinedCategories
               );
             }}
           >
