@@ -18,6 +18,7 @@ import { replaceDocs } from "../../SlateGraph/store/slateDocumentsSlice";
 import { replaceDrawings } from "../../Excalidraw/store/drawingsSlice";
 import { replaceFiles } from "../../UploadedFiles/uploadedFilesSlice";
 import { replaceRemoteFiles } from "../../RemoteFiles/remoteFilesSlice";
+import { replaceCategories } from "../../Category/store/categoriesSlice";
 
 const folderPath = "";
 
@@ -179,12 +180,14 @@ export const useDbxEntries = () => {
             rev,
             revisions,
             remoteFiles,
+            categories,
           } = await fetchDataFromCollectionAndCompose(dbx, indexFilePath);
           II.clear();
           dispatch(selectFilePathAction(indexFilePath, rev, revisions));
           dispatch(replaceFiles(uploadedFiles));
           dispatch(replaceDocs(documents));
           dispatch(replaceDrawings(drawings));
+          dispatch(replaceCategories(categories ?? {}));
           dispatch(replaceRemoteFiles({ remoteFiles }));
           setFilePendingState({ _type: "ok" });
           dispatch(pushAction("/graph"));

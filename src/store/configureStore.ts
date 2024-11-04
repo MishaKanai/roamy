@@ -41,6 +41,7 @@ import { RemoteFiles } from "../RemoteFiles/remoteFilesSlice";
 import isSingleFile from "../util/isSingleFile";
 import TokenManager from "../dropbox/util/storage";
 import createAuthSyncMiddleware from "./middleware/createAuthSyncMiddleware";
+import { Categories } from "../Category/store/categoriesSlice";
 
 /**
  * https://redux-toolkit.js.org/usage/usage-guide#use-with-redux-persist
@@ -101,6 +102,7 @@ const syncDropboxToStore = (
   let prevDrawings: DrawingDocuments = store.getState().drawings;
   let prevFiles: UploadedFiles = store.getState().files.uploadedFiles;
   let prevRemoteFiles: RemoteFiles = store.getState().files.remoteFiles;
+  let prevCategories: Categories = store.getState().categories;
 
   const reset = () => {
     docsPendingUpload.clear();
@@ -112,6 +114,7 @@ const syncDropboxToStore = (
     prevDrawings = state.drawings;
     prevFiles = state.files.uploadedFiles;
     prevRemoteFiles = state.files.remoteFiles;
+    prevCategories = state.categories;
   };
 
   let setPrevDocuments = (documents: SlateDocuments) => {
@@ -126,6 +129,9 @@ const syncDropboxToStore = (
   let setPrevRemoteFiles = (remoteFiles: RemoteFiles) => {
     prevRemoteFiles = remoteFiles;
   };
+  let setPrevCategories = (categories: Categories) => {
+    prevCategories = categories;
+  };
 
   let documentsChanged = (documents: SlateDocuments) =>
     documents !== prevDocuments;
@@ -134,6 +140,8 @@ const syncDropboxToStore = (
   let filesChanged = (files: UploadedFiles) => files !== prevFiles;
   let remoteFilesChanged = (remoteFiles: RemoteFiles) =>
     remoteFiles !== prevRemoteFiles;
+  let categoriesChanged = (categories: Categories) =>
+    categories !== prevCategories;
   const isAuthorized = (
     authState: CollectionState
   ): authState is AuthorizedCollectionState => {
@@ -158,6 +166,7 @@ const syncDropboxToStore = (
       documents,
       drawings,
       files: { uploadedFiles },
+      categories,
     } = state;
 
     store.dispatch(syncStart());
@@ -173,7 +182,8 @@ const syncDropboxToStore = (
       docsPendingUpload,
       drawingsPendingUpload,
       filesPendingUpload,
-      remoteFilesPendingDeletion
+      remoteFilesPendingDeletion,
+      categories
     )
       .then(async ({ response, revisions }) => {
         store.dispatch(syncSuccess(response.result.rev, revisions));
@@ -204,6 +214,7 @@ const syncDropboxToStore = (
       files: { uploadedFiles, remoteFiles },
       drawings,
       merge,
+      categories,
     } = store.getState();
 
     if (merge.state === "conflict") {
@@ -236,7 +247,8 @@ const syncDropboxToStore = (
         documentsChanged(documents) ||
         drawingsChanged(drawings) ||
         filesChanged(uploadedFiles) ||
-        remoteFilesChanged(remoteFiles))
+        remoteFilesChanged(remoteFiles) ||
+        categoriesChanged(categories))
       // lets not sync based on remoteFile change - that can wait until the document creates a change.
       // just ensure we remove the entry in remoteFiles first (before the dispatch of the changed doc is sent.)
     ) {
@@ -303,6 +315,7 @@ const syncDropboxToStore = (
       setPrevDrawings(drawings);
       setPrevFiles(uploadedFiles);
       setPrevRemoteFiles(remoteFiles);
+      setPrevCategories(categories);
 
       if (
         collection.syncing?._type !== "debounced_pending" &&

@@ -13,6 +13,7 @@ import Home from "./components/Home";
 import CollectionSettings from "./dropbox/Components/CollectionSettings";
 import MasonrySearch from "./Search/components/Masonry";
 import CompressFileDialog from "./RemoteFiles/util/CompressMp4Dialog/Dialog";
+import CategoryPage from "./Category/CategoryRoute";
 
 const Docs = React.memo(() => {
   const match = useRouteMatch();
@@ -62,6 +63,9 @@ export const getApp = (history: History) => {
                 </Route>
                 <Route path="/graph">
                   <Demo />
+                </Route>
+                <Route path="/categories">
+                  <CategoryPage />
                 </Route>
                 <Route path="/settings">
                   <CollectionSettings />

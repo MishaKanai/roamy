@@ -34,6 +34,7 @@ import SyncStatus from "../dropbox/Components/SyncStatus";
 import {
   Add,
   ArticleOutlined,
+  Category,
   GestureOutlined,
   GridViewOutlined,
   HubOutlined,
@@ -269,6 +270,12 @@ const ResponsiveDrawer = React.memo((props: ResponsiveDrawerProps) => {
                     <HubOutlined color="primary" />
                   </ListItemIcon>
                   <ListItemText primary="Graph View" />
+                </ListItem>
+                <ListItem dense button component={Link} to="/categories">
+                  <ListItemIcon>
+                    <Category color="primary" />
+                  </ListItemIcon>
+                  <ListItemText primary="Categories" />
                 </ListItem>
                 {fileLoaded && !atHome && !isSingleFile() && (
                   <CreateOrDeleteDocumentsDialog>
