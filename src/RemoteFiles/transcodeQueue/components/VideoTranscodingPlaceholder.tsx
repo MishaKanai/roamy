@@ -1,4 +1,4 @@
-import { Skeleton, Typography } from "@mui/material";
+import { Skeleton, Typography, useMediaQuery } from "@mui/material";
 import React, { useMemo } from "react";
 import TranscodingJobTracker from "./TranscodingJobTracker";
 import { transcodingQueue } from "../TranscodingQueue";
@@ -20,6 +20,8 @@ const VideoTranscodingPlaceholder = ({
     () => transcodingQueue.containsJob(jobId),
     [jobId]
   );
+  const isSmallScreen = useMediaQuery("(max-width:600px)");
+  const maxWidth = isSmallScreen ? 'calc(100vw - 80px)' : 'calc(100vw - 312px)';
   return (
     <div
       contentEditable={false}
@@ -30,6 +32,7 @@ const VideoTranscodingPlaceholder = ({
         justifyContent: "center",
         alignItems: "center", // Centers content vertically
         position: "relative",
+        maxWidth
       }}
     >
       <Skeleton

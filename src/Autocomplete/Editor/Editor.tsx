@@ -604,14 +604,14 @@ const Video = ({
   // }, []);
 
   const thumnbailB64 = useFetchThumbnail(fileIdentifier);
-
+  const maxWidth = useMaxWidthForEmbeddedThing()
   return (
     <span contentEditable={false}>
       <video
         playsInline
         ref={videoRef}
         controls
-        style={{ width: "100%" }}
+        style={{ width: "100%", maxWidth }}
         poster={thumnbailB64}
       >
         <source src={src} type={type}></source>
@@ -667,6 +667,15 @@ const useFetchRemoteFile = (fileIdentifier: string | null | undefined) => {
   }, [fileIdentifier, remoteFileApi]);
   return state;
 };
+
+const useIsSmallScreen = () => {
+  return  useMediaQuery("(max-width:600px)");
+}
+const useMaxWidthForEmbeddedThing = () => {
+  const isSmallScreen = useIsSmallScreen();
+  const maxWidth = isSmallScreen ? 'calc(100vw - 92px)' : 'calc(100vw - 312px)';
+  return maxWidth;
+}
 const RemoteFile = ({
   attributes,
   children,
@@ -685,10 +694,11 @@ const RemoteFile = ({
   });
 
   const state = useFetchRemoteFile(element.fileIdentifier);
-
+  const maxWidth = useMaxWidthForEmbeddedThing();
+  const isSmallScreen = useIsSmallScreen();
   const imageClassName = css`
     display: block;
-    max-width: 100%;
+    max-width: ${maxWidth};
     box-shadow: ${selected && focused
       ? "0 0 0 3px " + theme.palette.action.focus
       : "none"};
@@ -712,6 +722,7 @@ const RemoteFile = ({
         `}
       >
         <Resizable
+          enable={isSmallScreen ? false : undefined}
           lockAspectRatio
           defaultSize={{
             width: element.width ?? 200,
