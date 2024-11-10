@@ -1,7 +1,7 @@
 import { createSlice } from '@reduxjs/toolkit';
 
 
-interface SyncGateState {
+export interface SyncGateState {
   count: number;
 }
 
