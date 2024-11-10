@@ -1,5 +1,5 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-import { updateDoc } from "../SlateGraph/store/globalActions";
+import { createDoc, updateDoc } from "../SlateGraph/store/globalActions";
 import { getRemoteFilesFromNodes } from "../SlateGraph/store/util/getReferencesFromNodes";
 
 export type RemoteFiles = {
@@ -47,6 +47,16 @@ const remoteFilesSlice = createSlice({
     },
     extraReducers(builder) {
         builder
+            // TODO: handle doc deletion?
+            .addCase(createDoc, (state, { payload }) => {
+                const filesForDoc = getRemoteFilesFromNodes(payload.doc);
+                Object.entries(filesForDoc).forEach(([fileId, { count } ]) => {
+                        if (!state[fileId]) {
+                            state[fileId] = { count: 0 }
+                        }
+                        state[fileId].count += count;
+                })
+            })
             .addCase(updateDoc, (state, { payload: { newDoc, prevDoc } }) => {
                 const oldRemoteFilesForDoc = getRemoteFilesFromNodes(prevDoc);
                 const newRemoteFilesForDoc = getRemoteFilesFromNodes(newDoc);
