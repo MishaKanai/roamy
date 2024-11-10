@@ -42,6 +42,7 @@ import isSingleFile from "../util/isSingleFile";
 import TokenManager from "../dropbox/util/storage";
 import createAuthSyncMiddleware from "./middleware/createAuthSyncMiddleware";
 import { Categories } from "../Category/store/categoriesSlice";
+import { UploadTracker } from "./util/UploadTracker";
 
 /**
  * https://redux-toolkit.js.org/usage/usage-guide#use-with-redux-persist
@@ -57,7 +58,7 @@ export const history = isSingleFile()
 const persistConfig = {
   key: "root",
   storage: storageSession,
-  blacklist: ["dbx", "files", "router"],
+  blacklist: ["dbx", "files", "router", "merge"],
 };
 
 /**
@@ -91,8 +92,8 @@ const syncDropboxToStore = (
   auth: DropboxAuth,
   store: ReturnType<typeof appConfigureStore>["store"]
 ) => {
-  const docsPendingUpload = new Set<string>();
-  const drawingsPendingUpload = new Set<string>();
+  const docsPendingUpload = new UploadTracker();
+  const drawingsPendingUpload = new UploadTracker();
   const filesPendingUpload = new Set<string>();
   const remoteFilesPendingDeletion = new Set<string>();
 
@@ -267,7 +268,7 @@ const syncDropboxToStore = (
           })
           .map(([docName]) => docName);
         docKeysChanged.forEach((dk) => {
-          docsPendingUpload.add(dk);
+          docsPendingUpload.markForUpload(dk);
         });
       }
       if (drawingsChanged(drawings)) {
@@ -283,7 +284,7 @@ const syncDropboxToStore = (
           })
           .map(([drawingName]) => drawingName);
         drawingKeysChanged.forEach((dk) => {
-          drawingsPendingUpload.add(dk);
+          drawingsPendingUpload.markForUpload(dk);
         });
       }
       if (filesChanged(uploadedFiles)) {

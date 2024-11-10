@@ -36,6 +36,7 @@ import {
   Categories,
   replaceCategories,
 } from "../../../Category/store/categoriesSlice";
+import { UploadTracker } from "../../../store/util/UploadTracker";
 
 const useAutomerge = () => {
   const _lastRev = useAppSelector(
@@ -210,7 +211,7 @@ export const useSubmitMergedDoc = () => {
       if (!dbx || !filePath) {
         return;
       }
-      const docsPendingUpload = new Set<string>();
+      const docsPendingUpload = new UploadTracker();
       Object.values(documents).forEach((doc) => {
         const existingDoc = state.documents[doc.name];
         if (
@@ -218,10 +219,10 @@ export const useSubmitMergedDoc = () => {
           doc.documentHash !== existingDoc.documentHash ||
           doc.backReferencesHash !== existingDoc.backReferencesHash
         ) {
-          docsPendingUpload.add(doc.name);
+          docsPendingUpload.markForUpload(doc.name);
         }
       });
-      const drawingsPendingUpload = new Set<string>();
+      const drawingsPendingUpload = new UploadTracker();
       const filesPendingUpload = new Set<string>();
       Object.values(drawings).forEach((drawing) => {
         const existingDrawing = state.drawings[drawing.name];
@@ -230,7 +231,7 @@ export const useSubmitMergedDoc = () => {
           drawing.drawingHash !== existingDrawing.drawingHash ||
           drawing.backReferencesHash !== existingDrawing.backReferencesHash
         ) {
-          drawingsPendingUpload.add(drawing.name);
+          drawingsPendingUpload.markForUpload(drawing.name);
           drawing.drawing.filesIds.forEach((fileId) => {
             if (
               !existingDrawing ||

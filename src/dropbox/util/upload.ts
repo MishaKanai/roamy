@@ -9,6 +9,7 @@ import { Revisions } from "../store/activeCollectionSlice";
 import getFilesToDocs from "./getFilesToDocx";
 import getFilesToDrawings from "./getFilesToDrawings";
 import { Categories } from "../../Category/store/categoriesSlice";
+import { UploadTracker } from "../../store/util/UploadTracker";
 
 const getFileFileName = (fileId: string) => "file_" + fileId + ".json";
 const getDocFileName = (docId: string) => "doc_" + docId + ".json";
@@ -23,8 +24,8 @@ const upload = async (
   drawings: DrawingDocuments,
   uploadedFiles: UploadedFiles,
   existingRevisions: Revisions | undefined,
-  docsPendingUpload: Set<string>,
-  drawingsPendingUpload: Set<string>,
+  docsPendingUpload: UploadTracker,
+  drawingsPendingUpload: UploadTracker,
   filesPendingUpload: Set<string>,
   remoteFilesPendingDelete: Set<string>,
   categories: Categories
@@ -38,6 +39,9 @@ const upload = async (
     ),
     // possibly add others later
   };
+
+  const docsPendingUploadSnapshot = docsPendingUpload.createSnapshot();
+  const drawingsPendingUploadSnapshot = docsPendingUpload.createSnapshot();
 
   const results = await Promise.allSettled([
     ...Array.from(filesPendingUpload)
@@ -66,7 +70,7 @@ const upload = async (
             return { type: "file" as const, key: fileId, result };
           })
       ),
-    ...Array.from(docsPendingUpload)
+    ...docsPendingUpload.getAllPendingKeys()
       // only adds
       .filter((docKey) => documents[docKey])
       .map((docKey) =>
@@ -85,11 +89,11 @@ const upload = async (
             ),
           })
           .then((result) => {
-            docsPendingUpload.delete(docKey);
+            docsPendingUpload.clearUploaded(docsPendingUploadSnapshot);
             return { type: "doc" as const, key: docKey, result };
           })
       ),
-    ...Array.from(drawingsPendingUpload)
+    ...drawingsPendingUpload.getAllPendingKeys()
       .filter((drawingKey) => drawings[drawingKey])
       .map((drawingKey) =>
         dbx
@@ -107,7 +111,7 @@ const upload = async (
             ),
           })
           .then((result) => {
-            drawingsPendingUpload.delete(drawingKey);
+            drawingsPendingUpload.clearUploaded(drawingsPendingUploadSnapshot)
             return { type: "drawing" as const, key: drawingKey, result };
           })
       ),
