@@ -13,6 +13,7 @@ import { persistReducer } from "redux-persist";
 import localforage from "localforage";
 import storageSession from "redux-persist/lib/storage/session";
 import categoriesReducer from "../Category/store/categoriesSlice";
+import syncGateReducer from './syncGateSlice';
 
 /**
  * Each session gets its own IDB key/value entry, to store files in.
@@ -62,6 +63,7 @@ const createRootReducer = (history: History) =>
     merge: mergeReducer,
     recentlyOpened: recentlyOpenedReducer,
     collections: collectionsReducer,
+    syncGate: syncGateReducer,
     files: persistReducer(
       {
         key: "files",

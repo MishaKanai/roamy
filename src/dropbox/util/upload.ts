@@ -10,6 +10,7 @@ import getFilesToDocs from "./getFilesToDocx";
 import getFilesToDrawings from "./getFilesToDrawings";
 import { Categories } from "../../Category/store/categoriesSlice";
 import { UploadTracker } from "../../store/util/UploadTracker";
+import { retryWithBackoff } from "./retryWithBackoffAndBottleneck";
 
 const getFileFileName = (fileId: string) => "file_" + fileId + ".json";
 const getDocFileName = (docId: string) => "doc_" + docId + ".json";
@@ -48,8 +49,8 @@ const upload = async (
       // do 'adds' and not 'deletes' here.
       .filter((fileId) => uploadedFiles[fileId])
       .map((fileId) =>
-        dbx
-          .filesUpload({
+        retryWithBackoff(() =>
+          dbx.filesUpload({
             mode: {
               ".tag": "overwrite",
             },
@@ -65,17 +66,17 @@ const upload = async (
               }
             ),
           })
-          .then((result) => {
-            filesPendingUpload.delete(fileId);
-            return { type: "file" as const, key: fileId, result };
-          })
+        ).then((result) => {
+          filesPendingUpload.delete(fileId);
+          return { type: "file" as const, key: fileId, result };
+        })
       ),
     ...docsPendingUpload.getAllPendingKeys()
       // only adds
       .filter((docKey) => documents[docKey])
       .map((docKey) =>
-        dbx
-          .filesUpload({
+        retryWithBackoff(() =>
+          dbx.filesUpload({
             mode: {
               ".tag": "overwrite",
             },
@@ -87,7 +88,7 @@ const upload = async (
                 type: "application/json",
               }
             ),
-          })
+          }))
           .then((result) => {
             docsPendingUpload.clearUploaded(docsPendingUploadSnapshot);
             return { type: "doc" as const, key: docKey, result };
@@ -96,8 +97,8 @@ const upload = async (
     ...drawingsPendingUpload.getAllPendingKeys()
       .filter((drawingKey) => drawings[drawingKey])
       .map((drawingKey) =>
-        dbx
-          .filesUpload({
+        retryWithBackoff(() =>
+          dbx.filesUpload({
             mode: {
               ".tag": "overwrite",
             },
@@ -109,7 +110,7 @@ const upload = async (
                 type: "application/json",
               }
             ),
-          })
+          }))
           .then((result) => {
             drawingsPendingUpload.clearUploaded(drawingsPendingUploadSnapshot)
             return { type: "drawing" as const, key: drawingKey, result };
@@ -188,8 +189,8 @@ const upload = async (
     ),
   };
 
-  return dbx
-    .filesUpload({
+  return retryWithBackoff(() =>
+    dbx.filesUpload({
       mode: {
         ".tag": "update",
         update: indexFileRev,
@@ -203,6 +204,7 @@ const upload = async (
         }
       ),
     })
+  )
     .then((response) => ({
       response,
       revisions,
@@ -212,10 +214,10 @@ const upload = async (
       // we delete after successfully saving all the rest, so we don't have to undo deletion due to a merge error.
       let deletionResults = await Promise.allSettled([
         ...files.map((fileId) =>
-          dbx.filesDeleteV2({ path: folderPath + getFileFileName(fileId) })
+          retryWithBackoff(() =>dbx.filesDeleteV2({ path: folderPath + getFileFileName(fileId) }))
         ),
         ...Array.from(remoteFilesPendingDelete).map((fileId) =>
-          dbx.filesDeleteV2({ path: folderPath + fileId })
+          retryWithBackoff(() => dbx.filesDeleteV2({ path: folderPath + fileId }))
         ),
       ]);
 

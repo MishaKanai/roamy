@@ -216,8 +216,12 @@ const syncDropboxToStore = (
       drawings,
       merge,
       categories,
+      syncGate
     } = store.getState();
-
+    if (syncGate.count > 0) {
+      // abort - we're loading things into store or something. Don't sync.
+      return;
+    }
     if (merge.state === "conflict") {
       // prevent sync here, because we replace documents while the merge is in the conflict state,
       // causing a debounced sync to begin, before we get to change our auth.rev,
@@ -230,6 +234,7 @@ const syncDropboxToStore = (
       collection.selectedFilePath &&
       collection.selectedFilePath !== prevCollection
     ) {
+      debouncedSync.cancel();
       reset();
       prevCollection = collection.selectedFilePath;
     }

@@ -1,10 +1,11 @@
 import { Dropbox } from "dropbox";
+import { retryWithBackoff } from "./retryWithBackoffAndBottleneck";
 
 async function loadFileJSON<T>(dbx: Dropbox, filePath: string, rev?: string): Promise<{
     data: T,
     rev: string
 }> {
-    const data = await dbx.filesDownload({ path: filePath, rev });
+    const data = await retryWithBackoff(() =>dbx.filesDownload({ path: filePath, rev }));
     const fileBlob = (data.result as any)?.fileBlob;
     if (!fileBlob) {
         throw new Error('No fileBlob');

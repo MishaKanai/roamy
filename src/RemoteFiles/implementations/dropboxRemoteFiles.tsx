@@ -7,40 +7,7 @@ import mime from "mime";
 import { remoteFilesApiContext } from "../remoteFiles";
 import { useRef } from "react";
 import MurmurHash3 from "imurmurhash";
-import Bottleneck from "bottleneck";
-
-const limiter = new Bottleneck({
-  maxConcurrent: 4, // Limit to 4 concurrent requests
-});
-
-// Retry function with exponential backoff, incorporating limiter
-async function retryWithBackoff<T>(
-  operation: () => Promise<T>,
-  maxRetries = 5,
-  baseDelay = 1000
-): Promise<T> {
-  let attempt = 0;
-
-  while (attempt < maxRetries) {
-    try {
-      // Schedule the operation with the limiter
-      return await limiter.schedule(operation);
-    } catch (error) {
-      attempt++;
-      if (attempt >= maxRetries) {
-        throw new Error(
-          `Operation failed after ${maxRetries} attempts: ${error}`
-        );
-      }
-
-      // Exponential backoff delay
-      const delay = baseDelay * 2 ** (attempt - 1);
-      console.log(`Attempt ${attempt} failed. Retrying in ${delay} ms...`);
-      await new Promise((resolve) => setTimeout(resolve, delay));
-    }
-  }
-  throw new Error("Failed to complete operation within retry limits.");
-}
+import { retryWithBackoff } from "../../dropbox/util/retryWithBackoffAndBottleneck";
 
 export const useDropboxRemoteFiles = (): RemoteFilesApi => {
   const dbx = useDbx();

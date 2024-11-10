@@ -19,6 +19,7 @@ import { replaceDrawings } from "../../Excalidraw/store/drawingsSlice";
 import { replaceFiles } from "../../UploadedFiles/uploadedFilesSlice";
 import { replaceRemoteFiles } from "../../RemoteFiles/remoteFilesSlice";
 import { replaceCategories } from "../../Category/store/categoriesSlice";
+import { decrement, increment } from "../../store/syncGateSlice";
 
 const folderPath = "";
 
@@ -143,10 +144,12 @@ export const useDbxEntries = () => {
               drawings: {},
             })
           );
+          dispatch(increment());
           dispatch(replaceFiles({}));
           dispatch(replaceDocs({}));
           dispatch(replaceDrawings({}));
           dispatch(replaceRemoteFiles({ remoteFiles: {} }));
+          dispatch(decrement());
         })
         .then(() => {
           setFilePendingState({ _type: "ok" });
@@ -183,12 +186,15 @@ export const useDbxEntries = () => {
             categories,
           } = await fetchDataFromCollectionAndCompose(dbx, indexFilePath);
           II.clear();
+          dispatch(increment());
+          // we need to prevent the subscription here from running until we've loaded everything.
           dispatch(selectFilePathAction(indexFilePath, rev, revisions));
           dispatch(replaceFiles(uploadedFiles));
           dispatch(replaceDocs(documents));
           dispatch(replaceDrawings(drawings));
           dispatch(replaceCategories(categories ?? {}));
           dispatch(replaceRemoteFiles({ remoteFiles }));
+          dispatch(decrement());
           setFilePendingState({ _type: "ok" });
           dispatch(pushAction("/graph"));
         } catch (e) {
