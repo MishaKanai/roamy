@@ -1,7 +1,7 @@
 import Bottleneck from "bottleneck";
 
 const limiter = new Bottleneck({
-  maxConcurrent: 4, // Limit to 4 concurrent requests
+  maxConcurrent: 5, // Limit to 4 concurrent requests
 });
 
 // Retry function with exponential backoff, incorporating limiter
