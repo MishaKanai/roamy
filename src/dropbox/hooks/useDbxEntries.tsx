@@ -22,9 +22,9 @@ import { replaceCategories } from "../../Category/store/categoriesSlice";
 import { decrement, increment } from "../../store/syncGateSlice";
 
 const folderPath = "";
-
 const fetchEntries = (() => {
   let fetches = 0;
+
   const fetch = (
     dbx: Dropbox,
     onPending: () => void,
@@ -34,27 +34,46 @@ const fetchEntries = (() => {
     if (fetches === 0) {
       onPending();
       fetches = fetches + 1;
-      dbx
-        .filesListFolder({
-          path: folderPath,
-          recursive: true, // TODO: fix this. Remove recursive and just get top-level folders because we're hitting 2000 limit
-          include_non_downloadable_files: false,
-          limit: 2000,
-        })
-        .then(function (response) {
-          const entries = response?.result?.entries?.filter((e) =>
-            e.path_lower?.endsWith(".json")
-          );
-          onSuccess(entries);
-        })
-        .catch(function (error) {
-          onError(error);
-        })
-        .finally(() => {
+      const allEntries: files.ListFolderResult["entries"] = [];
+
+      const fetchAllPages = async (cursor?: string) => {
+        try {
+          const response = cursor
+            ? await dbx.filesListFolderContinue({ cursor })
+            : await dbx.filesListFolder({
+                path: folderPath,
+                recursive: true, // Adjust this if you only want top-level folders
+                include_non_downloadable_files: false,
+                limit: 2000,
+              });
+
+          // Filter the entries for `.json` files
+          const entries =
+            response?.result?.entries?.filter((e) =>
+              e.path_lower?.endsWith(".json")
+            ) || [];
+
+          // Accumulate entries across pages
+          allEntries.push(...entries);
+
+          // Check if there are more entries to fetch
+          if (response.result.has_more) {
+            await fetchAllPages(response.result.cursor);
+          } else {
+            // Call onSuccess with all accumulated entries once done
+            onSuccess(allEntries);
+          }
+        } catch (error) {
+          onError(error as DropboxResponseError<any>);
+        } finally {
           fetches = fetches - 1;
-        });
+        }
+      };
+
+      fetchAllPages();
     }
   };
+
   return fetch;
 })();
 
