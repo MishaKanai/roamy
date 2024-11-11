@@ -1,6 +1,6 @@
 import React, { useContext, useEffect } from "react";
 import { DropboxAuth } from "dropbox";
-import { CircularProgress, Typography } from "@mui/material";
+import { Box, Button, CircularProgress, Typography } from "@mui/material";
 import MergeEditorWrap from "../resolveMerge/components/MergePopup";
 import Layout from "../../components/Layout";
 import LandingPage from "./LandingPage";
@@ -14,6 +14,7 @@ import { useAppSelector } from "../../store/hooks";
 import { CLIENT_ID } from "../config";
 import isSingleFile from "../../util/isSingleFile";
 import { hasRedirectedFromAuth } from "../util/parseQueryString";
+import { useDbxEntries } from "../hooks/useDbxEntries";
 // var REDIRECT_URI = 'http://localhost:8080/pkce-browser';
 const REDIRECT_URI = window.location.protocol + "//" + window.location.host;
 var dbxAuth = new DropboxAuth({
@@ -44,6 +45,7 @@ interface AccessControlledPageProps {
 }
 
 const FileSelectPendingWrapper: React.FC<{}> = (props) => {
+  const { loadExistingCollection } = useDbxEntries();
   const { state } = useContext(fileSelectPendingContext);
   return (
     <>
@@ -63,7 +65,12 @@ const FileSelectPendingWrapper: React.FC<{}> = (props) => {
               {state._type === "pending" ? (
                 <Typography>Loading Collection...</Typography>
               ) : (
-                <Typography>{state.message}</Typography>
+                <Box>
+                  <p>
+                    <Typography>{state.message}</Typography>
+                  </p>
+                  {state.fileFailed && <Button onClick={() => loadExistingCollection(state.fileFailed)}>Retry?</Button>}
+                </Box>
               )}
             </div>
           </div>

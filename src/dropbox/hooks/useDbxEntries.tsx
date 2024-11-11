@@ -102,7 +102,7 @@ export const useDbxEntries = () => {
   const dispatch = useAppDispatch();
   const dbx = useDbx();
   const { retry, collectionsState } = useFetchCollectionsOnMount(dbx);
-  const { setState: setFilePendingState } = useContext(
+  const { setState: setFilePendingState, state: filePendingState } = useContext(
     fileSelectPendingContext
   );
 
@@ -173,6 +173,7 @@ export const useDbxEntries = () => {
         const setErr = () =>
           setFilePendingState({
             _type: "error",
+            fileFailed: indexFilePath,
             message: "error occurred loading file " + indexFilePath,
           });
         try {
@@ -208,6 +209,7 @@ export const useDbxEntries = () => {
 
   return {
     collectionsState,
+    filePendingState,
     createNewEmptyCollection,
     dbx,
     loadExistingCollection,

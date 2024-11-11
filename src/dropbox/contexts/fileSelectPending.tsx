@@ -7,6 +7,7 @@ type FileSelectPendingState = {
   _type: 'pending'
 } | {
   _type: 'error',
+  fileFailed?: string,
   message: string
 }
 const ok = { _type: 'ok' } as const;
