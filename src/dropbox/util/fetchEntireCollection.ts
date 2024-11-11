@@ -70,9 +70,8 @@ const fetchDataFromCollectionAndCompose = async (
   };
   documentResults.forEach((r) => {
     if (r.status === "rejected") {
-      // this will happen if 'they' deleted a file.
-      // throw new Error(r.reason);
-      return;
+      // alert("A document failed to fetch. " + JSON.stringify(r.reason))
+      throw new Error(r.reason);
     }
     const { value } = r;
     if (value.type === "file") {
