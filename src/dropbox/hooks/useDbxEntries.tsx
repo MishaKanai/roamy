@@ -37,9 +37,9 @@ const fetchEntries = (() => {
       dbx
         .filesListFolder({
           path: folderPath,
-          recursive: true, // TODO: fix this. Remove recursive and just get top-level folders
+          recursive: true, // TODO: fix this. Remove recursive and just get top-level folders because we're hitting 2000 limit
           include_non_downloadable_files: false,
-          limit: 3000,
+          limit: 2000,
         })
         .then(function (response) {
           const entries = response?.result?.entries?.filter((e) =>
