@@ -69,7 +69,13 @@ const FileSelectPendingWrapper: React.FC<{}> = (props) => {
                   <p>
                     <Typography>{state.message}</Typography>
                   </p>
-                  {state.fileFailed && <Button onClick={() => loadExistingCollection(state.fileFailed)}>Retry?</Button>}
+                  {state.fileFailed && (
+                    <Button
+                      onClick={() => loadExistingCollection(state.fileFailed!)}
+                    >
+                      Retry?
+                    </Button>
+                  )}
                 </Box>
               )}
             </div>
