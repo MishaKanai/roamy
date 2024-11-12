@@ -25,10 +25,7 @@ export const useDropboxRemoteFiles = (): RemoteFilesApi => {
     return folderPath;
   };
   const downloadedFileHashes = useRef<{ [hash: string]: string }>({});
-  const indexFilePath = getIndexFilePath();
-  useMemo(() => {
-    downloadedFileHashes.current = {};
-  }, [indexFilePath]);
+
   return {
     uploadFile: async (data) => {
       const uuid = uuidv4();
@@ -47,12 +44,12 @@ export const useDropboxRemoteFiles = (): RemoteFilesApi => {
         if (found) {
           try {
             const resp = await dbx?.filesGetMetadata({
-              path: getIndexFilePath() + found,
+              path: found,
             });
             const fileStillExists =
               resp && resp.status >= 200 && resp.status < 300;
             if (fileStillExists) {
-              return { id: found };
+              return { id: found.split("/").pop()! };
             }
           } catch (e) {
             // file was deleted - lets reupload by continuing below.
@@ -103,7 +100,7 @@ export const useDropboxRemoteFiles = (): RemoteFilesApi => {
           if (fileData) {
             const hashResult = MurmurHash3(fileData).result();
             const dataHash = `${hashResult}`;
-            downloadedFileHashes.current[dataHash] = filename;
+            downloadedFileHashes.current[dataHash] = path;
             storeFileInDB(path, fileData);
             resolve({ base64: fileData });
           }
@@ -113,9 +110,10 @@ export const useDropboxRemoteFiles = (): RemoteFilesApi => {
       });
     },
     deleteFile: async (filename: string) => {
-      await dbx?.filesDeleteV2({ path: getIndexFilePath() + filename });
+      const path = getIndexFilePath() + filename;
+      await dbx?.filesDeleteV2({ path });
       Object.keys(downloadedFileHashes.current).forEach((hash) => {
-        if (downloadedFileHashes.current[hash] === filename) {
+        if (downloadedFileHashes.current[hash] === path) {
           delete downloadedFileHashes.current[hash];
         }
       });
