@@ -5,9 +5,10 @@ import { RemoteFilesApi } from "../api";
 import { v4 as uuidv4 } from "uuid";
 import mime from "mime";
 import { remoteFilesApiContext } from "../remoteFiles";
-import { useRef } from "react";
+import { useMemo, useRef } from "react";
 import MurmurHash3 from "imurmurhash";
 import { retryWithBackoff } from "../../dropbox/util/retryWithBackoffAndBottleneck";
+import { getFileFromDB, storeFileInDB } from "../../IndexedDB/indexedDB";
 
 export const useDropboxRemoteFiles = (): RemoteFilesApi => {
   const dbx = useDbx();
@@ -24,6 +25,10 @@ export const useDropboxRemoteFiles = (): RemoteFilesApi => {
     return folderPath;
   };
   const downloadedFileHashes = useRef<{ [hash: string]: string }>({});
+  const indexFilePath = getIndexFilePath();
+  useMemo(() => {
+    downloadedFileHashes.current = {};
+  }, [indexFilePath]);
   return {
     uploadFile: async (data) => {
       const uuid = uuidv4();
@@ -69,13 +74,20 @@ export const useDropboxRemoteFiles = (): RemoteFilesApi => {
       };
     },
     downloadFile: async (filename: string) => {
+      const path = getIndexFilePath() + filename;
       if (!dbx) {
         throw new Error("No Dropbox instance");
+      }
+      // Check if file is already cached in IndexedDB
+      const cachedFile = await getFileFromDB(path);
+      if (cachedFile) {
+        const { data } = cachedFile;
+        return { base64: data };
       }
 
       const data = await retryWithBackoff(() =>
         dbx.filesDownload({
-          path: getIndexFilePath() + filename,
+          path,
         })
       );
 
@@ -92,6 +104,7 @@ export const useDropboxRemoteFiles = (): RemoteFilesApi => {
             const hashResult = MurmurHash3(fileData).result();
             const dataHash = `${hashResult}`;
             downloadedFileHashes.current[dataHash] = filename;
+            storeFileInDB(path, fileData);
             resolve({ base64: fileData });
           }
         };
