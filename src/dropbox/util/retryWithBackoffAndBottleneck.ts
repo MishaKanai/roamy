@@ -1,4 +1,5 @@
 import Bottleneck from "bottleneck";
+import { DropboxResponseError } from "dropbox";
 
 const limiter = new Bottleneck({
   maxConcurrent: 5, // Limit to 4 concurrent requests
@@ -17,6 +18,9 @@ export async function retryWithBackoff<T>(
       // Schedule the operation with the limiter
       return await limiter.schedule(operation);
     } catch (error) {
+      if ((error as DropboxResponseError<any>).status === 409) {
+        throw error;
+      }
       attempt++;
       if (attempt >= maxRetries) {
         throw new Error(
