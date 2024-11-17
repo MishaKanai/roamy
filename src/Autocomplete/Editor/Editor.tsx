@@ -301,11 +301,11 @@ const UploadFileButton = React.memo(
 
                 // await transcode here as well.
                 // Either prevent navigation, or prevent memory leak
-                if (videoWidth <= 400 || !videoHeight || !videoWidth) {
-                  // ok, Let's not transcode by default.
-                  upload();
-                  return;
-                }
+                // if (videoWidth <= 400 || !videoHeight || !videoWidth) {
+                //   // ok, Let's not transcode by default.
+                //   upload();
+                //   return;
+                // }
                 const _b64 = await getBlobBase64(file);
                 const [newWidth, newHeight] = await new Promise<
                   [width: number, height: number]
