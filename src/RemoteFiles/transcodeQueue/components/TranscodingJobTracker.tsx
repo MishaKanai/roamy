@@ -87,7 +87,7 @@ const TranscodingJobTracker = ({
               zIndex: 1000,
             }}
           >
-            Waiting in processing queue...
+            Uploading...
           </div>
         )}
       </div>
