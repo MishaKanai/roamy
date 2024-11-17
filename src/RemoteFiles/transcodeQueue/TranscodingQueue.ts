@@ -96,7 +96,7 @@ class TranscodingQueue {
         "400k", // TODO: adjust this as needed.
         "-movflags",
         "faststart", // optimize for web streaming
-        "-an", // Removes audio. TODO: make optional
+        // "-an", // Removes audio. TODO: make optional
         outputFileName,
       ]);
 

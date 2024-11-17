@@ -211,7 +211,8 @@ const UploadFileButton = React.memo(
               return;
             }
             const addFileB64 = (base64: string, at?: Location) => {
-              remoteFiles
+              // TODO track uploading in a store
+              return remoteFiles
                 .uploadFile({
                   type: "b64",
                   base64,
@@ -365,8 +366,11 @@ const UploadFileButton = React.memo(
                   file,
                   resolution: [newWidth, newHeight],
                   onSuccess: (transcodedB64) => {
-                    const placeholderLocation = removePlaceholder();
-                    addFileB64(transcodedB64, placeholderLocation || undefined);
+                    const placeholderLocation = findPlaceholder();
+                    addFileB64(
+                      transcodedB64,
+                      placeholderLocation || undefined
+                    ).then(removePlaceholder);
                   },
                   onCancel: () => {
                     removePlaceholder();
