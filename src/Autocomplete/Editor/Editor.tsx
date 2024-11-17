@@ -604,7 +604,7 @@ const Video = ({
   // }, []);
 
   const thumnbailB64 = useFetchThumbnail(fileIdentifier);
-  const maxWidth = useMaxWidthForEmbeddedThing()
+  const maxWidth = useMaxWidthForEmbeddedThing();
   return (
     <span contentEditable={false}>
       <video
@@ -669,13 +669,13 @@ const useFetchRemoteFile = (fileIdentifier: string | null | undefined) => {
 };
 
 const useIsSmallScreen = () => {
-  return  useMediaQuery("(max-width:600px)");
-}
+  return useMediaQuery("(max-width:600px)");
+};
 const useMaxWidthForEmbeddedThing = () => {
   const isSmallScreen = useIsSmallScreen();
-  const maxWidth = isSmallScreen ? 'calc(100vw - 92px)' : 'calc(100vw - 312px)';
+  const maxWidth = isSmallScreen ? "calc(100vw - 92px)" : "calc(100vw - 312px)";
   return maxWidth;
-}
+};
 const RemoteFile = ({
   attributes,
   children,
@@ -698,6 +698,7 @@ const RemoteFile = ({
   const isSmallScreen = useIsSmallScreen();
   const imageClassName = css`
     display: block;
+    width: 100%;
     max-width: ${maxWidth};
     box-shadow: ${selected && focused
       ? "0 0 0 3px " + theme.palette.action.focus
