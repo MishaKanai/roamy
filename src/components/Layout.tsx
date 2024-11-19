@@ -412,7 +412,7 @@ const ResponsiveDrawer = React.memo((props: ResponsiveDrawerProps) => {
         component="main"
         sx={{
           flexGrow: 1,
-          pl: 4,
+          pl: 0,
           width: { xs: "100%", sm: `calc(100% - ${drawerWidth}px)` },
           position: "absolute",
           top: 0,

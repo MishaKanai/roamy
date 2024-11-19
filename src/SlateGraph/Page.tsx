@@ -20,7 +20,7 @@ import { createDoc, deleteDoc, updateDoc } from "./store/globalActions";
 import DocTitle from "../components/EditableTitle";
 import ReadOnlyDoc from "../Autocomplete/Editor/ReadOnly";
 import isSingleFile from "../util/isSingleFile";
-import { IconButton } from "@mui/material";
+import { Box, IconButton } from "@mui/material";
 import { DeleteOutline } from "@mui/icons-material";
 import CategorySelect from "../Category/Components/CategorySelect";
 import { setCategoryId } from "./store/slateDocumentsSlice";
@@ -200,9 +200,9 @@ export const PageRoute = React.memo(() => {
     </div>
   );
   return (
-    <div>
+    <Box sx={{ pl: 3 }}>
       <Page title={title} key={docName} docName={docName} />
-    </div>
+    </Box>
   );
 });
 
