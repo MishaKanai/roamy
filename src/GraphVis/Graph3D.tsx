@@ -365,7 +365,7 @@ const AppGraph3D = ({ filterNode }: { filterNode?: FilterNode }) => {
     graph.zoomToFit();
 
     let angle = 0; // Initialize the angle
-    const radius = 500; // Adjust radius for your scene size
+    const radius = 300; // Adjust radius for your scene size
     const center = { x: 0, y: 0, z: 0 }; // Focus point
 
     const spin = () => {
