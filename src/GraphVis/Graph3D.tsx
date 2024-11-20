@@ -340,7 +340,18 @@ const AppGraph3D = ({ filterNode }: { filterNode?: FilterNode }) => {
     setSelectedNode(null);
   };
 
+  const [readyToShowGraph, setReadyToShowGraph] = useState(false);
   const [isSpinning, setIsSpinning] = useState(false);
+  useEffect(() => {
+    // wait a bit after being mounted to start spinning, because graph takes some time to init.
+    const to = setTimeout(() => setIsSpinning(true), 75);
+    return () => clearTimeout(to);
+  }, []);
+  useEffect(() => {
+    // show graph after spinning has begun, to prevent flash
+    const to = setTimeout(() => setReadyToShowGraph(true), 250);
+    return () => clearTimeout(to);
+  }, []);
   const animationFrameRef = React.useRef<number | null>(null);
 
   // Toggle spinning
@@ -389,6 +400,7 @@ const AppGraph3D = ({ filterNode }: { filterNode?: FilterNode }) => {
   return (
     <div
       style={{
+        visibility: readyToShowGraph ? undefined : "hidden",
         height: "calc(100% - 1em)",
         width: "100%",
         position: "relative",
