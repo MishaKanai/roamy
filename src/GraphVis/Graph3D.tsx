@@ -397,6 +397,8 @@ const AppGraph3D = ({ filterNode }: { filterNode?: FilterNode }) => {
     };
   }, [isSpinning]);
 
+  const [drawerSize, setDrawerSize] = useState(isMobile ? 200 : 400);
+
   return (
     <div
       style={{
@@ -422,58 +424,75 @@ const AppGraph3D = ({ filterNode }: { filterNode?: FilterNode }) => {
           {isSpinning ? <SyncDisabled /> : <ThreeSixty />}
         </IconButton>
       </Box>
-      <div style={{ marginTop: -1, marginBottom: -1 }}>
-        <SizeMe>
+      <div
+        style={{
+          marginTop: -1,
+          marginBottom: -1,
+          height: "100%",
+        }}
+      >
+        <SizeMe noPlaceholder monitorHeight>
           {({ size }) => (
-            <ForceGraph3D
-              onNodeClick={handleNodeClick}
-              ref={graphRef}
-              height={size.height ?? undefined}
-              width={size.width ?? undefined}
-              graphData={filteredGraph}
-              nodeLabel="label" // Display the 'label' property on hover
-              nodeThreeObject={(node) => {
-                if (node.svgImage) {
-                  const imgTexture = new THREE.TextureLoader().load(
-                    node.svgImage
-                  );
-                  const spriteMaterial = new THREE.SpriteMaterial({
-                    map: imgTexture,
-                  });
-                  const sprite = new THREE.Sprite(spriteMaterial);
-
-                  const dims = getSvgDimensionsFromBase64(node.svgImage);
-                  const { scaledHeight, scaledWidth } =
-                    dims?.width && dims?.height
-                      ? scaleToFit(dims?.width, dims?.height, 50, 50)
-                      : { scaledHeight: 50, scaledWidth: 50 };
-                  sprite.scale.set(scaledWidth, scaledHeight, 1); // Adjust size as needed
-                  return sprite;
+            <div style={{ height: "100%" }}>
+              <ForceGraph3D
+                onNodeClick={handleNodeClick}
+                ref={graphRef}
+                height={
+                  typeof size.height === "number"
+                    ? size.height - (drawerOpen && !isLg ? drawerSize : 0)
+                    : undefined
                 }
-                // Default sphere for nodes
-                const sphereGeometry = new THREE.SphereGeometry(5);
-                const sphereMaterial = new THREE.MeshBasicMaterial({
-                  color:
-                    node.type === "drawing"
-                      ? theme.palette.secondary.main
-                      : node.color ?? theme.palette.primary.main,
-                });
-                return new THREE.Mesh(sphereGeometry, sphereMaterial);
-              }}
-              linkWidth={1}
-              linkDirectionalParticles={2}
-              linkDirectionalParticleSpeed={0.01}
-              backgroundColor={theme.palette.background.default}
-            />
+                width={
+                  typeof size.width === "number"
+                    ? size.width - (drawerOpen && isLg ? drawerSize : 0)
+                    : undefined
+                }
+                graphData={filteredGraph}
+                nodeLabel="label" // Display the 'label' property on hover
+                nodeThreeObject={(node) => {
+                  if (node.svgImage) {
+                    const imgTexture = new THREE.TextureLoader().load(
+                      node.svgImage
+                    );
+                    const spriteMaterial = new THREE.SpriteMaterial({
+                      map: imgTexture,
+                    });
+                    const sprite = new THREE.Sprite(spriteMaterial);
+
+                    const dims = getSvgDimensionsFromBase64(node.svgImage);
+                    const { scaledHeight, scaledWidth } =
+                      dims?.width && dims?.height
+                        ? scaleToFit(dims?.width, dims?.height, 50, 50)
+                        : { scaledHeight: 50, scaledWidth: 50 };
+                    sprite.scale.set(scaledWidth, scaledHeight, 1); // Adjust size as needed
+                    return sprite;
+                  }
+                  // Default sphere for nodes
+                  const sphereGeometry = new THREE.SphereGeometry(5);
+                  const sphereMaterial = new THREE.MeshBasicMaterial({
+                    color:
+                      node.type === "drawing"
+                        ? theme.palette.secondary.main
+                        : node.color ?? theme.palette.primary.main,
+                  });
+                  return new THREE.Mesh(sphereGeometry, sphereMaterial);
+                }}
+                linkWidth={1}
+                linkDirectionalParticles={2}
+                linkDirectionalParticleSpeed={0.01}
+                backgroundColor={theme.palette.background.default}
+              />
+            </div>
           )}
         </SizeMe>
       </div>
-
       <ResizableDrawer
         open={drawerOpen}
         onClose={handleCloseDrawer}
         isLg={isLg}
         isMobile={isMobile}
+        drawerSize={drawerSize}
+        setDrawerSize={setDrawerSize}
       >
         {selectedNode?.type === "document" ? (
           <Page
@@ -519,6 +538,7 @@ const SearchableAppGraph3D = () => {
       RootElementProps={{
         style: {
           position: "relative",
+          height: "100%",
         },
       }}
       SearchElementProps={{
@@ -533,9 +553,7 @@ const SearchableAppGraph3D = () => {
         return (
           <ProvideFilterNode results={results} searchText={innerText}>
             {(filterNode) => (
-              <div>
-                <AppGraph3D filterNode={innerText ? filterNode : undefined} />
-              </div>
+              <AppGraph3D filterNode={innerText ? filterNode : undefined} />
             )}
           </ProvideFilterNode>
         );

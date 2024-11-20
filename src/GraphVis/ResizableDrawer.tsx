@@ -8,15 +8,19 @@ const ResizableDrawer = ({
   children,
   isLg,
   isMobile,
+  drawerSize,
+  setDrawerSize,
 }: {
   open: boolean;
   onClose: () => void;
   children: React.ReactNode;
   isLg: boolean;
   isMobile: boolean;
+  drawerSize: number;
+  setDrawerSize: (size: number) => void;
 }) => {
   const theme = useTheme();
-  const [drawerSize, setDrawerSize] = useState(isMobile ? 200 : 400); // Initial size
+  // const [drawerSize, setDrawerSize] = useState(isMobile ? 200 : 400); // Initial size
   const [isDragging, setIsDragging] = useState(false);
   const [initialY, setInitialY] = useState<number | null>(null);
 
