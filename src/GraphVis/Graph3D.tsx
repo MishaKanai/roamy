@@ -6,6 +6,7 @@ import ForceGraph3D, {
 } from "react-force-graph-3d";
 import {
   Box,
+  Button,
   Drawer,
   IconButton,
   Typography,
@@ -20,7 +21,7 @@ import { SizeMe } from "react-sizeme";
 import { useStore } from "react-redux";
 import { drawingSvgStore } from "../Excalidraw/svgFromDrawing";
 import Search, { HighlightedSearchResults } from "../Search/components/Search";
-import { Close } from "@mui/icons-material";
+import { Close, SyncDisabled, ThreeSixty } from "@mui/icons-material";
 import Page from "../SlateGraph/Page";
 import ResizableDrawer from "./ResizableDrawer";
 import { isEqual, result } from "lodash";
@@ -339,13 +340,76 @@ const AppGraph3D = ({ filterNode }: { filterNode?: FilterNode }) => {
     setSelectedNode(null);
   };
 
+  const [isSpinning, setIsSpinning] = useState(false);
+  const animationFrameRef = React.useRef<number | null>(null);
+
+  // Toggle spinning
+  const toggleSpin = () => {
+    setIsSpinning((prev) => !prev);
+  };
+
+  useEffect(() => {
+    const graph = graphRef.current;
+    if (!graph) return;
+    graph.zoomToFit();
+
+    let angle = 0; // Initialize the angle
+    const radius = 500; // Adjust radius for your scene size
+    const center = { x: 0, y: 0, z: 0 }; // Focus point
+
+    const spin = () => {
+      if (!graph) return;
+
+      // Increment the angle for smooth rotation
+      angle += 0.005; // Adjust for rotation speed
+      const x = center.x + radius * Math.cos(angle);
+      const z = center.z + radius * Math.sin(angle);
+
+      // Smooth camera movement
+      graph.cameraPosition({ x, y: 0, z }, center, 0);
+
+      // Schedule the next frame
+      animationFrameRef.current = requestAnimationFrame(spin);
+    };
+
+    if (isSpinning) {
+      // Start the animation loop
+      animationFrameRef.current = requestAnimationFrame(spin);
+    }
+
+    return () => {
+      // Clean up the animation loop
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+        animationFrameRef.current = null;
+      }
+    };
+  }, [isSpinning]);
+
   return (
     <div
       style={{
         height: "calc(100% - 1em)",
         width: "100%",
+        position: "relative",
       }}
     >
+      <Box
+        sx={{
+          position: "absolute",
+          top: "16px",
+          left: "280px",
+          zIndex: 100,
+        }}
+      >
+        <IconButton
+          color={isSpinning ? "secondary" : "primary"}
+          aria-label="spin"
+          onClick={toggleSpin}
+        >
+          {isSpinning ? <SyncDisabled /> : <ThreeSixty />}
+        </IconButton>
+      </Box>
       <div style={{ marginTop: -1, marginBottom: -1 }}>
         <SizeMe>
           {({ size }) => (
