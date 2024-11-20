@@ -211,7 +211,7 @@ const UploadFileButton = React.memo(
               return;
             }
             const addFileB64 = (base64: string, at?: Location) => {
-              // TODO track uploading in a store
+              // TODO track uploading in a store (use jobId?)
               return remoteFiles
                 .uploadFile({
                   type: "b64",
@@ -610,7 +610,7 @@ const Video = ({
   const thumnbailB64 = useFetchThumbnail(fileIdentifier);
   const maxWidth = useMaxWidthForEmbeddedThing();
   return (
-    <span contentEditable={false}>
+    <span contentEditable={false} style={{ maxWidth: "100%" }}>
       <video
         playsInline
         ref={videoRef}
@@ -714,6 +714,7 @@ const RemoteFile = ({
       {...attributes}
       contentEditable={false}
       style={{
+        maxWidth: "100%",
         userSelect: "none",
         verticalAlign: "baseline",
         display: "inline-block",
@@ -722,11 +723,13 @@ const RemoteFile = ({
     >
       <div
         className={css`
+          max-width: 100%;
           display: inline-block;
           position: relative;
         `}
       >
         <Resizable
+          maxWidth={"100%"}
           enable={isSmallScreen ? false : undefined}
           lockAspectRatio
           defaultSize={{
@@ -848,6 +851,7 @@ const InlineImageOrVideo = ({
       {...attributes}
       contentEditable={false}
       style={{
+        maxWidth: "100%",
         userSelect: "none",
         verticalAlign: "baseline",
         display: "inline-block",
@@ -856,6 +860,7 @@ const InlineImageOrVideo = ({
     >
       <div
         className={css`
+          max-width: 100%;
           display: inline-block;
           position: relative;
         `}

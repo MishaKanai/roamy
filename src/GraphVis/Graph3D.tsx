@@ -4,7 +4,14 @@ import ForceGraph3D, {
   LinkObject,
   ForceGraphMethods,
 } from "react-force-graph-3d";
-import { Box, useTheme } from "@mui/material";
+import {
+  Box,
+  Drawer,
+  IconButton,
+  Typography,
+  useMediaQuery,
+  useTheme,
+} from "@mui/material";
 import { createSelector } from "reselect";
 import { useAppSelector } from "../store/hooks";
 import { RootState } from "../store/configureStore";
@@ -13,6 +20,87 @@ import { SizeMe } from "react-sizeme";
 import { useStore } from "react-redux";
 import { drawingSvgStore } from "../Excalidraw/svgFromDrawing";
 import Search, { HighlightedSearchResults } from "../Search/components/Search";
+import { Close } from "@mui/icons-material";
+import Page from "../SlateGraph/Page";
+import ResizableDrawer from "./ResizableDrawer";
+import { isEqual, result } from "lodash";
+import { createGraphSelector } from "./graphSelector";
+
+type DiffResult = {
+  path: string;
+  type: "added" | "removed" | "changed";
+  value: any;
+  oldValue?: any;
+};
+
+const deepDiff = (obj1: any, obj2: any, path = ""): DiffResult[] => {
+  const diffs: DiffResult[] = [];
+
+  const isObject = (value: any) =>
+    value && typeof value === "object" && !Array.isArray(value);
+
+  // Get all keys from both objects
+  const keys = new Set([
+    ...Object.keys(obj1 || {}),
+    ...Object.keys(obj2 || {}),
+  ]);
+
+  keys.forEach((key) => {
+    const fullPath = path ? `${path}.${key}` : key;
+
+    const val1 = obj1?.[key];
+    const val2 = obj2?.[key];
+
+    if (isObject(val1) && isObject(val2)) {
+      // Recurse into nested objects
+      diffs.push(...deepDiff(val1, val2, fullPath));
+    } else if (Array.isArray(val1) && Array.isArray(val2)) {
+      // Handle array differences
+      if (JSON.stringify(val1) !== JSON.stringify(val2)) {
+        diffs.push({
+          path: fullPath,
+          type: "changed",
+          value: val2,
+          oldValue: val1,
+        });
+      }
+    } else if (val1 !== val2) {
+      if (val1 === undefined) {
+        diffs.push({ path: fullPath, type: "added", value: val2 });
+      } else if (val2 === undefined) {
+        diffs.push({ path: fullPath, type: "removed", value: val1 });
+      } else {
+        diffs.push({
+          path: fullPath,
+          type: "changed",
+          value: val2,
+          oldValue: val1,
+        });
+      }
+    }
+  });
+
+  return diffs;
+};
+
+const logDeepDiff = (obj1: any, obj2: any) => {
+  const diffs = deepDiff(obj1, obj2);
+
+  diffs.forEach((diff) => {
+    const { path, type, value, oldValue } = diff;
+    if (type === "added") {
+      console.log(`Added at ${path}:`, value);
+    } else if (type === "removed") {
+      console.log(`Removed at ${path}:`, value);
+    } else if (type === "changed") {
+      console.log(`Changed at ${path}:`, `from`, oldValue, `to`, value);
+    }
+  });
+
+  if (diffs.length === 0) {
+    console.log("No differences found.");
+  }
+};
 
 function getSvgDimensionsFromBase64(
   base64Svg: string
@@ -72,7 +160,7 @@ function scaleToFit(
   return { scaledWidth: width, scaledHeight: height };
 }
 
-const createGraphSelector = () =>
+const createGraphSelectorOrig = () =>
   createSelector(
     (state: RootState) => state.documents,
     (state: RootState) => state.drawings,
@@ -82,6 +170,10 @@ const createGraphSelector = () =>
       const links: LinkObject[] = [];
 
       Object.values(documents).forEach((doc) => {
+        // doc.documentHash
+        // doc.backReferencesHash
+        // doc.backReferencesHash
+
         const color =
           (doc.categoryId && categories[doc.categoryId]?.color) ?? undefined;
         nodes.push({
@@ -122,6 +214,12 @@ const AppGraph3D = ({ filterNode }: { filterNode?: FilterNode }) => {
   const theme = useTheme();
   const graphSelector = useMemo(() => createGraphSelector(), []);
   const { nodes: rawNodes, links } = useAppSelector(graphSelector);
+  useMemo(() => {
+    console.log({ rawNodes });
+  }, [rawNodes]);
+  useMemo(() => {
+    console.log({ links });
+  }, [links]);
   const [nodes, setNodes] = useState<NodeObject[]>(rawNodes);
   const store = useStore<RootState>();
   const isDark = theme.palette.mode === "dark";
@@ -133,10 +231,8 @@ const AppGraph3D = ({ filterNode }: { filterNode?: FilterNode }) => {
           if (!r) {
             return n;
           }
-          return {
-            ...n,
-            svgImage: r,
-          };
+          n.svgImage = r;
+          return n;
         })
       );
     };
@@ -166,6 +262,14 @@ const AppGraph3D = ({ filterNode }: { filterNode?: FilterNode }) => {
         results[i] = null;
       }
     });
+    if (results.every((r) => r !== -1)) {
+      setNodes((_nodes) => {
+        if (_nodes.length === rawNodes.length) {
+          return _nodes;
+        }
+        return rawNodes;
+      });
+    }
     return () => {
       cancels.forEach((cancel) => {
         cancel();
@@ -201,6 +305,9 @@ const AppGraph3D = ({ filterNode }: { filterNode?: FilterNode }) => {
   const graphRef = React.useRef<ForceGraphMethods>();
 
   useEffect(() => {
+    console.log({ filteredGraph });
+  }, [filteredGraph]);
+  useEffect(() => {
     const to = setTimeout(() => {
       const graph = graphRef.current;
       if (graph) {
@@ -216,6 +323,22 @@ const AppGraph3D = ({ filterNode }: { filterNode?: FilterNode }) => {
     }, 100);
     return () => clearTimeout(to);
   }, []);
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm")); // Detect mobile screen
+  const isLg = useMediaQuery(theme.breakpoints.up("md")); // Detect mobile screen
+
+  const [drawerOpen, setDrawerOpen] = useState(false); // Drawer state
+  const [selectedNode, setSelectedNode] = useState<NodeObject | null>(null); // Selected node
+
+  const handleNodeClick = (node: NodeObject) => {
+    setSelectedNode(node);
+    setDrawerOpen(true);
+  };
+
+  const handleCloseDrawer = () => {
+    setDrawerOpen(false);
+    setSelectedNode(null);
+  };
+
   return (
     <div
       style={{
@@ -223,49 +346,70 @@ const AppGraph3D = ({ filterNode }: { filterNode?: FilterNode }) => {
         width: "100%",
       }}
     >
-      <SizeMe>
-        {({ size }) => (
-          <ForceGraph3D
-            ref={graphRef}
-            height={size.height ?? undefined}
-            width={size.width ?? undefined}
-            graphData={filteredGraph}
-            nodeLabel="label" // Display the 'label' property on hover
-            nodeThreeObject={(node) => {
-              if (node.svgImage) {
-                const imgTexture = new THREE.TextureLoader().load(
-                  node.svgImage
-                );
-                const spriteMaterial = new THREE.SpriteMaterial({
-                  map: imgTexture,
-                });
-                const sprite = new THREE.Sprite(spriteMaterial);
+      <div style={{ marginTop: -1, marginBottom: -1 }}>
+        <SizeMe>
+          {({ size }) => (
+            <ForceGraph3D
+              onNodeClick={handleNodeClick}
+              ref={graphRef}
+              height={size.height ?? undefined}
+              width={size.width ?? undefined}
+              graphData={filteredGraph}
+              nodeLabel="label" // Display the 'label' property on hover
+              nodeThreeObject={(node) => {
+                if (node.svgImage) {
+                  const imgTexture = new THREE.TextureLoader().load(
+                    node.svgImage
+                  );
+                  const spriteMaterial = new THREE.SpriteMaterial({
+                    map: imgTexture,
+                  });
+                  const sprite = new THREE.Sprite(spriteMaterial);
 
-                const dims = getSvgDimensionsFromBase64(node.svgImage);
-                const { scaledHeight, scaledWidth } =
-                  dims?.width && dims?.height
-                    ? scaleToFit(dims?.width, dims?.height, 50, 50)
-                    : { scaledHeight: 50, scaledWidth: 50 };
-                sprite.scale.set(scaledWidth, scaledHeight, 1); // Adjust size as needed
-                return sprite;
-              }
-              // Default sphere for nodes
-              const sphereGeometry = new THREE.SphereGeometry(5);
-              const sphereMaterial = new THREE.MeshBasicMaterial({
-                color:
-                  node.type === "drawing"
-                    ? theme.palette.secondary.main
-                    : node.color ?? theme.palette.primary.main,
-              });
-              return new THREE.Mesh(sphereGeometry, sphereMaterial);
-            }}
-            linkWidth={1}
-            linkDirectionalParticles={2}
-            linkDirectionalParticleSpeed={0.01}
-            backgroundColor={theme.palette.background.default}
+                  const dims = getSvgDimensionsFromBase64(node.svgImage);
+                  const { scaledHeight, scaledWidth } =
+                    dims?.width && dims?.height
+                      ? scaleToFit(dims?.width, dims?.height, 50, 50)
+                      : { scaledHeight: 50, scaledWidth: 50 };
+                  sprite.scale.set(scaledWidth, scaledHeight, 1); // Adjust size as needed
+                  return sprite;
+                }
+                // Default sphere for nodes
+                const sphereGeometry = new THREE.SphereGeometry(5);
+                const sphereMaterial = new THREE.MeshBasicMaterial({
+                  color:
+                    node.type === "drawing"
+                      ? theme.palette.secondary.main
+                      : node.color ?? theme.palette.primary.main,
+                });
+                return new THREE.Mesh(sphereGeometry, sphereMaterial);
+              }}
+              linkWidth={1}
+              linkDirectionalParticles={2}
+              linkDirectionalParticleSpeed={0.01}
+              backgroundColor={theme.palette.background.default}
+            />
+          )}
+        </SizeMe>
+      </div>
+
+      <ResizableDrawer
+        open={drawerOpen}
+        onClose={handleCloseDrawer}
+        isLg={isLg}
+        isMobile={isMobile}
+      >
+        {selectedNode?.type === "document" ? (
+          <Page
+            docName={selectedNode.id as string}
+            title={selectedNode.label}
           />
+        ) : selectedNode?.type === "drawing" ? (
+          <Typography>Show drawing details here...</Typography>
+        ) : (
+          <Typography>No details available.</Typography>
         )}
-      </SizeMe>
+      </ResizableDrawer>
     </div>
   );
 };
@@ -305,7 +449,7 @@ const SearchableAppGraph3D = () => {
         style: {
           position: "absolute",
           top: "1em",
-          left: "1em",
+          left: "2em",
           zIndex: 100,
         },
       }}
