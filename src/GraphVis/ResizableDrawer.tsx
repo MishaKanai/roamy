@@ -30,6 +30,11 @@ const ResizableDrawer = ({
     e.preventDefault();
   };
 
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setIsDragging(true);
+    setInitialY(e.touches[0].clientY);
+  };
+
   const handleMouseMove = (e: MouseEvent) => {
     if (!isDragging || initialY === null) return;
 
@@ -48,23 +53,54 @@ const ResizableDrawer = ({
     }
   };
 
+  const handleTouchMove = (e: TouchEvent) => {
+    if (!isDragging || initialY === null) return;
+
+    const touchY = e.touches[0].clientY;
+
+    if (isLg) {
+      // Right-aligned drawer resizing via touch (not typical on mobile, but added for completeness)
+      const newWidth = window.innerWidth - e.touches[0].clientX;
+      setDrawerSize(Math.max(200, Math.min(newWidth, window.innerWidth - 100)));
+    } else {
+      // Bottom-aligned drawer resizing via touch
+      const deltaY = initialY - touchY;
+      const newHeight = drawerSize + deltaY;
+      setDrawerSize(
+        Math.max(100, Math.min(newHeight, window.innerHeight - 50))
+      );
+      setInitialY(touchY);
+    }
+  };
+
   const handleMouseUp = () => {
     setIsDragging(false);
     setInitialY(null); // Reset the initial Y position
+  };
+
+  const handleTouchEnd = () => {
+    setIsDragging(false);
+    setInitialY(null);
   };
 
   useEffect(() => {
     if (isDragging) {
       window.addEventListener("mousemove", handleMouseMove);
       window.addEventListener("mouseup", handleMouseUp);
+      window.addEventListener("touchmove", handleTouchMove);
+      window.addEventListener("touchend", handleTouchEnd);
     } else {
       window.removeEventListener("mousemove", handleMouseMove);
       window.removeEventListener("mouseup", handleMouseUp);
+      window.removeEventListener("touchmove", handleTouchMove);
+      window.removeEventListener("touchend", handleTouchEnd);
     }
 
     return () => {
       window.removeEventListener("mousemove", handleMouseMove);
       window.removeEventListener("mouseup", handleMouseUp);
+      window.removeEventListener("touchmove", handleTouchMove);
+      window.removeEventListener("touchend", handleTouchEnd);
     };
   }, [isDragging]);
 
@@ -119,6 +155,7 @@ const ResizableDrawer = ({
             zIndex: 1, // Ensure the handle is on top of other elements
           }}
           onMouseDown={handleMouseDown}
+          onTouchStart={handleTouchStart}
         />
 
         {/* Close Button Tab */}
