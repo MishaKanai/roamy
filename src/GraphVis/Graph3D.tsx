@@ -375,7 +375,7 @@ const AppGraph3D = ({ filterNode }: { filterNode?: FilterNode }) => {
       const delta = clock.current.getDelta();
 
       // Rotate the entire scene about the Y-axis
-      scene.rotation.y += delta * 0.25; // Adjust speed as needed
+      scene.rotation.y += delta * 0.1; // Adjust speed as needed
 
       // Ensure controls still work for zooming and panning
       controls.update();
