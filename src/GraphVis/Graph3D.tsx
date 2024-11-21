@@ -26,6 +26,7 @@ import Page from "../SlateGraph/Page";
 import ResizableDrawer from "./ResizableDrawer";
 import { isEqual, result } from "lodash";
 import { createGraphSelector } from "./graphSelector";
+import SpriteText from "three-spritetext";
 
 type DiffResult = {
   path: string;
@@ -455,7 +456,7 @@ const AppGraph3D = ({ filterNode }: { filterNode?: FilterNode }) => {
                     : undefined
                 }
                 graphData={filteredGraph}
-                nodeLabel="label" // Display the 'label' property on hover
+                nodeLabel={(node) => `${node.label || node.id}`} // Use node label or ID as fallback
                 nodeThreeObject={(node) => {
                   if (node.svgImage) {
                     const imgTexture = new THREE.TextureLoader().load(
@@ -501,15 +502,13 @@ const AppGraph3D = ({ filterNode }: { filterNode?: FilterNode }) => {
                   const group = new THREE.Group();
                   group.add(sphereMesh);
 
-                  if (isSelected || isDescendant) {
+                  if (isSelected) {
                     // Outline for selected node
                     const outlineGeometry = new THREE.SphereGeometry(6);
                     const outlineMaterial = new THREE.MeshBasicMaterial({
-                      color: isDark
-                        ? theme.palette.common.white
-                        : theme.palette.secondary.main,
+                      color: theme.palette.info.main,
                       transparent: true,
-                      opacity: isSelected ? 0.95 : 0.65,
+                      opacity: 0.65,
                       side: THREE.BackSide,
                     });
                     const outlineMesh = new THREE.Mesh(
@@ -518,6 +517,13 @@ const AppGraph3D = ({ filterNode }: { filterNode?: FilterNode }) => {
                     );
                     group.add(outlineMesh);
                   }
+                  // Label using SpriteText
+                  const spriteText = new SpriteText(node.label || node.id, 3);
+                  spriteText.color = theme.palette.text.primary;
+                  spriteText.backgroundColor = "transparent";
+                  spriteText.position.set(0, -10, 0); // Position slightly below the node
+                  group.add(spriteText);
+
                   return group;
                 }}
                 linkWidth={1}
