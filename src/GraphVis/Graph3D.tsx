@@ -84,23 +84,23 @@ const deepDiff = (obj1: any, obj2: any, path = ""): DiffResult[] => {
   return diffs;
 };
 
-const logDeepDiff = (obj1: any, obj2: any) => {
-  const diffs = deepDiff(obj1, obj2);
-
-  diffs.forEach((diff) => {
-    const { path, type, value, oldValue } = diff;
-    if (type === "added") {
-      console.log(`Added at ${path}:`, value);
-    } else if (type === "removed") {
-      console.log(`Removed at ${path}:`, value);
-    } else if (type === "changed") {
-      console.log(`Changed at ${path}:`, `from`, oldValue, `to`, value);
+// Utility function to find direct descendants
+const getDirectDescendants = (selectedNodeId: string, links: LinkObject[]) => {
+  const descendants = new Set<string>();
+  links.forEach((link) => {
+    if (
+      (typeof link.source === "object" && link.source
+        ? link.source.id
+        : link.source) === selectedNodeId
+    ) {
+      descendants.add(
+        typeof link.target === "object" && link.target
+          ? (link.target.id as string)
+          : (link.target as string)
+      );
     }
   });
-
-  if (diffs.length === 0) {
-    console.log("No differences found.");
-  }
+  return descendants;
 };
 
 function getSvgDimensionsFromBase64(
@@ -397,6 +397,13 @@ const AppGraph3D = ({ filterNode }: { filterNode?: FilterNode }) => {
     };
   }, [isSpinning]);
 
+  const directDescendants = useMemo(() => {
+    if (!selectedNode) {
+      return new Set<string>();
+    }
+    return getDirectDescendants(selectedNode.id as string, links);
+  }, [selectedNode?.id, links]);
+
   const [drawerSize, setDrawerSize] = useState(isMobile ? 200 : 400);
 
   return (
@@ -467,15 +474,51 @@ const AppGraph3D = ({ filterNode }: { filterNode?: FilterNode }) => {
                     sprite.scale.set(scaledWidth, scaledHeight, 1); // Adjust size as needed
                     return sprite;
                   }
-                  // Default sphere for nodes
+                  const isSelected = selectedNode?.id === node.id;
+                  const isDescendant = directDescendants?.has(
+                    node.id as string
+                  );
+
+                  // Node sphere
                   const sphereGeometry = new THREE.SphereGeometry(5);
                   const sphereMaterial = new THREE.MeshBasicMaterial({
                     color:
                       node.type === "drawing"
                         ? theme.palette.secondary.main
                         : node.color ?? theme.palette.primary.main,
+                    transparent:
+                      !!selectedNode?.id && !isSelected && !isDescendant,
+                    opacity:
+                      selectedNode?.id && !isSelected && !isDescendant
+                        ? 0.6
+                        : 1,
                   });
-                  return new THREE.Mesh(sphereGeometry, sphereMaterial);
+                  const sphereMesh = new THREE.Mesh(
+                    sphereGeometry,
+                    sphereMaterial
+                  );
+
+                  const group = new THREE.Group();
+                  group.add(sphereMesh);
+
+                  if (isSelected || isDescendant) {
+                    // Outline for selected node
+                    const outlineGeometry = new THREE.SphereGeometry(6);
+                    const outlineMaterial = new THREE.MeshBasicMaterial({
+                      color: isDark
+                        ? theme.palette.common.white
+                        : theme.palette.secondary.main,
+                      transparent: true,
+                      opacity: isSelected ? 0.95 : 0.65,
+                      side: THREE.BackSide,
+                    });
+                    const outlineMesh = new THREE.Mesh(
+                      outlineGeometry,
+                      outlineMaterial
+                    );
+                    group.add(outlineMesh);
+                  }
+                  return group;
                 }}
                 linkWidth={1}
                 linkDirectionalParticles={2}
