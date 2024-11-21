@@ -359,42 +359,34 @@ const AppGraph3D = ({ filterNode }: { filterNode?: FilterNode }) => {
   const toggleSpin = () => {
     setIsSpinning((prev) => !prev);
   };
+  const clock = React.useRef(new THREE.Clock());
 
   useEffect(() => {
+    if (!isSpinning) return;
+
     const graph = graphRef.current;
     if (!graph) return;
-    graph.zoomToFit();
+    clock.current.start();
 
-    let angle = 0; // Initialize the angle
-    const radius = 500; // Adjust radius for your scene size
-    const center = { x: 0, y: 0, z: 0 }; // Focus point
+    const controls = graph.controls() as any;
+    const scene = graph.scene();
 
     const spin = () => {
-      if (!graph) return;
+      const delta = clock.current.getDelta();
 
-      // Increment the angle for smooth rotation
-      angle += 0.005; // Adjust for rotation speed
-      const x = center.x + radius * Math.cos(angle);
-      const z = center.z + radius * Math.sin(angle);
+      // Rotate the entire scene about the Y-axis
+      scene.rotation.y += delta * 0.25; // Adjust speed as needed
 
-      // Smooth camera movement
-      graph.cameraPosition({ x, y: 0, z }, center, 0);
+      // Ensure controls still work for zooming and panning
+      controls.update();
 
-      // Schedule the next frame
-      animationFrameRef.current = requestAnimationFrame(spin);
+      requestAnimationFrame(spin);
     };
 
-    if (isSpinning) {
-      // Start the animation loop
-      animationFrameRef.current = requestAnimationFrame(spin);
-    }
+    spin();
 
     return () => {
-      // Clean up the animation loop
-      if (animationFrameRef.current) {
-        cancelAnimationFrame(animationFrameRef.current);
-        animationFrameRef.current = null;
-      }
+      clock.current.stop();
     };
   }, [isSpinning]);
 
