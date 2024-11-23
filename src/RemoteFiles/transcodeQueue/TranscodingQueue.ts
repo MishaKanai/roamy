@@ -90,10 +90,12 @@ class TranscodingQueue {
         inFileName,
         "-vf",
         `scale=${resolution.join("x")}`,
+        "-c:v",
+        "libx264", // H.264 codec
         "-preset",
-        "veryfast", // TODO: change this according to user device
-        "-b:v",
-        "400k", // TODO: adjust this as needed.
+        "slow", // TODO: change this according to user device
+        "-crf",
+        "23", // Constant Rate Factor (quality control)
         "-movflags",
         "faststart", // optimize for web streaming
         // "-an", // Removes audio. TODO: make optional
