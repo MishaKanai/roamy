@@ -607,7 +607,9 @@ const Video = ({
   // videoRef.current?.load();
   // }, []);
 
-  const thumnbailB64 = useFetchThumbnail(fileIdentifier);
+  const thumnbailB64 = useFetchThumbnail(
+    isSingleFile() ? undefined : fileIdentifier
+  );
   const maxWidth = useMaxWidthForEmbeddedThing();
   return (
     <span contentEditable={false} style={{ maxWidth: "100%" }}>
@@ -680,6 +682,7 @@ const useMaxWidthForEmbeddedThing = () => {
   const maxWidth = isSmallScreen ? "calc(100vw - 92px)" : "calc(100vw - 312px)";
   return maxWidth;
 };
+
 const RemoteFile = ({
   attributes,
   children,
